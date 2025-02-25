@@ -16,7 +16,7 @@ export const routes = [
       {
         name: "OrderDetails",
         path: "l_costumers",
-        component: () => import("../pages/Orders/Lucas_costumers"),
+        component: () => import("../pages/Customer/Lucas_costumers"),
       },      
     ]
   },
