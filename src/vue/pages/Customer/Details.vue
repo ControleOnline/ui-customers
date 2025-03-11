@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import People from "@controleonline/ui-people/src/components/People/Details.vue";
+import People from "@controleonline/ui-people/src/vue/components/People/Details.vue";
 
 export default {
   components: {

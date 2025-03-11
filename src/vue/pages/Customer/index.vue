@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import People from "@controleonline/ui-people/src/components/People/List.vue";
+import People from "@controleonline/ui-people/src/vue/components/People/List.vue";
 import { mapGetters, mapActions } from "vuex";
 
 export default {
