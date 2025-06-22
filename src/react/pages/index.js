@@ -23,8 +23,8 @@ const Clients = () => {
     useCallback(() => {
       if (currentCompany && Object.keys(currentCompany).length > 0) {
         actions.getItems({
-          //company: '/people/' + currentCompany.id,
-          //type: 'client',
+          company: '/people/' + currentCompany.id,
+          link_type: 'client',
         });
       }
     }, [currentCompany]),
