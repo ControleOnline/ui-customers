@@ -1,10 +1,11 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useState, useEffect, useRef} from 'react';
 import {
   Text,
   View,
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  TextInput,
 } from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {getStore} from '@store';
@@ -19,16 +20,34 @@ const Clients = () => {
   const {currentCompany} = getters;
   const navigation = useNavigation();
 
+  const [search, setSearch] = useState('');
+  const debounceRef = useRef(null);
+
+  const fetchClients = useCallback((query) => {
+    if (currentCompany && Object.keys(currentCompany).length > 0) {
+      actions.getItems({
+        company: '/people/' + currentCompany.id,
+        link_type: 'client',
+        search: query.trim() !== '' ? query : undefined,
+      });
+    }
+  }, [currentCompany]);
+
   useFocusEffect(
     useCallback(() => {
-      if (currentCompany && Object.keys(currentCompany).length > 0) {
-        actions.getItems({
-          company: '/people/' + currentCompany.id,
-          link_type: 'client',
-        });
-      }
-    }, [currentCompany]),
+      fetchClients(search);
+    }, [fetchClients, search])
   );
+
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      fetchClients(search);
+    }, 500);
+    return () => clearTimeout(debounceRef.current);
+  }, [search, fetchClients]);
 
   const handleEdit = client => {
     navigation.navigate('ClientDetails', {client});
@@ -40,16 +59,30 @@ const Clients = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{height: 50}}>
+      <View style={{padding: 16}}>
+        <TextInput
+          placeholder="Buscar cliente..."
+          value={search}
+          onChangeText={setSearch}
+          style={{
+            backgroundColor: '#fff',
+            borderRadius: 8,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            marginBottom: 12,
+            color: '#000',
+          }}
+          placeholderTextColor="#999"
+        />
         <TouchableOpacity
           onPress={handleAdd}
           style={[
             globalStyles.button,
             {
-              flex: 1,
               flexDirection: 'row',
               justifyContent: 'center',
               alignItems: 'center',
+              height: 50,
             },
           ]}>
           <Icon name="person-add" size={24} color="#fff" />
