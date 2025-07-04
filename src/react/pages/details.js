@@ -1,4 +1,4 @@
-import React, {useState, useCallback} from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Text,
   View,
@@ -7,15 +7,16 @@ import {
   TextInput,
   Image,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import css from '@controleonline/ui-people/src/react/css/people';
-import {useFocusEffect} from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import md5 from 'md5';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Contracts from '@controleonline/ui-contracts/src/react/components/contracts';
 
-const Profile = ({route}) => {
-  const {client} = route.params || {};
-  const {styles} = css();
+const Profile = ({ route }) => {
+  const { client } = route.params || {};
+  const { styles } = css();
   const [phones, setPhones] = useState([]);
   const [emails, setEmails] = useState([]);
 
@@ -47,7 +48,7 @@ const Profile = ({route}) => {
     <View style={styles.listContainer}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>
-          {type === 'phone' ? 'Phones' : 'Emails'}
+          {type === 'phone' ? 'Telefones' : 'Emails'}
         </Text>
         <TouchableOpacity onPress={() => setItems([...items, ''])}>
           <Icon name="add" size={24} color={styles.addIcon.color} />
@@ -63,7 +64,7 @@ const Profile = ({route}) => {
               newItems[index] = text;
               setItems(newItems);
             }}
-            placeholder={`Enter ${type}`}
+            placeholder={`Digite ${type === 'phone' ? 'telefone' : 'email'}`}
           />
           <TouchableOpacity
             onPress={() => {
@@ -81,7 +82,7 @@ const Profile = ({route}) => {
     return (
       <SafeAreaView style={styles.Profile}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Failed to load client data</Text>
+          <Text style={styles.errorText}>Falha ao carregar dados do cliente</Text>
         </View>
       </SafeAreaView>
     );
@@ -91,7 +92,7 @@ const Profile = ({route}) => {
     <SafeAreaView style={styles.Profile}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.headerContainer}>
-          <Image source={{uri: getAvatarUrl()}} style={styles.avatar} />
+          <Image source={{ uri: getAvatarUrl() }} style={styles.avatar} />
           <Text style={styles.clientName}>{client.name}</Text>
         </View>
 
@@ -99,6 +100,8 @@ const Profile = ({route}) => {
           {renderEditableList(phones, setPhones, 'phone')}
           {renderEditableList(emails, setEmails, 'email')}
         </View>
+
+        <Contracts client={client} />
       </ScrollView>
     </SafeAreaView>
   );
