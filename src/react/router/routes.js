@@ -19,7 +19,7 @@ const peopleRoutes = [
     name: 'ClientsIndex',
     component: WrappedClients,
     options: {
-      headerShown: false,
+      headerShown: true,
       title: 'Clientes',
       headerBackButtonMenuEnabled: false,
     },
