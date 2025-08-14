@@ -19,7 +19,7 @@ const Profile = ({route, navigation}) => {
 
   const [activeTab, setActiveTab] = useState('contact');
   const [isEditing, setIsEditing] = useState(false);
-
+  //update
   const getAvatarUrl = () => {
     if (!client?.email?.[0]?.email && !client?.name) {
       return 'https://www.gravatar.com/avatar/?d=identicon';

@@ -71,7 +71,6 @@ const AddCompanyModal = ({visible, onClose, onSave}) => {
   const handleDateChange = text => {
     const formatted = formatDateInput(text);
 
-    // Se a data estiver completa (DD/MM/AAAA), tentar fazer o parse
     if (formatted.length === 10) {
       const parts = formatted.split('/');
       const day = parseInt(parts[0], 10);

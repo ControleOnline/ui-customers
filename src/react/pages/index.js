@@ -53,7 +53,7 @@ const Clients = () => {
       });
     }
   }, [search, currentCompany]);
-
+  //update
   const handleEdit = client => {
     navigation.navigate('ClientDetails', {client});
   };
