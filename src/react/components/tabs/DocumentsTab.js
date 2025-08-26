@@ -1,14 +1,14 @@
-import React, {useState, useEffect} from 'react';
+import {getStore} from '@store';
+import React, {useEffect, useState} from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
   Alert,
   Modal,
+  Text,
   TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {getStore} from '@store';
 
 const DocumentsTab = ({client, customStyles, isEditing}) => {
   const [documents, setDocuments] = useState([]);
@@ -19,6 +19,7 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
   const {actions: actionsDocuments} = getStore('documents');
   const {actions: actionsDocumentsType, getters} = getStore('documentsTypes');
   const {items} = getters;
+
   useEffect(() => {
     const rawDocuments = Array.isArray(client?.document)
       ? client.document.map(d => ({
@@ -32,7 +33,6 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
       : [];
 
     actionsDocumentsType.getItems();
-    console.log('entrou');
     setDocuments(rawDocuments);
   }, [client]);
 
@@ -47,7 +47,6 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
     setEditingItem(null);
     setFormData({});
   };
-  console.log(items, 'doccumentype');
   const handleSave = async () => {
     if (!formData.value || !formData.type) {
       Alert.alert('Erro', 'Documento e tipo são obrigatórios.');
@@ -194,7 +193,8 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
                       {String(doc.value || '')}
                     </Text>
                     <Text style={customStyles.itemSubtext}>
-                      {String(doc.type || '')}
+                      {items.find(i => i['@id'] === doc.type)?.documentType ||
+                        String(doc.type || '')}
                     </Text>
                   </View>
                 </View>

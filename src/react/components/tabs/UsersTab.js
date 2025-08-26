@@ -31,7 +31,7 @@ const UsersTab = ({client, customStyles, isEditing}) => {
 
   const openModal = (item = null) => {
     setEditingItem(item);
-    setFormData(item || {});
+    setFormData(item ? {...item, username: item.name} : {});
     setShowModal(true);
   };
 
@@ -60,8 +60,6 @@ const UsersTab = ({client, customStyles, isEditing}) => {
           confirmPassword: formData.confirmPassword,
           people: client['@id']?.match(/\d+/)?.[0] || client['@id'],
         };
-
-        console.log(userData);
 
         await actions.createUser(userData);
 
@@ -131,11 +129,12 @@ const UsersTab = ({client, customStyles, isEditing}) => {
       <View style={customStyles.modalOverlay}>
         <View style={customStyles.modalContainer}>
           <Text style={customStyles.modalTitle}>
-            {editingItem ? 'Editar Usuário' : 'Adicionar Usuário'}
+            {editingItem ? 'Editar Senha do Usuário ' : 'Adicionar Usuário'}
           </Text>
           <TextInput
+            editable={editingItem ? false : true}
             style={customStyles.modalInput}
-            placeholder="Nome de usuário"
+            placeholder="Email do usuário"
             value={formData.username || ''}
             onChangeText={text => setFormData({...formData, username: text})}
             autoCapitalize="none"
