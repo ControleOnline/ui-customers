@@ -102,13 +102,16 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
         text: 'Remover',
         style: 'destructive',
         onPress: async () => {
-          try {
-            await actionsDocuments.remove(id);
-            setDocuments(documents.filter(d => d.id !== id));
-            Alert.alert('Sucesso', 'Documento removido com sucesso!');
-          } catch (error) {
-            Alert.alert('Erro', 'Falha ao remover documento. Tente novamente.');
-          }
+
+          actionsDocuments.remove(id)
+            .then(() => {
+              setDocuments(documents.filter(d => d.id !== id));
+              Alert.alert('Sucesso', 'Documento removido com sucesso!');
+            })
+            .catch((error) => {
+              Alert.alert('Erro', 'Falha ao remover o documento. Tente novamente.')
+            })
+          
         },
       },
     ]);

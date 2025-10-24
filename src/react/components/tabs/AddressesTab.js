@@ -128,13 +128,16 @@ const AddressesTab = ({client, customStyles, isEditing}) => {
         text: 'Remover',
         style: 'destructive',
         onPress: async () => {
-          try {
-            await actions.remove(id);
-            setAddresses(addresses.filter(a => a.id !== id));
-            Alert.alert('Sucesso', 'Endereço removido com sucesso!');
-          } catch (error) {
-            Alert.alert('Erro', 'Falha ao remover endereço. Tente novamente.');
-          }
+
+          actions.remove(id)
+            .then(() => {
+              setDocuments(documents.filter(d => d.id !== id));
+              Alert.alert('Sucesso', 'Endereço removido com sucesso!');
+            })
+            .catch((error) => {
+              Alert.alert('Erro', 'Falha ao remover o endreço. Tente novamente.')
+            })
+
         },
       },
     ]);

@@ -167,23 +167,29 @@ const ContactTab = ({client, customStyles, isEditing}) => {
         text: 'Remover',
         style: 'destructive',
         onPress: async () => {
-          try {
-            if (type === 'phone') {
-              await actionsPhones.remove(id);
-              setPhones(phones.filter(p => p.id !== id));
-              Alert.alert('Sucesso', 'Telefone removido com sucesso!');
-            } else if (type === 'email') {
-              await actionsEmails.remove(id);
-              setEmails(emails.filter(e => e.id !== id));
-              Alert.alert('Sucesso', 'Email removido com sucesso!');
-            }
-          } catch (error) {
-            Alert.alert(
-              'Erro',
-              `Falha ao remover ${
-                type === 'phone' ? 'telefone' : 'email'
-              }. Tente novamente.`,
-            );
+
+          if (type === 'phone') {
+
+            actionsPhones.remove(id)
+
+              .then(() => {
+                setPhones(phones.filter(p => p.id !== id));
+                Alert.alert('Sucesso', 'Telefone removido com sucesso!');
+              })
+              .catch((error) => {
+                Alert.alert('Erro', 'Falha ao remover o telefone. Tente novamente.')
+              })
+
+          } else if (type === 'email') {
+
+            actionsEmails.remove(id)
+              .then(() => {
+                setPhones(phones.filter(p => p.id !== id));
+                Alert.alert('Sucesso', 'Email removido com sucesso!');
+              })
+              .catch((error) => {
+                Alert.alert('Erro', 'Falha ao remover o email. Tente novamente.')
+              })
           }
         },
       },
