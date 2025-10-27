@@ -10,7 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getStore} from '@store';
 
-const AddressesTab = ({client, customStyles, isEditing}) => {
+const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [addresses, setAddresses] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -87,7 +87,24 @@ const AddressesTab = ({client, customStyles, isEditing}) => {
           id: Date.now(),
           ...formData,
         };
-        setAddresses([...addresses, newAddress]);
+        const updatedAddresses = [...addresses, newAddress];
+        setAddresses(updatedAddresses);
+        if (onUpdateClient) {
+          const fullAddressData = updatedAddresses.map(a => ({
+            id: a.id,
+            '@id': a.id,
+            street: a.street,
+            number: a.number,
+            complement: a.complement,
+            district: a.district,
+            city: a.city,
+            state: a.state,
+            zipCode: a.zipCode,
+            country: a.country,
+            nickname: a.nickname,
+          }));
+          onUpdateClient('address', fullAddressData);
+        }
 
         Alert.alert('Sucesso', 'Endereço criado com sucesso!');
         closeModal();
@@ -108,9 +125,26 @@ const AddressesTab = ({client, customStyles, isEditing}) => {
         await actions.save(addressData);
 
         const updatedAddress = {...editingItem, ...formData};
-        setAddresses(
-          addresses.map(a => (a.id === editingItem.id ? updatedAddress : a)),
+        const updatedAddresses = addresses.map(a =>
+          a.id === editingItem.id ? updatedAddress : a,
         );
+        setAddresses(updatedAddresses);
+        if (onUpdateClient) {
+          const fullAddressData = updatedAddresses.map(a => ({
+            id: a.id,
+            '@id': a.id,
+            street: a.street,
+            number: a.number,
+            complement: a.complement,
+            district: a.district,
+            city: a.city,
+            state: a.state,
+            zipCode: a.zipCode,
+            country: a.country,
+            nickname: a.nickname,
+          }));
+          onUpdateClient('address', fullAddressData);
+        }
 
         Alert.alert('Sucesso', 'Endereço atualizado com sucesso!');
         closeModal();
@@ -130,7 +164,24 @@ const AddressesTab = ({client, customStyles, isEditing}) => {
         onPress: async () => {
           try {
             await actions.remove(id);
-            setAddresses(addresses.filter(a => a.id !== id));
+            const updatedAddresses = addresses.filter(a => a.id !== id);
+            setAddresses(updatedAddresses);
+            if (onUpdateClient) {
+              const fullAddressData = updatedAddresses.map(a => ({
+                id: a.id,
+                '@id': a.id,
+                street: a.street,
+                number: a.number,
+                complement: a.complement,
+                district: a.district,
+                city: a.city,
+                state: a.state,
+                zipCode: a.zipCode,
+                country: a.country,
+                nickname: a.nickname,
+              }));
+              onUpdateClient('address', fullAddressData);
+            }
             Alert.alert('Sucesso', 'Endereço removido com sucesso!');
           } catch (error) {
             Alert.alert('Erro', 'Falha ao remover endereço. Tente novamente.');

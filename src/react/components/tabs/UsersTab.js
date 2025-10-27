@@ -10,7 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getStore} from '@store';
 
-const UsersTab = ({client, customStyles, isEditing}) => {
+const UsersTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [users, setUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -69,7 +69,17 @@ const UsersTab = ({client, customStyles, isEditing}) => {
           role: 'Usuário',
           email: '',
         };
-        setUsers([...users, newUser]);
+        const updatedUsers = [...users, newUser];
+        setUsers(updatedUsers);
+        if (onUpdateClient) {
+          const fullUserData = updatedUsers.map(u => ({
+            id: u.id,
+            '@id': u.id,
+            username: u.name,
+            role: u.role,
+          }));
+          onUpdateClient('user', fullUserData);
+        }
 
         Alert.alert('Sucesso', 'Usuário criado com sucesso!');
         closeModal();
@@ -90,12 +100,25 @@ const UsersTab = ({client, customStyles, isEditing}) => {
           await actions.changePassword({
             id: editingItem.id,
             password: formData.password,
+            active: true,
             confirmPassword: formData.confirmPassword,
           });
         }
 
         const updatedUser = {...editingItem, ...formData};
-        setUsers(users.map(u => (u.id === editingItem.id ? updatedUser : u)));
+        const updatedUsers = users.map(u =>
+          u.id === editingItem.id ? updatedUser : u,
+        );
+        setUsers(updatedUsers);
+        if (onUpdateClient) {
+          const fullUserData = updatedUsers.map(u => ({
+            id: u.id,
+            '@id': u.id,
+            username: u.name,
+            role: u.role,
+          }));
+          onUpdateClient('user', fullUserData);
+        }
 
         Alert.alert('Sucesso', 'Usuário atualizado com sucesso!');
         closeModal();
@@ -114,7 +137,17 @@ const UsersTab = ({client, customStyles, isEditing}) => {
         onPress: async () => {
           try {
             await actions.remove(id);
-            setUsers(users.filter(u => u.id !== id));
+            const updatedUsers = users.filter(u => u.id !== id);
+            setUsers(updatedUsers);
+            if (onUpdateClient) {
+              const fullUserData = updatedUsers.map(u => ({
+                id: u.id,
+                '@id': u.id,
+                username: u.name,
+                role: u.role,
+              }));
+              onUpdateClient('user', fullUserData);
+            }
             Alert.alert('Sucesso', 'Usuário removido com sucesso!');
           } catch (error) {
             Alert.alert('Erro', 'Falha ao remover usuário. Tente novamente.');

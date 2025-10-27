@@ -10,7 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getStore} from '@store';
 
-const ContactTab = ({client, customStyles, isEditing}) => {
+const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [phones, setPhones] = useState([]);
   const [emails, setEmails] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -96,10 +96,25 @@ const ContactTab = ({client, customStyles, isEditing}) => {
           value: `(${formData.ddd}) ${formData.phone}`,
         };
 
-        if (editingItem) {
-          setPhones(phones.map(p => (p.id === editingItem.id ? phoneItem : p)));
-        } else {
-          setPhones([...phones, phoneItem]);
+        const updatedPhones = editingItem
+          ? phones.map(p => (p.id === editingItem.id ? phoneItem : p))
+          : [...phones, phoneItem];
+
+        setPhones(updatedPhones);
+
+        // Atualizar o cliente com a estrutura completa
+        if (onUpdateClient) {
+          const fullPhoneData = updatedPhones.map(p => {
+            const match = p.value.match(/\((\d{2})\)\s(\d+)/);
+            return {
+              id: p.id,
+              '@id': p.id,
+              ddd: match ? match[1] : '',
+              phone: match ? match[2] : '',
+              ddi: 55,
+            };
+          });
+          onUpdateClient('phone', fullPhoneData);
         }
 
         Alert.alert(
@@ -138,10 +153,20 @@ const ContactTab = ({client, customStyles, isEditing}) => {
           value: formData.value,
         };
 
-        if (editingItem) {
-          setEmails(emails.map(e => (e.id === editingItem.id ? emailItem : e)));
-        } else {
-          setEmails([...emails, emailItem]);
+        const updatedEmails = editingItem
+          ? emails.map(e => (e.id === editingItem.id ? emailItem : e))
+          : [...emails, emailItem];
+
+        setEmails(updatedEmails);
+
+        // Atualizar o cliente com a estrutura completa
+        if (onUpdateClient) {
+          const fullEmailData = updatedEmails.map(e => ({
+            id: e.id,
+            '@id': e.id,
+            email: e.value,
+          }));
+          onUpdateClient('email', fullEmailData);
         }
 
         Alert.alert(
@@ -170,11 +195,34 @@ const ContactTab = ({client, customStyles, isEditing}) => {
           try {
             if (type === 'phone') {
               await actionsPhones.remove(id);
-              setPhones(phones.filter(p => p.id !== id));
+              const updatedPhones = phones.filter(p => p.id !== id);
+              setPhones(updatedPhones);
+              if (onUpdateClient) {
+                const fullPhoneData = updatedPhones.map(p => {
+                  const match = p.value.match(/\((\d{2})\)\s(\d+)/);
+                  return {
+                    id: p.id,
+                    '@id': p.id,
+                    ddd: match ? match[1] : '',
+                    phone: match ? match[2] : '',
+                    ddi: 55,
+                  };
+                });
+                onUpdateClient('phone', fullPhoneData);
+              }
               Alert.alert('Sucesso', 'Telefone removido com sucesso!');
             } else if (type === 'email') {
               await actionsEmails.remove(id);
-              setEmails(emails.filter(e => e.id !== id));
+              const updatedEmails = emails.filter(e => e.id !== id);
+              setEmails(updatedEmails);
+              if (onUpdateClient) {
+                const fullEmailData = updatedEmails.map(e => ({
+                  id: e.id,
+                  '@id': e.id,
+                  email: e.value,
+                }));
+                onUpdateClient('email', fullEmailData);
+              }
               Alert.alert('Sucesso', 'Email removido com sucesso!');
             }
           } catch (error) {

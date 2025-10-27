@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const DocumentsTab = ({client, customStyles, isEditing}) => {
+const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [documents, setDocuments] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -26,7 +26,7 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
           id: d.id || d['@id'],
           type:
             typeof d.documentType === 'object'
-              ? d.documentType?.name || 'Documento'
+              ? d.documentType?.['@id'] || d.documentType?.id || 'Documento'
               : d.documentType || 'Documento',
           value: d.document,
         }))
@@ -47,10 +47,64 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
     setEditingItem(null);
     setFormData({});
   };
+
+  const getAvailableDocumentTypes = () => {
+    const availableTypes = items.filter(
+      type => type.peopleType === client?.peopleType,
+    );
+
+    // Se estiver editando, permite o tipo atual + tipos não utilizados
+    if (editingItem) {
+      return availableTypes.filter(type => {
+        const isCurrentType = type['@id'] === editingItem.type;
+        const isAlreadyUsed = documents.some(doc => doc.type === type['@id']);
+        return isCurrentType || !isAlreadyUsed;
+      });
+    }
+
+    // Se estiver adicionando, mostra apenas tipos não utilizados
+    return availableTypes.filter(type => {
+      return !documents.some(doc => doc.type === type['@id']);
+    });
+  };
+
+  const getFilteredDocuments = () => {
+    const isPessoaFisica =
+      client?.peopleType === 'F' || client?.peopleType === 'fisica';
+    const isPessoaJuridica =
+      client?.peopleType === 'J' || client?.peopleType === 'juridica';
+
+    return documents.filter(doc => {
+      const docTypeItem = items.find(item => item['@id'] === doc.type);
+      const docType = docTypeItem?.documentType?.toUpperCase();
+
+      if (isPessoaFisica) {
+        return docType === 'RG' || docType === 'CPF';
+      }
+
+      if (isPessoaJuridica) {
+        return docType === 'CNPJ' || docType === 'IE' || docType === 'IM';
+      }
+
+      return true;
+    });
+  };
   const handleSave = async () => {
     if (!formData.value || !formData.type) {
       Alert.alert('Erro', 'Documento e tipo são obrigatórios.');
       return;
+    }
+
+    if (!editingItem) {
+      const existingDoc = documents.find(doc => doc.type === formData.type);
+      if (existingDoc) {
+        const selectedType = items.find(item => item['@id'] === formData.type);
+        Alert.alert(
+          'Erro',
+          `Já existe um documento do tipo ${selectedType?.documentType}.`,
+        );
+        return;
+      }
     }
 
     try {
@@ -72,12 +126,19 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
         type: formData.type,
       };
 
-      if (editingItem) {
-        setDocuments(
-          documents.map(d => (d.id === editingItem.id ? documentItem : d)),
-        );
-      } else {
-        setDocuments([...documents, documentItem]);
+      const updatedDocuments = editingItem
+        ? documents.map(d => (d.id === editingItem.id ? documentItem : d))
+        : [...documents, documentItem];
+
+      setDocuments(updatedDocuments);
+      if (onUpdateClient) {
+        const fullDocumentData = updatedDocuments.map(d => ({
+          id: d.id,
+          '@id': d.id,
+          document: d.value,
+          documentType: d.type,
+        }));
+        onUpdateClient('document', fullDocumentData);
       }
 
       Alert.alert(
@@ -104,9 +165,20 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
         onPress: async () => {
           try {
             await actionsDocuments.remove(id);
-            setDocuments(documents.filter(d => d.id !== id));
+            const updatedDocuments = documents.filter(d => d.id !== id);
+            setDocuments(updatedDocuments);
+            if (onUpdateClient) {
+              const fullDocumentData = updatedDocuments.map(d => ({
+                id: d.id,
+                '@id': d.id,
+                document: d.value,
+                documentType: d.type,
+              }));
+              onUpdateClient('document', fullDocumentData);
+            }
             Alert.alert('Sucesso', 'Documento removido com sucesso!');
           } catch (error) {
+            console.log('Delete error:', error);
             Alert.alert('Erro', 'Falha ao remover documento. Tente novamente.');
           }
         },
@@ -124,7 +196,7 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
           <View style={customStyles.pickerContainer}>
             <Text style={customStyles.label}>Tipo:</Text>
             <View style={customStyles.pickerButtons}>
-              {items.map(type => (
+              {getAvailableDocumentTypes().map(type => (
                 <TouchableOpacity
                   key={type.documentType}
                   style={[
@@ -136,7 +208,7 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
                   <Text
                     style={[
                       customStyles.pickerButtonText,
-                      formData.type === type &&
+                      formData.type === type['@id'] &&
                         customStyles.pickerButtonTextActive,
                     ]}>
                     {type.documentType}
@@ -179,12 +251,12 @@ const DocumentsTab = ({client, customStyles, isEditing}) => {
               </TouchableOpacity>
             )}
           </View>
-          {documents.length === 0 ? (
+          {getFilteredDocuments().length === 0 ? (
             <Text style={customStyles.emptyText}>
               Nenhum documento cadastrado
             </Text>
           ) : (
-            documents.map(doc => (
+            getFilteredDocuments().map(doc => (
               <View key={doc.id} style={customStyles.listItem}>
                 <View style={customStyles.itemContent}>
                   <Icon name="description" size={20} color="#666" />

@@ -13,13 +13,13 @@ import AddressesTab from '../components/tabs/AddressesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 
 const Profile = ({route, navigation}) => {
-  const {client} = route.params || {};
+  const {client: initialClient} = route.params || {};
   const {styles} = css();
   const customStyles = detailsStyles;
 
   const [activeTab, setActiveTab] = useState('contact');
   const [isEditing, setIsEditing] = useState(false);
-  //update
+  const [client, setClient] = useState(initialClient);
   const getAvatarUrl = () => {
     if (!client?.email?.[0]?.email && !client?.name) {
       return 'https://www.gravatar.com/avatar/?d=identicon';
@@ -69,6 +69,13 @@ const Profile = ({route, navigation}) => {
     </View>
   );
 
+  const updateClientData = (field, data) => {
+    setClient(prevClient => ({
+      ...prevClient,
+      [field]: data,
+    }));
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'contact':
@@ -77,6 +84,7 @@ const Profile = ({route, navigation}) => {
             client={client}
             customStyles={customStyles}
             isEditing={isEditing}
+            onUpdateClient={updateClientData}
           />
         );
       case 'documents':
@@ -85,6 +93,7 @@ const Profile = ({route, navigation}) => {
             client={client}
             customStyles={customStyles}
             isEditing={isEditing}
+            onUpdateClient={updateClientData}
           />
         );
       case 'users':
@@ -93,6 +102,7 @@ const Profile = ({route, navigation}) => {
             client={client}
             customStyles={customStyles}
             isEditing={isEditing}
+            onUpdateClient={updateClientData}
           />
         );
       case 'addresses':
@@ -101,6 +111,7 @@ const Profile = ({route, navigation}) => {
             client={client}
             customStyles={customStyles}
             isEditing={isEditing}
+            onUpdateClient={updateClientData}
           />
         );
       case 'contracts':
@@ -111,6 +122,7 @@ const Profile = ({route, navigation}) => {
             client={client}
             customStyles={customStyles}
             isEditing={isEditing}
+            onUpdateClient={updateClientData}
           />
         );
     }
