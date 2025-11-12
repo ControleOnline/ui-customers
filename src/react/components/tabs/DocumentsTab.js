@@ -20,6 +20,42 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const {actions: actionsDocumentsType, getters} = getStore('documentsTypes');
   const {items} = getters;
 
+  // Funções de máscara
+  const applyMask = (value, type) => {
+    if (!value) {
+      return '';
+    }
+    const numbers = value.replace(/\D/g, '');
+
+    const docTypeItem = items.find(item => item['@id'] === type);
+    const docType = docTypeItem?.documentType?.toUpperCase();
+
+    if (docType === 'CPF') {
+      // Máscara CPF: 000.000.000-00
+      return numbers
+        .slice(0, 11)
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+
+    if (docType === 'CNPJ') {
+      // Máscara CNPJ: 00.000.000/0000-00
+      return numbers
+        .slice(0, 14)
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+    }
+
+    return value;
+  };
+
+  const removeMask = value => {
+    return value ? value.replace(/\D/g, '') : '';
+  };
+
   useEffect(() => {
     const rawDocuments = Array.isArray(client?.document)
       ? client.document.map(d => ({
@@ -108,8 +144,11 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     }
 
     try {
+      // Remove a máscara antes de salvar
+      const cleanValue = removeMask(formData.value);
+
       const documentData = {
-        document: formData.value,
+        document: cleanValue,
         documentType: formData.type,
         people: client['@id'],
       };
@@ -122,7 +161,7 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
 
       const documentItem = {
         id: editingItem?.id || Date.now(),
-        value: formData.value,
+        value: cleanValue,
         type: formData.type,
       };
 
@@ -220,8 +259,12 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           <TextInput
             style={customStyles.modalInput}
             placeholder="Número do documento"
-            value={formData.value || ''}
-            onChangeText={text => setFormData({...formData, value: text})}
+            value={applyMask(formData.value || '', formData.type)}
+            onChangeText={text => {
+              const cleanText = removeMask(text);
+              setFormData({...formData, value: cleanText});
+            }}
+            keyboardType="numeric"
           />
           <View style={customStyles.modalActions}>
             <TouchableOpacity
@@ -262,7 +305,7 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
                   <Icon name="description" size={20} color="#666" />
                   <View>
                     <Text style={customStyles.itemText}>
-                      {String(doc.value || '')}
+                      {applyMask(String(doc.value || ''), doc.type)}
                     </Text>
                     <Text style={customStyles.itemSubtext}>
                       {items.find(i => i['@id'] === doc.type)?.documentType ||
