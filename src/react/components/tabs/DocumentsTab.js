@@ -49,6 +49,33 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
         .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
     }
 
+    if (docType === 'RG') {
+      // Máscara RG: 00.000.000-0
+      return numbers
+        .slice(0, 9)
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1})$/, '$1-$2');
+    }
+
+    if (docType === 'IE') {
+      // Máscara IE: 000.000.000.000 (varia por estado, usando formato genérico)
+      return numbers
+        .slice(0, 12)
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2');
+    }
+
+    if (docType === 'IM') {
+      // Máscara IM: 00.000.000-0 (varia por município, usando formato genérico)
+      return numbers
+        .slice(0, 9)
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1})$/, '$1-$2');
+    }
+
     return value;
   };
 
@@ -287,7 +314,9 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       <View style={customStyles.tabContent}>
         <View style={customStyles.section}>
           <View style={customStyles.sectionHeader}>
-            <Text style={customStyles.sectionTitle}>Documentos</Text>
+            <Text style={customStyles.sectionTitle} numberOfLines={1}>
+              Documentos
+            </Text>
             {isEditing && (
               <TouchableOpacity onPress={() => openModal()}>
                 <Icon name="add" size={24} color="#007bff" />
