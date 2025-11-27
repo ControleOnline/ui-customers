@@ -15,12 +15,15 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
+  const {getters: peopleGetters} = getStore('people');
+  const {currentCompany} = peopleGetters;
 
   const {actions: actionsDocuments} = getStore('documents');
   const {actions: actionsDocumentsType, getters} = getStore('documentsTypes');
   const {items} = getters;
 
   useEffect(() => {
+    if (!currentCompany || !client) return;
     const rawDocuments = Array.isArray(client?.document)
       ? client.document.map(d => ({
           id: d.id || d['@id'],
@@ -32,9 +35,11 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
         }))
       : [];
 
-    actionsDocumentsType.getItems();
+    actionsDocumentsType.getItems({
+      'company_document.people': currentCompany?.id,
+    });
     setDocuments(rawDocuments);
-  }, [client]);
+  }, [client, currentCompany]);
 
   const openModal = (item = null) => {
     setEditingItem(item);
