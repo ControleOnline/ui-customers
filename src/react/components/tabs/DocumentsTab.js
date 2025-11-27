@@ -146,10 +146,6 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
         onUpdateClient('document', fullDocumentData);
       }
 
-      Alert.alert(
-        'Sucesso',
-        `Documento ${editingItem ? 'atualizado' : 'adicionado'} com sucesso!`,
-      );
       closeModal();
     } catch (error) {
       Alert.alert(
@@ -181,7 +177,6 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
               }));
               onUpdateClient('document', fullDocumentData);
             }
-            Alert.alert('Sucesso', 'Documento removido com sucesso!');
           } catch (error) {
             console.log('Delete error:', error);
             Alert.alert('Erro', 'Falha ao remover documento. Tente novamente.');
