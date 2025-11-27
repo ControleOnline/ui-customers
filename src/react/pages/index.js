@@ -32,13 +32,18 @@ const Clients = () => {
   const fetchClients = useCallback(
     (query, page = currentPage) => {
       if (currentCompany && Object.keys(currentCompany).length > 0) {
-        actions.getItems({
+        const params = {
           company: '/people/' + currentCompany.id,
           link_type: 'client',
-          search: query.trim() !== '' ? query : undefined,
           page: page,
           itemsPerPage: itemsPerPage,
-        });
+        };
+
+        if (query.trim() !== '') {
+          params.name = query.trim();
+        }
+
+        actions.getItems(params);
       }
     },
     [currentCompany, currentPage, itemsPerPage],
@@ -46,18 +51,17 @@ const Clients = () => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchClients(search);
-    }, [fetchClients, search]),
+      fetchClients(search, currentPage);
+    }, [fetchClients, search, currentPage]),
   );
 
   useEffect(() => {
-    setCurrentPage(1); // Reset to first page when search or itemsPerPage changes
-    fetchClients(search, 1);
-  }, [search, itemsPerPage, currentCompany, fetchClients]);
+    setCurrentPage(1);
+  }, [search, itemsPerPage, currentCompany]);
 
   useEffect(() => {
     fetchClients(search, currentPage);
-  }, [currentPage, fetchClients, search]);
+  }, [currentPage, search, itemsPerPage, currentCompany, fetchClients]);
   const handleEdit = client => {
     navigation.navigate('ClientDetails', {client});
   };
