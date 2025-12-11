@@ -8,7 +8,7 @@ import {
   TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {getStore} from '@store';
+import {useStores} from '@store';
 
 const UsersTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [users, setUsers] = useState([]);
@@ -16,7 +16,8 @@ const UsersTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  const {actions} = getStore('users');
+  const usersStore = useStores(state => state.users);
+  const actions = usersStore.actions;
   useEffect(() => {
     const rawUsers = Array.isArray(client?.user)
       ? client.user.map(u => ({

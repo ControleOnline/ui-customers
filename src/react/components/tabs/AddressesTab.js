@@ -8,7 +8,7 @@ import {
   TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {getStore} from '@store';
+import {useStores} from '@store';
 
 const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [addresses, setAddresses] = useState([]);
@@ -16,7 +16,8 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  const {actions} = getStore('address');
+  const addressStore = useStores(state => state.address);
+  const actions = addressStore.actions;
 
   useEffect(() => {
     const rawAddresses = Array.isArray(client?.address)

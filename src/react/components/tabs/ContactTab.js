@@ -8,7 +8,7 @@ import {
   TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {getStore} from '@store';
+import {useStores} from '@store';
 
 const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [phones, setPhones] = useState([]);
@@ -18,8 +18,10 @@ const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  const {actions: actionsPhones} = getStore('phones');
-  const {actions: actionsEmails} = getStore('emails');
+  const phonesStore = useStores(state => state.phones);
+  const actionsPhones = phonesStore.actions;
+  const emailsStore = useStores(state => state.emails);
+  const actionsEmails = emailsStore.actions;
 
   useEffect(() => {
     const rawPhones = Array.isArray(client?.phone)

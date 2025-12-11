@@ -1,4 +1,4 @@
-import {getStore} from '@store';
+import {useStores} from '@store';
 import React, {useEffect, useState} from 'react';
 import {
   Alert,
@@ -15,11 +15,15 @@ const DocumentsTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
-  const {getters: peopleGetters} = getStore('people');
+  const peopleStore = useStores(state => state.people);
+  const peopleGetters = peopleStore.getters;
   const {currentCompany} = peopleGetters;
 
-  const {actions: actionsDocuments} = getStore('documents');
-  const {actions: actionsDocumentsType, getters} = getStore('documentsTypes');
+  const documentsStore = useStores(state => state.documents);
+  const actionsDocuments = documentsStore.actions;
+  const documentsTypesStore = useStores(state => state.documentsTypes);
+  const actionsDocumentsType = documentsTypesStore.actions;
+  const getters = documentsTypesStore.getters;
   const {items} = getters;
 
   // Funções de máscara

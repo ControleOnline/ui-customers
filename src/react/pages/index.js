@@ -8,7 +8,7 @@ import {
   TextInput,
 } from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import {getStore} from '@store';
+import {useStores} from '@store';
 import StateStore from '@controleonline/ui-layout/src/react/components/StateStore';
 import css from '@controleonline/ui-orders/src/react/css/orders';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -16,7 +16,9 @@ import AddCompanyModal from '../components/AddCompanyModal';
 
 const Clients = () => {
   const {styles} = css();
-  const {getters, actions} = getStore('people');
+  const peopleStore = useStores(state => state.people);
+  const getters = peopleStore.getters;
+  const actions = peopleStore.actions;
 
   const {items: clients, totalItems, isLoading, error} = getters;
   const {currentCompany} = getters;
