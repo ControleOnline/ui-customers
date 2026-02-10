@@ -1,13 +1,13 @@
 import Clients from '@controleonline/ui-customers/src/react/pages';
 import Client from '@controleonline/ui-customers/src/react/pages/details';
-import CrmLayout from '@controleonline/ui-layout/src/react/layouts/CrmLayout';
+import DefaultLayout from '@controleonline/ui-layout/src/react/layouts/DefaultLayout';
 
 import React from 'react';
 
 const WrappedClients = ({navigation, route}) => (
-  <CrmLayout navigation={navigation} route={route}>
+  <DefaultLayout navigation={navigation} route={route}>
     <Clients navigation={navigation} route={route} />
-  </CrmLayout>
+  </DefaultLayout>
 );
 
 const WrappedClient = ({navigation, route}) => (
