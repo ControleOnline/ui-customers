@@ -1,23 +1,10 @@
 import Clients from '@controleonline/ui-customers/src/react/pages';
 import Client from '@controleonline/ui-customers/src/react/pages/details';
-import DefaultLayout from '@controleonline/ui-layout/src/react/layouts/DefaultLayout';
 
-import React from 'react';
-
-const WrappedClients = ({navigation, route}) => (
-  <DefaultLayout navigation={navigation} route={route}>
-    <Clients navigation={navigation} route={route} />
-  </DefaultLayout>
-);
-
-const WrappedClient = ({navigation, route}) => (
-  <Client navigation={navigation} route={route} />
-);
-
-const peopleRoutes = [
+const customersRoutes = [
   {
     name: 'ClientsIndex',
-    component: WrappedClients,
+    component: Clients,
     options: {
       headerShown: true,
       title: 'Clientes',
@@ -26,7 +13,7 @@ const peopleRoutes = [
   },
   {
     name: 'ClientDetails',
-    component: WrappedClient,
+    component: Client,
     options: {
       headerShown: true,
       title: 'Cliente',
@@ -35,4 +22,4 @@ const peopleRoutes = [
   },
 ];
 
-export default peopleRoutes;
+export default customersRoutes;
