@@ -17,7 +17,7 @@ const customersRoutes = [
     component: Client,
     options: {
       headerShown: true,
-      headerBackVisible: false,
+      headerBackVisible: true,
       title: 'Cliente',
     },
   },
