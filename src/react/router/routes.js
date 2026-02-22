@@ -7,8 +7,9 @@ const customersRoutes = [
     component: Clients,
     options: {
       headerShown: true,
+      headerBackVisible: true,
       title: 'Clientes',
-      headerBackButtonMenuEnabled: false,
+      
     },
   },
   {
@@ -16,8 +17,8 @@ const customersRoutes = [
     component: Client,
     options: {
       headerShown: true,
+      headerBackVisible: false,
       title: 'Cliente',
-      headerBackButtonMenuEnabled: false,
     },
   },
 ];
