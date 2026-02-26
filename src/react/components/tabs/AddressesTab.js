@@ -3,14 +3,16 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
   Modal,
   TextInput,
+  Keyboard,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useStores} from '@store';
+import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 
 const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
+  const {showError, showSuccess, showDialog} = useMessage();
   const [addresses, setAddresses] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -63,7 +65,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
 
   const handleSave = async () => {
     if (!formData.street || !formData.city) {
-      Alert.alert('Erro', 'Rua e cidade são obrigatórios.');
+      showError('Rua e cidade são obrigatórios.');
       return;
     }
 
@@ -107,7 +109,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           onUpdateClient('address', fullAddressData);
         }
 
-        Alert.alert('Sucesso', 'Endereço criado com sucesso!');
+        showSuccess('Endereço criado com sucesso!');
         closeModal();
       } else {
         const addressData = {
@@ -147,49 +149,48 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           onUpdateClient('address', fullAddressData);
         }
 
-        Alert.alert('Sucesso', 'Endereço atualizado com sucesso!');
+        showSuccess('Endereço atualizado com sucesso!');
         closeModal();
       }
     } catch (error) {
       console.log(error);
-      Alert.alert('Erro', 'Falha ao salvar endereço. Tente novamente.');
+      showError('Falha ao salvar endereço. Tente novamente.');
     }
   };
 
   const handleDelete = id => {
-    Alert.alert('Confirmar exclusão', 'Deseja realmente remover este item?', [
-      {text: 'Cancelar', style: 'cancel'},
-      {
-        text: 'Remover',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await actions.remove(id);
-            const updatedAddresses = addresses.filter(a => a.id !== id);
-            setAddresses(updatedAddresses);
-            if (onUpdateClient) {
-              const fullAddressData = updatedAddresses.map(a => ({
-                id: a.id,
-                '@id': a.id,
-                street: a.street,
-                number: a.number,
-                complement: a.complement,
-                district: a.district,
-                city: a.city,
-                state: a.state,
-                zipCode: a.zipCode,
-                country: a.country,
-                nickname: a.nickname,
-              }));
-              onUpdateClient('address', fullAddressData);
-            }
-            Alert.alert('Sucesso', 'Endereço removido com sucesso!');
-          } catch (error) {
-            Alert.alert('Erro', 'Falha ao remover endereço. Tente novamente.');
+    showDialog({
+      title: 'Confirmar exclusão',
+      message: 'Deseja realmente remover este item?',
+      confirmLabel: 'Remover',
+      cancelLabel: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          await actions.remove(id);
+          const updatedAddresses = addresses.filter(a => a.id !== id);
+          setAddresses(updatedAddresses);
+          if (onUpdateClient) {
+            const fullAddressData = updatedAddresses.map(a => ({
+              id: a.id,
+              '@id': a.id,
+              street: a.street,
+              number: a.number,
+              complement: a.complement,
+              district: a.district,
+              city: a.city,
+              state: a.state,
+              zipCode: a.zipCode,
+              country: a.country,
+              nickname: a.nickname,
+            }));
+            onUpdateClient('address', fullAddressData);
           }
-        },
+          showSuccess('Endereço removido com sucesso!');
+        } catch (error) {
+          showError('Falha ao remover endereço. Tente novamente.');
+        }
       },
-    ]);
+    });
   };
 
   const renderModal = () => (
@@ -257,12 +258,18 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           <View style={customStyles.modalActions}>
             <TouchableOpacity
               style={customStyles.modalCancelButton}
-              onPress={closeModal}>
+              onPress={() => {
+                Keyboard.dismiss();
+                closeModal();
+              }}>
               <Text style={customStyles.modalCancelText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={customStyles.modalSaveButton}
-              onPress={handleSave}>
+              onPress={() => {
+                Keyboard.dismiss();
+                handleSave();
+              }}>
               <Text style={customStyles.modalSaveText}>Salvar</Text>
             </TouchableOpacity>
           </View>
@@ -329,3 +336,4 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
 };
 
 export default AddressesTab;
+

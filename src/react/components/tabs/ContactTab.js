@@ -1,16 +1,17 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
-  Modal,
   TextInput,
 } from 'react-native';
+import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {useStores} from '@store';
+import { useStores } from '@store';
+import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 
-const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
+const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
+  const {showError, showSuccess, showDialog} = useMessage();
   const [phones, setPhones] = useState([]);
   const [emails, setEmails] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -23,15 +24,56 @@ const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const emailsStore = useStores(state => state.emails);
   const actionsEmails = emailsStore.actions;
 
+  const extractPhoneDigits = value =>
+    String(value || '')
+      .replace(/\D/g, '')
+      .slice(0, 11);
+
+  const splitPhoneValue = value => {
+    const digits = extractPhoneDigits(value);
+    if (digits.length < 2) {
+      return { ddd: '', phone: '' };
+    }
+
+    return {
+      ddd: digits.slice(0, 2),
+      phone: digits.slice(2),
+    };
+  };
+
+  const formatPhoneValue = value => {
+    const digits = extractPhoneDigits(value);
+    if (!digits) {
+      return '';
+    }
+
+    if (digits.length <= 2) {
+      return `(${digits}`;
+    }
+
+    const ddd = digits.slice(0, 2);
+    const phoneNumber = digits.slice(2);
+
+    if (phoneNumber.length <= 4) {
+      return `(${ddd}) ${phoneNumber}`;
+    }
+
+    if (phoneNumber.length <= 8) {
+      return `(${ddd}) ${phoneNumber.slice(0, phoneNumber.length - 4)}-${phoneNumber.slice(-4)}`;
+    }
+
+    return `(${ddd}) ${phoneNumber.slice(0, 5)}-${phoneNumber.slice(5, 9)}`;
+  };
+
   useEffect(() => {
     const rawPhones = Array.isArray(client?.phone)
       ? client.phone.map(p => ({
-          id: p.id || p['@id'],
-          value: `(${p.ddd}) ${p.phone}`,
-        }))
+        id: p.id || p['@id'],
+        value: formatPhoneValue(`${p.ddd || ''}${p.phone || ''}`),
+      }))
       : [];
     const rawEmails = Array.isArray(client?.email)
-      ? client.email.map(e => ({id: e.id || e['@id'], value: e.email}))
+      ? client.email.map(e => ({ id: e.id || e['@id'], value: e.email }))
       : [];
 
     setPhones(rawPhones);
@@ -48,16 +90,10 @@ const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     setEditingItem(item);
 
     if (type === 'phone' && item) {
-      const phoneMatch = item.value.match(/\((\d{2})\)\s(\d+)/);
-      if (phoneMatch) {
-        setFormData({
-          ...item,
-          ddd: phoneMatch[1],
-          phone: phoneMatch[2],
-        });
-      } else {
-        setFormData(item || {});
-      }
+      setFormData({
+        ...item,
+        phone: formatPhoneValue(item?.value || ''),
+      });
     } else {
       setFormData(item || {});
     }
@@ -74,16 +110,19 @@ const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
 
   const handleSave = async () => {
     if (modalType === 'phone') {
-      if (!formData.ddd || !formData.phone) {
-        Alert.alert('Erro', 'DDD e telefone são obrigatórios.');
+      const phoneDigits = extractPhoneDigits(formData.phone);
+      if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
+        showError('Telefone com DDD é obrigatório.');
         return;
       }
 
+      const { ddd, phone } = splitPhoneValue(phoneDigits);
+
       try {
         const phoneData = {
-          phone: parseInt(formData.phone, 10),
+          phone: parseInt(phone, 10),
           ddi: 55,
-          ddd: parseInt(formData.ddd, 10),
+          ddd: parseInt(ddd, 10),
           people: client['@id'],
         };
 
@@ -95,7 +134,7 @@ const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
 
         const phoneItem = {
           id: editingItem?.id || Date.now(),
-          value: `(${formData.ddd}) ${formData.phone}`,
+          value: formatPhoneValue(phoneDigits),
         };
 
         const updatedPhones = editingItem
@@ -107,34 +146,30 @@ const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
         // Atualizar o cliente com a estrutura completa
         if (onUpdateClient) {
           const fullPhoneData = updatedPhones.map(p => {
-            const match = p.value.match(/\((\d{2})\)\s(\d+)/);
+            const phoneParts = splitPhoneValue(p.value);
             return {
               id: p.id,
               '@id': p.id,
-              ddd: match ? match[1] : '',
-              phone: match ? match[2] : '',
+              ddd: phoneParts.ddd,
+              phone: phoneParts.phone,
               ddi: 55,
             };
           });
           onUpdateClient('phone', fullPhoneData);
         }
 
-        Alert.alert(
-          'Sucesso',
+        showSuccess(
           `Telefone ${editingItem ? 'atualizado' : 'adicionado'} com sucesso!`,
         );
         closeModal();
       } catch (error) {
-        Alert.alert(
-          'Erro',
-          `Falha ao ${
-            editingItem ? 'atualizar' : 'adicionar'
-          } telefone. Tente novamente.`,
+        showError(
+          `Falha ao ${editingItem ? 'atualizar' : 'adicionar'} telefone. Tente novamente.`,
         );
       }
     } else if (modalType === 'email') {
       if (!formData.value || !validateEmail(formData.value)) {
-        Alert.alert('Erro', 'Email válido é obrigatório.');
+        showError('Email válido é obrigatório.');
         return;
       }
 
@@ -171,73 +206,65 @@ const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           onUpdateClient('email', fullEmailData);
         }
 
-        Alert.alert(
-          'Sucesso',
+        showSuccess(
           `Email ${editingItem ? 'atualizado' : 'adicionado'} com sucesso!`,
         );
         closeModal();
       } catch (error) {
-        Alert.alert(
-          'Erro',
-          `Falha ao ${
-            editingItem ? 'atualizar' : 'adicionar'
-          } email. Tente novamente.`,
+        showError(
+          `Falha ao ${editingItem ? 'atualizar' : 'adicionar'} email. Tente novamente.`,
         );
       }
     }
   };
 
   const handleDelete = (type, id) => {
-    Alert.alert('Confirmar exclusão', 'Deseja realmente remover este item?', [
-      {text: 'Cancelar', style: 'cancel'},
-      {
-        text: 'Remover',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            if (type === 'phone') {
-              await actionsPhones.remove(id);
-              const updatedPhones = phones.filter(p => p.id !== id);
-              setPhones(updatedPhones);
-              if (onUpdateClient) {
-                const fullPhoneData = updatedPhones.map(p => {
-                  const match = p.value.match(/\((\d{2})\)\s(\d+)/);
-                  return {
-                    id: p.id,
-                    '@id': p.id,
-                    ddd: match ? match[1] : '',
-                    phone: match ? match[2] : '',
-                    ddi: 55,
-                  };
-                });
-                onUpdateClient('phone', fullPhoneData);
-              }
-              Alert.alert('Sucesso', 'Telefone removido com sucesso!');
-            } else if (type === 'email') {
-              await actionsEmails.remove(id);
-              const updatedEmails = emails.filter(e => e.id !== id);
-              setEmails(updatedEmails);
-              if (onUpdateClient) {
-                const fullEmailData = updatedEmails.map(e => ({
-                  id: e.id,
-                  '@id': e.id,
-                  email: e.value,
-                }));
-                onUpdateClient('email', fullEmailData);
-              }
-              Alert.alert('Sucesso', 'Email removido com sucesso!');
+    showDialog({
+      title: 'Confirmar exclusão',
+      message: 'Deseja realmente remover este item?',
+      confirmLabel: 'Remover',
+      cancelLabel: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          if (type === 'phone') {
+            await actionsPhones.remove(id);
+            const updatedPhones = phones.filter(p => p.id !== id);
+            setPhones(updatedPhones);
+            if (onUpdateClient) {
+              const fullPhoneData = updatedPhones.map(p => {
+                const phoneParts = splitPhoneValue(p.value);
+                return {
+                  id: p.id,
+                  '@id': p.id,
+                  ddd: phoneParts.ddd,
+                  phone: phoneParts.phone,
+                  ddi: 55,
+                };
+              });
+              onUpdateClient('phone', fullPhoneData);
             }
-          } catch (error) {
-            Alert.alert(
-              'Erro',
-              `Falha ao remover ${
-                type === 'phone' ? 'telefone' : 'email'
-              }. Tente novamente.`,
-            );
+            showSuccess('Telefone removido com sucesso!');
+          } else if (type === 'email') {
+            await actionsEmails.remove(id);
+            const updatedEmails = emails.filter(e => e.id !== id);
+            setEmails(updatedEmails);
+            if (onUpdateClient) {
+              const fullEmailData = updatedEmails.map(e => ({
+                id: e.id,
+                '@id': e.id,
+                email: e.value,
+              }));
+              onUpdateClient('email', fullEmailData);
+            }
+            showSuccess('Email removido com sucesso!');
           }
-        },
+        } catch (error) {
+          showError(
+            `Falha ao remover ${type === 'phone' ? 'telefone' : 'email'}. Tente novamente.`,
+          );
+        }
       },
-    ]);
+    });
   };
 
   const renderModal = () => {
@@ -245,38 +272,34 @@ const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       if (modalType === 'phone') {
         return (
           <View>
-            <Text style={customStyles.modalTitle}>
-              {editingItem ? 'Editar Telefone' : 'Adicionar Telefone'}
-            </Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Telefone</Text>
             <TextInput
-              style={customStyles.modalInput}
-              placeholder="DDD (ex: 11)"
-              value={formData.ddd || ''}
-              onChangeText={text => setFormData({...formData, ddd: text})}
-              keyboardType="numeric"
-              maxLength={2}
-            />
-            <TextInput
-              style={customStyles.modalInput}
-              placeholder="Telefone (ex: 999999999)"
+              style={{
+                borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
+                fontSize: 16, backgroundColor: '#f8f9fa'
+              }}
+              placeholder="Ex: (11) 99999-9999"
               value={formData.phone || ''}
-              onChangeText={text => setFormData({...formData, phone: text})}
-              keyboardType="numeric"
-              maxLength={9}
+              onChangeText={text =>
+                setFormData({ ...formData, phone: formatPhoneValue(text) })
+              }
+              keyboardType="phone-pad"
+              maxLength={15}
             />
           </View>
         );
       } else if (modalType === 'email') {
         return (
           <View>
-            <Text style={customStyles.modalTitle}>
-              {editingItem ? 'Editar Email' : 'Adicionar Email'}
-            </Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Email</Text>
             <TextInput
-              style={customStyles.modalInput}
+              style={{
+                borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
+                fontSize: 16, backgroundColor: '#f8f9fa'
+              }}
               placeholder="email@exemplo.com"
               value={formData.value || ''}
-              onChangeText={text => setFormData({...formData, value: text})}
+              onChangeText={text => setFormData({ ...formData, value: text })}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -287,26 +310,65 @@ const ContactTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     };
 
     return (
-      <Modal visible={showModal} transparent animationType="slide">
-        <View style={customStyles.modalOverlay}>
-          <View style={customStyles.modalContainer}>
+      <AnimatedModal
+        visible={showModal}
+        onRequestClose={closeModal}
+        style={{ justifyContent: 'flex-end' }}>
+        <View style={{
+          backgroundColor: '#fff',
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          maxHeight: '80%',
+          width: '100%',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 10,
+        }}>
+          {/* Header */}
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 24,
+            paddingVertical: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: '#F1F5F9',
+          }}>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: '#0F172A' }}>
+              {editingItem ? (modalType === 'phone' ? 'Editar Telefone' : 'Editar Email') : (modalType === 'phone' ? 'Adicionar Telefone' : 'Adicionar Email')}
+            </Text>
+            <TouchableOpacity onPress={closeModal} style={{
+              width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <Icon name="close" size={20} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ padding: 24 }}>
             {renderModalContent()}
-            <View style={customStyles.modalActions}>
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
               <TouchableOpacity
-                style={customStyles.modalCancelButton}
+                style={{
+                  flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#64748B', alignItems: 'center'
+                }}
                 onPress={closeModal}>
-                <Text style={customStyles.modalCancelText}>Cancelar</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#64748B' }}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={customStyles.modalSaveButton}
+                style={{
+                  flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#007bff', alignItems: 'center'
+                }}
                 onPress={handleSave}>
-                <Text style={customStyles.modalSaveText}>Salvar</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>Salvar</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
-      </Modal>
+      </AnimatedModal>
     );
+
   };
   return (
     <>

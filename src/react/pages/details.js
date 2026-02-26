@@ -1,195 +1,212 @@
-import React, {useState} from 'react';
-import {Text, View, ScrollView, TouchableOpacity, Image} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import css from '@controleonline/ui-people/src/react/css/people';
-import {detailsStyles} from '../styles/details';
-import md5 from 'md5';
+import React, { useState, useLayoutEffect } from 'react';
+import {
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import md5 from 'md5';
+import { detailsStyles } from '../styles/details';
+import { colors } from '@controleonline/../../src/styles/colors';
 
-import ContactTab from '../components/tabs/ContactTab';
-import DocumentsTab from '../components/tabs/DocumentsTab';
+import GeneralTab from '../components/tabs/GeneralTab';
 import UsersTab from '../components/tabs/UsersTab';
-import AddressesTab from '../components/tabs/AddressesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 
-const Profile = ({route, navigation}) => {
-  const {client: initialClient} = route.params || {};
-  const {styles} = css();
-  const customStyles = detailsStyles;
-
-  const [activeTab, setActiveTab] = useState('contact');
-  const [isEditing, setIsEditing] = useState(false);
+const ClientDetails = ({ route, navigation }) => {
+  const { width } = Dimensions.get('window');
+  const { client: initialClient } = route.params || {};
   const [client, setClient] = useState(initialClient);
-  const getAvatarUrl = () => {
-    if (!client?.email?.[0]?.email && !client?.name) {
-      return 'https://www.gravatar.com/avatar/?d=identicon';
-    }
+  const [activeTab, setActiveTab] = useState(0);
+  const scrollRef = React.useRef(null);
 
-    let hashSource = '';
-    if (client?.email?.[0]?.email) {
-      hashSource = client.email[0].email.trim().toLowerCase();
-    } else if (client?.name) {
-      hashSource = client.name.trim().toLowerCase();
-    }
-
-    const hash = md5(hashSource);
-    return `https://www.gravatar.com/avatar/${hash}?s=200&d=identicon`;
-  };
-
-  const renderTabBar = () => (
-    <View style={customStyles.tabBar}>
-      {[
-        {key: 'contact', label: 'Contato', icon: 'phone'},
-        {key: 'documents', label: 'Documentos', icon: 'description'},
-        {key: 'users', label: 'Usuários', icon: 'people'},
-        {key: 'addresses', label: 'Endereços', icon: 'location-on'},
-        {key: 'contracts', label: 'Contratos', icon: 'assignment'},
-      ].map(tab => (
-        <TouchableOpacity
-          key={tab.key}
-          style={[
-            customStyles.tabItem,
-            activeTab === tab.key && customStyles.tabItemActive,
-          ]}
-          onPress={() => setActiveTab(tab.key)}>
-          <Icon
-            name={tab.icon}
-            size={20}
-            color={activeTab === tab.key ? '#007bff' : '#666'}
-          />
-          <Text
-            style={[
-              customStyles.tabLabel,
-              activeTab === tab.key && customStyles.tabLabelActive,
-            ]}>
-            {tab.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
+  // Configure Header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: '',
+      headerShadowVisible: false,
+      headerStyle: { backgroundColor: '#F8FAFC' },
+      headerRight: () => null,
+    });
+  }, [navigation]);
 
   const updateClientData = (field, data) => {
-    setClient(prevClient => ({
-      ...prevClient,
-      [field]: data,
-    }));
+    setClient(prevClient => ({ ...prevClient, [field]: data }));
   };
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'contact':
-        return (
-          <ContactTab
-            client={client}
-            customStyles={customStyles}
-            isEditing={isEditing}
-            onUpdateClient={updateClientData}
-          />
-        );
-      case 'documents':
-        return (
-          <DocumentsTab
-            client={client}
-            customStyles={customStyles}
-            isEditing={isEditing}
-            onUpdateClient={updateClientData}
-          />
-        );
-      case 'users':
-        return (
-          <UsersTab
-            client={client}
-            customStyles={customStyles}
-            isEditing={isEditing}
-            onUpdateClient={updateClientData}
-          />
-        );
-      case 'addresses':
-        return (
-          <AddressesTab
-            client={client}
-            customStyles={customStyles}
-            isEditing={isEditing}
-            onUpdateClient={updateClientData}
-          />
-        );
-      case 'contracts':
-        return <ContractsTab client={client} customStyles={customStyles} />;
-      default:
-        return (
-          <ContactTab
-            client={client}
-            customStyles={customStyles}
-            isEditing={isEditing}
-            onUpdateClient={updateClientData}
-          />
-        );
-    }
+  const tabs = [
+    { key: 0, label: 'Geral' },
+    { key: 1, label: 'Usuários' },
+    { key: 2, label: 'Contratos' },
+  ];
+
+  const handleTabPress = (index) => {
+    setActiveTab(index);
+    scrollRef.current?.scrollTo({ x: index * width, animated: true });
   };
 
-  if (!client) {
-    return (
-      <SafeAreaView style={styles.Profile}>
-        <View style={styles.errorContainer}>
-          <Icon name="error-outline" size={48} color="#ff4444" />
-          <Text style={styles.errorText}>
-            Falha ao carregar dados do cliente
-          </Text>
-          <TouchableOpacity
-            style={customStyles.retryButton}
-            onPress={() => navigation.goBack()}>
-            <Text style={customStyles.retryButtonText}>Voltar</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+
+
+  if (!client) return null;
+
+  const tabProps = {
+    client,
+    customStyles: detailsStyles,
+    isEditing: true, // Always editing as per requirement
+    onUpdateClient: updateClientData,
+  };
 
   return (
-    <SafeAreaView style={styles.Profile}>
-      <View style={customStyles.headerContainer}>
-        <Image source={{uri: getAvatarUrl()}} style={customStyles.avatar} />
-        <View style={customStyles.clientInfo}>
-          <Text style={customStyles.clientName}>
-            {String(client.name || '')}
-          </Text>
-          <Text style={customStyles.clientId}>
-            ID: {String(client.id || '')}
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <View style={styles.headerProfile}>
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatarText}>
+            {client.name?.charAt(0)?.toUpperCase()}
           </Text>
         </View>
+        <Text style={styles.profileName}>{client.name}</Text>
+        <Text style={styles.profileId}>ID: {client.id}</Text>
       </View>
 
-      <View style={customStyles.actionContainer}>
-        {!isEditing ? (
+      <View style={styles.tabsHeader}>
+        {tabs.map((tab) => (
           <TouchableOpacity
-            style={customStyles.editButton}
-            onPress={() => setIsEditing(true)}>
-            <Icon name="edit" size={20} color="#fff" />
-            <Text style={customStyles.editButtonText}>Editar</Text>
+            key={tab.key}
+            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
+            onPress={() => handleTabPress(tab.key)}>
+            <Text style={[styles.tabButtonText, activeTab === tab.key && styles.tabButtonTextActive]}>
+              {tab.label}
+            </Text>
+            {activeTab === tab.key && <View style={styles.activeIndicator} />}
           </TouchableOpacity>
-        ) : (
-          <View style={customStyles.editActions}>
-            <TouchableOpacity
-              style={customStyles.cancelButton}
-              onPress={() => setIsEditing(false)}>
-              <Icon name="close" size={20} color="#666" />
-              <Text style={customStyles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        ))}
       </View>
-
-      {renderTabBar()}
 
       <ScrollView
-        style={customStyles.scrollContainer}
-        contentContainerStyle={customStyles.scrollContent}
-        keyboardShouldPersistTaps="handled">
-        {renderTabContent()}
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        nestedScrollEnabled
+        directionalLockEnabled
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+        onScroll={(event) => {
+          const contentOffsetX = event.nativeEvent.contentOffset.x;
+          const currentIndex = Math.round(contentOffsetX / width);
+          if (currentIndex !== activeTab) {
+            setActiveTab(currentIndex);
+          }
+        }}
+        scrollEventThrottle={16}
+        style={styles.contentContainer}>
+
+        {/* Tab 1: Geral */}
+        <View style={{ width, height: '100%' }}>
+          <GeneralTab {...tabProps} />
+        </View>
+
+        {/* Tab 2: Usuários */}
+        <View style={{ width, height: '100%' }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 80 }}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}>
+            <UsersTab {...tabProps} />
+          </ScrollView>
+        </View>
+
+        {/* Tab 3: Contratos */}
+        <View style={{ width, height: '100%' }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 80 }}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}>
+            <ContractsTab {...tabProps} />
+          </ScrollView>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-export default Profile;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  headerProfile: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: '#F8FAFC',
+  },
+  avatarContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  avatarText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  profileId: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  tabsHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 16,
+    position: 'relative',
+  },
+  tabButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  tabButtonTextActive: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    width: '60%',
+    height: 3,
+    backgroundColor: colors.primary,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+});
+
+
+export default ClientDetails;

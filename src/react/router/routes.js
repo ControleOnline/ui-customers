@@ -1,26 +1,41 @@
 import Clients from '@controleonline/ui-customers/src/react/pages';
 import Client from '@controleonline/ui-customers/src/react/pages/details';
+import CrmLayout from '@controleonline/ui-layout/src/react/layouts/CrmLayout';
+import CompanySelector from '@controleonline/ui-crm/src/react/components/CompanySelector';
 
-const customersRoutes = [
+import React from 'react';
+
+const WrappedClients = ({ navigation, route }) => (
+  <CrmLayout navigation={navigation} route={route}>
+    <Clients navigation={navigation} route={route} />
+  </CrmLayout>
+);
+
+const WrappedClient = ({ navigation, route }) => (
+  <Client navigation={navigation} route={route} />
+);
+
+const peopleRoutes = [
   {
     name: 'ClientsIndex',
-    component: Clients,
+    component: WrappedClients,
     options: {
       headerShown: true,
-      headerBackVisible: true,
       title: 'Clientes',
-      
+      headerLeft: () => null,
+      headerBackButtonMenuEnabled: false,
+      headerRight: () => <CompanySelector mode="icon" />,
     },
   },
   {
     name: 'ClientDetails',
-    component: Client,
+    component: WrappedClient,
     options: {
       headerShown: true,
-      headerBackVisible: true,
       title: 'Cliente',
+      headerBackButtonMenuEnabled: false,
     },
   },
 ];
 
-export default customersRoutes;
+export default peopleRoutes;
