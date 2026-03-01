@@ -12,6 +12,7 @@ import {
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
+import { colors } from '@controleonline/../../src/styles/colors';
 
 const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -373,7 +374,7 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             </Text>
             {isEditing && (
               <TouchableOpacity onPress={() => openModal()}>
-                <Icon name="add" size={24} color="#007bff" />
+                <Icon name="add" size={24} color={colors.primary} />
               </TouchableOpacity>
             )}
           </View>
@@ -385,7 +386,7 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             getFilteredDocuments().map(doc => (
               <View key={doc.id} style={customStyles.listItem}>
                 <View style={customStyles.itemContent}>
-                  <Icon name="description" size={20} color="#666" />
+                  <Icon name="description" size={20} color={colors.primary} />
                   <View>
                     <Text style={customStyles.itemText}>
                       {applyMask(String(doc.value || ''), doc.type)}
@@ -399,7 +400,7 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                 {isEditing && (
                   <View style={customStyles.itemActions}>
                     <TouchableOpacity onPress={() => openModal(doc)}>
-                      <Icon name="edit" size={20} color="#007bff" />
+                      <Icon name="edit" size={20} color={colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDelete(doc.id)}>
                       <Icon name="delete" size={20} color="#ff4444" />

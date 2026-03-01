@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import {
   Text,
   View,
@@ -6,26 +6,32 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import md5 from 'md5';
+import { useStores } from '@store';
 import { detailsStyles } from '../styles/details';
 import { colors } from '@controleonline/../../src/styles/colors';
 
 import GeneralTab from '../components/tabs/GeneralTab';
 import UsersTab from '../components/tabs/UsersTab';
+import ClientsTab from '../components/tabs/ClientsTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 
 const ClientDetails = ({ route, navigation }) => {
   const { width } = Dimensions.get('window');
   const { client: initialClient } = route.params || {};
   const [client, setClient] = useState(initialClient);
+  const [isLoadingClient, setIsLoadingClient] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
-  const scrollRef = React.useRef(null);
 
-  // Configure Header
+  const scrollRef = React.useRef(null);
+  const peopleStore = useStores(state => state.people) || {};
+  const peopleActions = peopleStore?.actions || {};
+  const getPeople = peopleActions?.get;
+  const savePeople = peopleActions?.save;
+
+  const extractId = value => String(value || '').replace(/\D/g, '');
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: '',
@@ -35,51 +41,191 @@ const ClientDetails = ({ route, navigation }) => {
     });
   }, [navigation]);
 
+  useEffect(() => {
+    let mounted = true;
+    setClient(initialClient || null);
+
+    const clientId = extractId(initialClient?.id || initialClient?.['@id']);
+    if (!clientId || !getPeople) {
+      setIsLoadingClient(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    setIsLoadingClient(true);
+    getPeople(clientId)
+      .then(fullClient => {
+        if (!mounted || !fullClient) {
+          return;
+        }
+        setClient(prev => ({ ...(prev || {}), ...fullClient }));
+      })
+      .catch(() => {
+        if (!mounted) {
+          return;
+        }
+        setClient(initialClient || null);
+      })
+      .finally(() => {
+        if (mounted) {
+          setIsLoadingClient(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [initialClient, getPeople]);
+
   const updateClientData = (field, data) => {
     setClient(prevClient => ({ ...prevClient, [field]: data }));
   };
 
+  const persistClientData = async partialData => {
+    const clientId = extractId(
+      client?.id || client?.['@id'] || initialClient?.id || initialClient?.['@id'],
+    );
+
+    if (!clientId || !savePeople) {
+      throw new Error('Nao foi possivel identificar o cliente para salvar.');
+    }
+
+    const payload = {
+      id: clientId,
+      ...partialData,
+    };
+
+    const saved = await savePeople(payload);
+    setClient(prev => ({ ...(prev || {}), ...(saved || {}), ...partialData }));
+
+    return saved;
+  };
+
+  const isPessoaJuridica = String(client?.peopleType || '').toUpperCase() === 'J';
+
   const tabs = [
     { key: 0, label: 'Geral' },
-    { key: 1, label: 'Usuários' },
+    { key: 1, label: isPessoaJuridica ? 'Clientes' : 'Usuarios' },
     { key: 2, label: 'Contratos' },
   ];
 
-  const handleTabPress = (index) => {
+  const handleTabPress = index => {
     setActiveTab(index);
     scrollRef.current?.scrollTo({ x: index * width, animated: true });
   };
 
+  const renderSkeleton = () => (
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <View style={styles.headerProfile}>
+        <View
+          style={[
+            styles.skeletonCircle,
+            { width: 64, height: 64, borderRadius: 32, marginBottom: 12 },
+          ]}
+        />
+        <View
+          style={[
+            styles.skeletonLine,
+            { width: 180, height: 22, marginBottom: 8 },
+          ]}
+        />
+        <View style={[styles.skeletonLine, { width: 90, height: 12 }]} />
+      </View>
 
+      <View style={styles.tabsHeader}>
+        <View style={styles.skeletonTab} />
+        <View style={styles.skeletonTab} />
+        <View style={styles.skeletonTab} />
+      </View>
 
-  if (!client) return null;
+      <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+        <View style={styles.skeletonCard}>
+          <View
+            style={[
+              styles.skeletonLine,
+              { width: '48%', height: 18, marginBottom: 14 },
+            ]}
+          />
+          <View
+            style={[
+              styles.skeletonLine,
+              { width: '100%', height: 14, marginBottom: 10 },
+            ]}
+          />
+          <View
+            style={[
+              styles.skeletonLine,
+              { width: '90%', height: 14, marginBottom: 10 },
+            ]}
+          />
+          <View style={[styles.skeletonLine, { width: '82%', height: 14 }]} />
+        </View>
+        <View style={styles.skeletonCard}>
+          <View
+            style={[
+              styles.skeletonLine,
+              { width: '52%', height: 18, marginBottom: 14 },
+            ]}
+          />
+          <View
+            style={[
+              styles.skeletonLine,
+              {
+                width: '100%',
+                height: 46,
+                borderRadius: 10,
+                marginBottom: 10,
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.skeletonLine,
+              { width: '100%', height: 46, borderRadius: 10 },
+            ]}
+          />
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+
+  if (isLoadingClient || !client) {
+    return renderSkeleton();
+  }
 
   const tabProps = {
     client,
     customStyles: detailsStyles,
-    isEditing: true, // Always editing as per requirement
+    isEditing: true,
     onUpdateClient: updateClientData,
+    onSaveClientData: persistClientData,
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.headerProfile}>
         <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>
-            {client.name?.charAt(0)?.toUpperCase()}
-          </Text>
+          <Text style={styles.avatarText}>{client.name?.charAt(0)?.toUpperCase()}</Text>
         </View>
-        <Text style={styles.profileName}>{client.name}</Text>
-        <Text style={styles.profileId}>ID: {client.id}</Text>
+        <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">
+          {client.name}
+        </Text>
+
+        <Text style={styles.profileId}>{`ID: ${client.id}`}</Text>
       </View>
 
       <View style={styles.tabsHeader}>
-        {tabs.map((tab) => (
+        {tabs.map(tab => (
           <TouchableOpacity
             key={tab.key}
             style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
             onPress={() => handleTabPress(tab.key)}>
-            <Text style={[styles.tabButtonText, activeTab === tab.key && styles.tabButtonTextActive]}>
+            <Text
+              style={[
+                styles.tabButtonText,
+                activeTab === tab.key && styles.tabButtonTextActive,
+              ]}>
               {tab.label}
             </Text>
             {activeTab === tab.key && <View style={styles.activeIndicator} />}
@@ -95,7 +241,7 @@ const ClientDetails = ({ route, navigation }) => {
         directionalLockEnabled
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}
-        onScroll={(event) => {
+        onScroll={event => {
           const contentOffsetX = event.nativeEvent.contentOffset.x;
           const currentIndex = Math.round(contentOffsetX / width);
           if (currentIndex !== activeTab) {
@@ -104,24 +250,20 @@ const ClientDetails = ({ route, navigation }) => {
         }}
         scrollEventThrottle={16}
         style={styles.contentContainer}>
-
-        {/* Tab 1: Geral */}
         <View style={{ width, height: '100%' }}>
           <GeneralTab {...tabProps} />
         </View>
 
-        {/* Tab 2: Usuários */}
         <View style={{ width, height: '100%' }}>
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingBottom: 80 }}
             nestedScrollEnabled
             showsVerticalScrollIndicator={false}>
-            <UsersTab {...tabProps} />
+            {isPessoaJuridica ? <ClientsTab {...tabProps} /> : <UsersTab {...tabProps} />}
           </ScrollView>
         </View>
 
-        {/* Tab 3: Contratos */}
         <View style={{ width, height: '100%' }}>
           <ScrollView
             style={{ flex: 1 }}
@@ -131,7 +273,6 @@ const ClientDetails = ({ route, navigation }) => {
             <ContractsTab {...tabProps} />
           </ScrollView>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -167,6 +308,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     marginBottom: 4,
     textAlign: 'center',
+    maxWidth: '86%',
   },
   profileId: {
     fontSize: 14,
@@ -206,7 +348,32 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
   },
+  skeletonCircle: {
+    backgroundColor: '#E2E8F0',
+  },
+  skeletonLine: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 8,
+  },
+  skeletonTab: {
+    flex: 1,
+    height: 36,
+    marginHorizontal: 8,
+    marginVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  skeletonCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
 });
-
 
 export default ClientDetails;

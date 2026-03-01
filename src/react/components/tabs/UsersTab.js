@@ -11,6 +11,7 @@ import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedM
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
+import { colors } from '@controleonline/../../src/styles/colors';
 
 const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -369,7 +370,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             <Text style={customStyles.sectionTitle}>Usuários</Text>
             {isEditing && (
               <TouchableOpacity onPress={() => openModal()}>
-                <Icon name="add" size={24} color="#007bff" />
+                <Icon name="add" size={24} color={colors.primary} />
               </TouchableOpacity>
             )}
           </View>
@@ -381,7 +382,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             users.map(user => (
               <View key={user.id} style={customStyles.listItem}>
                 <View style={customStyles.itemContent}>
-                  <Icon name="person" size={20} color="#666" />
+                  <Icon name="person" size={20} color={colors.primary} />
                   <View>
                     <Text style={customStyles.itemText}>
                       {String(user.name || '')}
@@ -394,7 +395,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                 {isEditing && (
                   <View style={customStyles.itemActions}>
                     <TouchableOpacity onPress={() => openModal(user)}>
-                      <Icon name="edit" size={20} color="#007bff" />
+                      <Icon name="edit" size={20} color={colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDelete(user.id)}>
                       <Icon name="delete" size={20} color="#ff4444" />

@@ -1,5 +1,6 @@
 import Clients from '@controleonline/ui-customers/src/react/pages';
 import Client from '@controleonline/ui-customers/src/react/pages/details';
+import { env } from '@env';
 
 const customersRoutes = [
   {
@@ -9,7 +10,7 @@ const customersRoutes = [
       headerShown: true,
       headerBackVisible: true,
       title: 'Clientes',
-      
+      showBottomToolBar: env.APP_TYPE === 'CRM',
     },
   },
   {
@@ -19,6 +20,7 @@ const customersRoutes = [
       headerShown: true,
       headerBackVisible: true,
       title: 'Cliente',
+      showBottomToolBar: env.APP_TYPE === 'CRM',
     },
   },
 ];
