@@ -1,16 +1,81 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  TextInput,
   Keyboard,
+  Modal,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useStores} from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
-import { colors } from '@controleonline/../../src/styles/colors';
+import {colors} from '@controleonline/../../src/styles/colors';
+
+const extractId = value => String(value || '').replace(/\D/g, '');
+const normalizeId = value => extractId(value) || value || Date.now();
+
+const toPeopleIri = person => {
+  const rawIri = String(person?.['@id'] || '').trim();
+  if (rawIri.startsWith('/people/')) {
+    return rawIri;
+  }
+
+  const nestedIri = String(person?.people?.['@id'] || person?.people || '').trim();
+  if (nestedIri.startsWith('/people/')) {
+    return nestedIri;
+  }
+
+  const id = extractId(person?.id || person?.people?.id || rawIri || nestedIri);
+  return id ? `/people/${id}` : '';
+};
+
+const normalizeString = value => {
+  const text = String(value || '').trim();
+  return text.length > 0 ? text : undefined;
+};
+const normalizeZipCode = value =>
+  String(value || '')
+    .replace(/\D/g, '')
+    .slice(0, 8);
+
+const normalizeAddress = address => ({
+  id: normalizeId(address?.id || address?.['@id']),
+  street: address?.street?.street || address?.street || '',
+  number: address?.number || '',
+  city: address?.street?.city?.city || address?.city || '',
+  state: address?.street?.city?.state?.state || address?.state || '',
+  zipCode:
+    (typeof address?.zipCode === 'object'
+      ? address?.zipCode?.cep
+      : address?.zipCode) ||
+    address?.street?.cep?.cep ||
+    address?.postal_code ||
+    address?.cep ||
+    '',
+  complement: address?.complement || '',
+  district: address?.street?.district?.district || address?.district || '',
+  country:
+    address?.street?.city?.state?.country?.countryname || address?.country || '',
+  nickname: address?.nickname || '',
+});
+
+const mapAddressesForClient = list =>
+  list.map(item => ({
+    id: item.id,
+    '@id': String(item?.id || '').startsWith('/addresses/')
+      ? String(item.id)
+      : `/addresses/${extractId(item.id || '')}`,
+    street: item.street,
+    number: item.number,
+    complement: item.complement,
+    district: item.district,
+    city: item.city,
+    state: item.state,
+    zipCode: item.zipCode,
+    country: item.country,
+    nickname: item.nickname,
+  }));
 
 const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -19,41 +84,20 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  const addressStore = useStores(state => state.address);
-  const actions = addressStore.actions;
+  const addressStore = useStores(state => state.address) || {};
+  const actions = addressStore.actions || {};
+  const peopleIri = useMemo(() => toPeopleIri(client), [client]);
 
   useEffect(() => {
     const rawAddresses = Array.isArray(client?.address)
-      ? client.address.map(a => {
-          console.log('Original zipCode:', a.zipCode);
-          const extractedZipCode =
-            (typeof a.zipCode === 'object' ? a.zipCode?.cep : a.zipCode) ||
-            a.street?.cep ||
-            a.cep ||
-            '';
-
-          return {
-            id: a.id || a['@id'],
-            street: a.street?.street || a.street || '',
-            number: a.number,
-            city: a.street?.city?.city || a.city || '',
-            state: a.street?.city?.state?.state || a.state || '',
-            zipCode: extractedZipCode,
-            complement: a.complement || '',
-            district: a.district || '',
-            country: a.country || '',
-            nickname: a.nickname || '',
-          };
-        })
+      ? client.address.map(item => normalizeAddress(item))
       : [];
-
-    setAddresses(rawAddresses);
 
     setAddresses(rawAddresses);
   }, [client]);
 
-  const openModal = (item = null) => {
-    setEditingItem(item);
+  const openModal = item => {
+    setEditingItem(item || null);
     setFormData(item || {});
     setShowModal(true);
   };
@@ -65,130 +109,95 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   };
 
   const handleSave = async () => {
-    if (!formData.street || !formData.city) {
-      showError('Rua e cidade são obrigatórios.');
+    if (!actions?.save) {
+      showError('Servico de enderecos indisponivel no momento.');
       return;
     }
 
+    const street = normalizeString(formData.street);
+    const city = normalizeString(formData.city);
+    const zipCode = normalizeZipCode(formData.zipCode);
+
+    if (!street || !city) {
+      showError('Rua e cidade sao obrigatorios.');
+      return;
+    }
+    if (!zipCode) {
+      showError('CEP e obrigatorio.');
+      return;
+    }
+
+    if (!peopleIri) {
+      showError('Nao foi possivel identificar o cliente para salvar o endereco.');
+      return;
+    }
+
+    const payload = {
+      street,
+      city,
+      people: peopleIri,
+      number: normalizeString(formData.number),
+      complement: normalizeString(formData.complement),
+      state: normalizeString(formData.state),
+      district: normalizeString(formData.district),
+      country: normalizeString(formData.country),
+      nickname: normalizeString(formData.nickname) || 'DEFAULT',
+      cep: zipCode,
+      postal_code: zipCode,
+    };
+
     try {
-      if (!editingItem) {
-        const addressData = {
-          street: formData.street,
-          number: formData.number,
-          complement: formData.complement,
-          city: formData.city,
-          state: formData.state,
-          cep: formData.zipCode,
-          district: formData.district,
-          country: formData.country,
-          nickname: formData.nickname || 'DEFAULT',
-          people: client['@id'],
-        };
-
-        await actions.save(addressData);
-
-        const newAddress = {
-          id: Date.now(),
-          ...formData,
-        };
-        const updatedAddresses = [...addresses, newAddress];
-        setAddresses(updatedAddresses);
-        if (onUpdateClient) {
-          const fullAddressData = updatedAddresses.map(a => ({
-            id: a.id,
-            '@id': a.id,
-            street: a.street,
-            number: a.number,
-            complement: a.complement,
-            district: a.district,
-            city: a.city,
-            state: a.state,
-            zipCode: a.zipCode,
-            country: a.country,
-            nickname: a.nickname,
-          }));
-          onUpdateClient('address', fullAddressData);
-        }
-
-        showSuccess('Endereço criado com sucesso!');
-        closeModal();
+      let saved;
+      if (editingItem) {
+        payload.id = editingItem.id;
+        saved = await actions.save(payload);
       } else {
-        const addressData = {
-          id: editingItem.id,
-          street: formData.street,
-          number: formData.number,
-          complement: formData.complement,
-          city: formData.city,
-          state: formData.state,
-          cep: formData.zipCode,
-          district: formData.district,
-          country: formData.country,
-          nickname: formData.nickname || 'DEFAULT',
-        };
-
-        await actions.save(addressData);
-
-        const updatedAddress = {...editingItem, ...formData};
-        const updatedAddresses = addresses.map(a =>
-          a.id === editingItem.id ? updatedAddress : a,
-        );
-        setAddresses(updatedAddresses);
-        if (onUpdateClient) {
-          const fullAddressData = updatedAddresses.map(a => ({
-            id: a.id,
-            '@id': a.id,
-            street: a.street,
-            number: a.number,
-            complement: a.complement,
-            district: a.district,
-            city: a.city,
-            state: a.state,
-            zipCode: a.zipCode,
-            country: a.country,
-            nickname: a.nickname,
-          }));
-          onUpdateClient('address', fullAddressData);
-        }
-
-        showSuccess('Endereço atualizado com sucesso!');
-        closeModal();
+        saved = await actions.save(payload);
       }
+
+      const normalizedSaved = normalizeAddress(saved || payload);
+      const updatedAddresses = editingItem
+        ? addresses.map(item =>
+            item.id === editingItem.id ? normalizedSaved : item,
+          )
+        : [...addresses, normalizedSaved];
+
+      setAddresses(updatedAddresses);
+      onUpdateClient?.('address', mapAddressesForClient(updatedAddresses));
+
+      showSuccess(
+        editingItem
+          ? 'Endereco atualizado com sucesso!'
+          : 'Endereco criado com sucesso!',
+      );
+      closeModal();
     } catch (error) {
-      console.log(error);
-      showError('Falha ao salvar endereço. Tente novamente.');
+      const backendMessage = Array.isArray(error?.message)
+        ? error.message.map(item => item?.message || item).join(', ')
+        : error?.message;
+      showError(backendMessage || 'Falha ao salvar endereco. Tente novamente.');
     }
   };
 
   const handleDelete = id => {
     showDialog({
-      title: 'Confirmar exclusão',
+      title: 'Confirmar exclusao',
       message: 'Deseja realmente remover este item?',
       confirmLabel: 'Remover',
       cancelLabel: 'Cancelar',
       onConfirm: async () => {
         try {
-          await actions.remove(id);
-          const updatedAddresses = addresses.filter(a => a.id !== id);
-          setAddresses(updatedAddresses);
-          if (onUpdateClient) {
-            const fullAddressData = updatedAddresses.map(a => ({
-              id: a.id,
-              '@id': a.id,
-              street: a.street,
-              number: a.number,
-              complement: a.complement,
-              district: a.district,
-              city: a.city,
-              state: a.state,
-              zipCode: a.zipCode,
-              country: a.country,
-              nickname: a.nickname,
-            }));
-            onUpdateClient('address', fullAddressData);
+          if (!actions?.remove) {
+            showError('Servico de enderecos indisponivel no momento.');
+            return;
           }
-          showSuccess('Endereço removido com sucesso!');
+          await actions.remove(id);
+          const updatedAddresses = addresses.filter(item => item.id !== id);
+          setAddresses(updatedAddresses);
+          onUpdateClient?.('address', mapAddressesForClient(updatedAddresses));
+          showSuccess('Endereco removido com sucesso!');
         } catch (error) {
-          showError('Falha ao remover endereço. Tente novamente.');
+          showError('Falha ao remover endereco. Tente novamente.');
         }
       },
     });
@@ -199,7 +208,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       <View style={customStyles.modalOverlay}>
         <View style={customStyles.modalContainer}>
           <Text style={customStyles.modalTitle}>
-            {editingItem ? 'Editar Endereço' : 'Adicionar Endereço'}
+            {editingItem ? 'Editar Endereco' : 'Adicionar Endereco'}
           </Text>
           <TextInput
             style={customStyles.modalInput}
@@ -215,7 +224,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder="Número"
+            placeholder="Numero"
             value={formData.number || ''}
             onChangeText={text => setFormData({...formData, number: text})}
           />
@@ -245,11 +254,10 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder="País"
+            placeholder="Pais"
             value={formData.country || ''}
             onChangeText={text => setFormData({...formData, country: text})}
           />
-
           <TextInput
             style={customStyles.modalInput}
             placeholder="Apelido (opcional)"
@@ -278,22 +286,21 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       </View>
     </Modal>
   );
+
   return (
     <>
       <View style={customStyles.tabContent}>
         <View style={customStyles.section}>
           <View style={customStyles.sectionHeader}>
-            <Text style={customStyles.sectionTitle}>Endereços</Text>
+            <Text style={customStyles.sectionTitle}>Enderecos</Text>
             {isEditing && (
-              <TouchableOpacity onPress={() => openModal()}>
+              <TouchableOpacity onPress={() => openModal(null)}>
                 <Icon name="add" size={24} color={colors.primary} />
               </TouchableOpacity>
             )}
           </View>
           {addresses.length === 0 ? (
-            <Text style={customStyles.emptyText}>
-              Nenhum endereço cadastrado
-            </Text>
+            <Text style={customStyles.emptyText}>Nenhum endereco cadastrado</Text>
           ) : (
             addresses.map(address => (
               <View key={address.id} style={customStyles.listItem}>
@@ -311,7 +318,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
                       {address.country ? ` (${address.country})` : ''}
                       {address.complement ? `\n${address.complement}` : ''}
                       {address.nickname && address.nickname !== 'DEFAULT'
-                        ? `\n📍 ${address.nickname}`
+                        ? `\n${address.nickname}`
                         : ''}
                     </Text>
                   </View>
@@ -337,4 +344,3 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
 };
 
 export default AddressesTab;
-

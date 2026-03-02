@@ -18,10 +18,13 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
     alias: '',
     foundationDate: new Date(),
     peopleType: 'J',
+    firstEmployeeName: '',
+    firstEmployeeAlias: '',
   });
   const [isLoading, setIsLoading] = useState(false);
 
   const isPessoaFisica = formData.peopleType === 'F';
+  const isPessoaJuridica = formData.peopleType === 'J';
   const nameLabel = isPessoaFisica ? 'Nome *' : 'Raz\u00E3o Social *';
   const namePlaceholder = isPessoaFisica
     ? 'Digite o nome'
@@ -44,6 +47,16 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
       return;
     }
 
+    if (isPessoaJuridica) {
+      if (
+        !String(formData.firstEmployeeName || '').trim() ||
+        !String(formData.firstEmployeeAlias || '').trim()
+      ) {
+        showError('Para cadastrar empresa, informe nome e apelido de um funcionario.');
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       const companyData = {
@@ -55,10 +68,17 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
         'extra-data': {},
       };
 
+      if (isPessoaJuridica) {
+        companyData.firstEmployee = {
+          name: String(formData.firstEmployeeName || '').trim(),
+          alias: String(formData.firstEmployeeAlias || '').trim(),
+        };
+      }
+
       await onSave(companyData);
       handleClose();
     } catch (error) {
-      showError('Erro ao criar empresa');
+      showError(error?.message || 'Erro ao criar empresa');
     } finally {
       setIsLoading(false);
     }
@@ -70,6 +90,8 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
       alias: '',
       foundationDate: new Date(),
       peopleType: 'J',
+      firstEmployeeName: '',
+      firstEmployeeAlias: '',
     });
     onClose();
   };
@@ -228,7 +250,14 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
             </Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <TouchableOpacity
-                onPress={() => setFormData(prev => ({ ...prev, peopleType: 'F' }))}
+                onPress={() =>
+                  setFormData(prev => ({
+                    ...prev,
+                    peopleType: 'F',
+                    firstEmployeeName: '',
+                    firstEmployeeAlias: '',
+                  }))
+                }
                 style={{
                   flex: 1,
                   flexDirection: 'row',
@@ -290,6 +319,61 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
               </TouchableOpacity>
             </View>
           </View>
+
+          {isPessoaJuridica && (
+            <View style={{ marginBottom: 20 }}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: '#212529',
+                  marginBottom: 8,
+                }}>
+                Funcionario vinculado (obrigatorio)
+              </Text>
+
+              <View style={{ marginBottom: 12 }}>
+                <TextInput
+                  value={formData.firstEmployeeName}
+                  onChangeText={text =>
+                    setFormData(prev => ({ ...prev, firstEmployeeName: text }))
+                  }
+                  placeholder="Nome do funcionario *"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#e9ecef',
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    fontSize: 16,
+                    backgroundColor: '#f8f9fa',
+                  }}
+                  placeholderTextColor="#6c757d"
+                />
+              </View>
+
+              <View style={{ marginBottom: 12 }}>
+                <TextInput
+                  value={formData.firstEmployeeAlias}
+                  onChangeText={text =>
+                    setFormData(prev => ({ ...prev, firstEmployeeAlias: text }))
+                  }
+                  placeholder="Apelido do funcionario *"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#e9ecef',
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    fontSize: 16,
+                    backgroundColor: '#f8f9fa',
+                  }}
+                  placeholderTextColor="#6c757d"
+                />
+              </View>
+
+            </View>
+          )}
 
           <View style={{ marginBottom: 30 }}>
             <Text

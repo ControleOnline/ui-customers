@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,10 +20,28 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  const phonesStore = useStores(state => state.phones);
-  const actionsPhones = phonesStore.actions;
-  const emailsStore = useStores(state => state.emails);
-  const actionsEmails = emailsStore.actions;
+  const phonesStore = useStores(state => state.phones) || {};
+  const actionsPhones = phonesStore.actions || {};
+  const emailsStore = useStores(state => state.emails) || {};
+  const actionsEmails = emailsStore.actions || {};
+  const extractId = value => String(value || '').replace(/\D/g, '');
+
+  const toPeopleIri = person => {
+    const directIri = String(person?.['@id'] || '').trim();
+    if (directIri.startsWith('/people/')) {
+      return directIri;
+    }
+
+    const nestedIri = String(person?.people?.['@id'] || person?.people || '').trim();
+    if (nestedIri.startsWith('/people/')) {
+      return nestedIri;
+    }
+
+    const rawId = extractId(person?.id || person?.people?.id || directIri || nestedIri);
+    return rawId ? `/people/${rawId}` : '';
+  };
+
+  const peopleIri = useMemo(() => toPeopleIri(client), [client]);
 
   const extractPhoneDigits = value =>
     String(value || '')
@@ -120,22 +138,33 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
       const { ddd, phone } = splitPhoneValue(phoneDigits);
 
       try {
+        if (!actionsPhones?.save) {
+          showError('Servico de telefones indisponivel no momento.');
+          return;
+        }
+
+        if (!peopleIri) {
+          showError('Nao foi possivel identificar o cliente para salvar o telefone.');
+          return;
+        }
+
         const phoneData = {
           phone: parseInt(phone, 10),
           ddi: 55,
           ddd: parseInt(ddd, 10),
-          people: client['@id'],
+          people: peopleIri,
         };
 
         if (editingItem) {
           phoneData.id = editingItem.id;
         }
 
-        await actionsPhones.save(phoneData);
+        const saved = await actionsPhones.save(phoneData);
+        const savedId = extractId(saved?.id || saved?.['@id'] || editingItem?.id);
 
         const phoneItem = {
-          id: editingItem?.id || Date.now(),
-          value: formatPhoneValue(phoneDigits),
+          id: savedId || editingItem?.id || Date.now(),
+          value: formatPhoneValue(`${saved?.ddd || ddd}${saved?.phone || phone}`),
         };
 
         const updatedPhones = editingItem
@@ -175,20 +204,31 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
       }
 
       try {
+        if (!actionsEmails?.save) {
+          showError('Servico de emails indisponivel no momento.');
+          return;
+        }
+
+        if (!peopleIri) {
+          showError('Nao foi possivel identificar o cliente para salvar o email.');
+          return;
+        }
+
         const emailData = {
-          email: formData.value,
-          people: client['@id'],
+          email: String(formData.value || '').trim(),
+          people: peopleIri,
         };
 
         if (editingItem) {
           emailData.id = editingItem.id;
         }
 
-        await actionsEmails.save(emailData);
+        const saved = await actionsEmails.save(emailData);
+        const savedId = extractId(saved?.id || saved?.['@id'] || editingItem?.id);
 
         const emailItem = {
-          id: editingItem?.id || Date.now(),
-          value: formData.value,
+          id: savedId || editingItem?.id || Date.now(),
+          value: String(saved?.email || emailData.email),
         };
 
         const updatedEmails = editingItem

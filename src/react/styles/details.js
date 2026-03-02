@@ -176,7 +176,7 @@ export const detailsStyles = StyleSheet.create({
 
   // Tab Content
   tabContent: {
-    flex: 1,
+    width: '100%',
   },
 
   // Sections
@@ -223,12 +223,14 @@ export const detailsStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    minWidth: 0,
   },
 
   itemText: {
     fontSize: 16,
     color: '#212529',
     fontWeight: '500',
+    flexShrink: 1,
   },
 
   itemSubtext: {

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useStore } from '@store';
+import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { colors } from '@controleonline/../../src/styles/colors';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import IconAdd from 'react-native-vector-icons/MaterialIcons';
@@ -172,6 +173,7 @@ const styles = StyleSheet.create({
 });
 
 const Clients = () => {
+  const { showError } = useMessage();
   const peopleStore = useStore('people');
   const getters = peopleStore.getters;
   const actions = peopleStore.actions;
@@ -185,6 +187,7 @@ const Clients = () => {
   const [allClients, setAllClients] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddCompanyModal, setShowAddCompanyModal] = useState(false);
+  const extractId = value => String(value || '').replace(/\D/g, '');
 
   const fetchClients = useCallback(
     (query, page) => {
@@ -258,11 +261,53 @@ const Clients = () => {
   };
 
   const handleSaveCompany = async (companyData) => {
+    const { firstEmployee, ...baseCompanyData } = companyData || {};
+
     const dataWithCompany = {
-      ...companyData,
+      ...baseCompanyData,
       company: '/people/' + currentCompany.id,
     };
-    await actions.company(dataWithCompany);
+
+    const createdCompany = await actions.company(dataWithCompany);
+    const createdCompanyId = extractId(
+      createdCompany?.id || createdCompany?.['@id'],
+    );
+
+    if (baseCompanyData?.peopleType === 'J') {
+      if (!firstEmployee?.name || !firstEmployee?.alias) {
+        throw new Error(
+          'Funcionario obrigatorio nao informado para empresa juridica.',
+        );
+      }
+
+      if (!createdCompanyId) {
+        showError(
+          'Empresa criada, mas nao foi possivel vincular o funcionario inicial.',
+        );
+      } else {
+        const employeePayload = {
+          name: String(firstEmployee.name).trim(),
+          alias: String(firstEmployee.alias).trim(),
+          peopleType: 'F',
+          company: `/people/${createdCompanyId}`,
+          link_type: 'employee',
+          'extra-data': {},
+        };
+
+        if (firstEmployee.foundationDate) {
+          employeePayload.foundationDate = firstEmployee.foundationDate;
+        }
+
+        try {
+          await actions.company(employeePayload);
+        } catch (employeeError) {
+          showError(
+            'Empresa criada, mas nao foi possivel cadastrar o funcionario inicial.',
+          );
+        }
+      }
+    }
+
     fetchClients(searchQuery, 1);
     setCurrentPage(1);
   };

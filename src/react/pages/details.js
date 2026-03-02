@@ -15,6 +15,7 @@ import { colors } from '@controleonline/../../src/styles/colors';
 import GeneralTab from '../components/tabs/GeneralTab';
 import UsersTab from '../components/tabs/UsersTab';
 import ClientsTab from '../components/tabs/ClientsTab';
+import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 
 const ClientDetails = ({ route, navigation }) => {
@@ -104,11 +105,25 @@ const ClientDetails = ({ route, navigation }) => {
 
   const isPessoaJuridica = String(client?.peopleType || '').toUpperCase() === 'J';
 
-  const tabs = [
-    { key: 0, label: 'Geral' },
-    { key: 1, label: isPessoaJuridica ? 'Clientes' : 'Usuarios' },
-    { key: 2, label: 'Contratos' },
-  ];
+  const tabs = isPessoaJuridica
+    ? [
+        { key: 0, label: 'Geral' },
+        { key: 1, label: 'Clientes' },
+        { key: 2, label: 'Funcionarios' },
+        { key: 3, label: 'Contratos' },
+      ]
+    : [
+        { key: 0, label: 'Geral' },
+        { key: 1, label: 'Usuarios' },
+        { key: 2, label: 'Contratos' },
+      ];
+
+  useEffect(() => {
+    if (activeTab > tabs.length - 1) {
+      setActiveTab(0);
+      scrollRef.current?.scrollTo({ x: 0, animated: false });
+    }
+  }, [activeTab, tabs.length]);
 
   const handleTabPress = index => {
     setActiveTab(index);
@@ -134,9 +149,9 @@ const ClientDetails = ({ route, navigation }) => {
       </View>
 
       <View style={styles.tabsHeader}>
-        <View style={styles.skeletonTab} />
-        <View style={styles.skeletonTab} />
-        <View style={styles.skeletonTab} />
+        {tabs.map(tab => (
+          <View key={`skeleton-${tab.key}`} style={styles.skeletonTab} />
+        ))}
       </View>
 
       <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
@@ -250,29 +265,37 @@ const ClientDetails = ({ route, navigation }) => {
         }}
         scrollEventThrottle={16}
         style={styles.contentContainer}>
-        <View style={{ width, height: '100%' }}>
-          <GeneralTab {...tabProps} />
-        </View>
-
-        <View style={{ width, height: '100%' }}>
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 80 }}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}>
-            {isPessoaJuridica ? <ClientsTab {...tabProps} /> : <UsersTab {...tabProps} />}
-          </ScrollView>
-        </View>
-
-        <View style={{ width, height: '100%' }}>
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 80 }}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}>
-            <ContractsTab {...tabProps} />
-          </ScrollView>
-        </View>
+        {tabs.map(tab => (
+          <View key={tab.key} style={{ width, height: '100%' }}>
+            {tab.key === 0 ? (
+              <GeneralTab {...tabProps} />
+            ) : tab.key === 1 ? (
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingBottom: 80 }}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator={false}>
+                {isPessoaJuridica ? <ClientsTab {...tabProps} /> : <UsersTab {...tabProps} />}
+              </ScrollView>
+            ) : tab.key === 2 && isPessoaJuridica ? (
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingBottom: 80 }}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator={false}>
+                <EmployeesTab {...tabProps} />
+              </ScrollView>
+            ) : (
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingBottom: 80 }}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator={false}>
+                <ContractsTab {...tabProps} />
+              </ScrollView>
+            )}
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
