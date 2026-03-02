@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,6 +16,23 @@ import DocumentsTab from './DocumentsTab';
 import AddressesTab from './AddressesTab';
 
 const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
+
+const normalizeEnable = value => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value === 1;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === '1' || normalized === 'true';
+  }
+
+  return false;
+};
 
 const formatYmdToBr = value => {
   if (!value) {
@@ -86,12 +104,14 @@ const GeneralTab = ({
     name: '',
     alias: '',
     dateBr: '',
+    enable: false,
     peopleType: 'J',
   });
   const [originalRegistrationForm, setOriginalRegistrationForm] = useState({
     name: '',
     alias: '',
     dateBr: '',
+    enable: false,
     peopleType: 'J',
   });
 
@@ -100,6 +120,7 @@ const GeneralTab = ({
       name: normalizeText(client?.name),
       alias: normalizeText(client?.alias),
       dateBr: formatYmdToBr(client?.foundationDate),
+      enable: normalizeEnable(client?.enable ?? client?.enabled),
       peopleType: String(client?.peopleType || 'J').toUpperCase(),
     };
 
@@ -116,7 +137,8 @@ const GeneralTab = ({
     return (
       normalizeText(registrationForm.name) !== normalizeText(originalRegistrationForm.name) ||
       normalizeText(registrationForm.alias) !== normalizeText(originalRegistrationForm.alias) ||
-      String(registrationForm.dateBr || '') !== String(originalRegistrationForm.dateBr || '')
+      String(registrationForm.dateBr || '') !== String(originalRegistrationForm.dateBr || '') ||
+      Boolean(registrationForm.enable) !== Boolean(originalRegistrationForm.enable)
     );
   }, [registrationForm, originalRegistrationForm]);
 
@@ -152,6 +174,7 @@ const GeneralTab = ({
       const payload = {
         name,
         alias,
+        enable: Boolean(registrationForm.enable),
       };
 
       if (foundationDate) {
@@ -162,6 +185,7 @@ const GeneralTab = ({
 
       onUpdateClient?.('name', name);
       onUpdateClient?.('alias', alias);
+      onUpdateClient?.('enable', Boolean(registrationForm.enable));
       if (foundationDate) {
         onUpdateClient?.('foundationDate', foundationDate);
       }
@@ -170,6 +194,7 @@ const GeneralTab = ({
         ...registrationForm,
         name,
         alias,
+        enable: Boolean(registrationForm.enable),
         dateBr: foundationDate ? formatYmdToBr(foundationDate) : registrationForm.dateBr,
       };
 
@@ -271,6 +296,39 @@ const GeneralTab = ({
                 color: '#0F172A',
               }}
               placeholderTextColor="#94A3B8"
+            />
+          </View>
+        </View>
+
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: '#334155', marginBottom: 6 }}>
+            Acesso do usuário
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderWidth: 1,
+              borderColor: '#E2E8F0',
+              borderRadius: 10,
+              backgroundColor: '#F8FAFC',
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+            }}>
+            <Text style={{ fontSize: 14, color: '#475569' }}>
+              {registrationForm.enable ? 'Liberado' : 'Bloqueado'}
+            </Text>
+            <Switch
+              value={Boolean(registrationForm.enable)}
+              onValueChange={value =>
+                setRegistrationForm(prev => ({
+                  ...prev,
+                  enable: value,
+                }))
+              }
+              trackColor={{ false: '#CBD5E1', true: '#93C5FD' }}
+              thumbColor={registrationForm.enable ? colors.primary : '#f4f3f4'}
             />
           </View>
         </View>
