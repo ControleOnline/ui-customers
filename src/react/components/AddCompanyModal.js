@@ -140,16 +140,20 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
   };
 
   const formatDateInput = text => {
-    let numbers = text.replace(/\D/g, '');
-
-    if (numbers.length >= 2) {
-      numbers = numbers.substring(0, 2) + '/' + numbers.substring(2);
-    }
-    if (numbers.length >= 5) {
-      numbers = numbers.substring(0, 5) + '/' + numbers.substring(5, 9);
+    const numbers = String(text || '').replace(/\D/g, '').slice(0, 8);
+    if (!numbers) {
+      return '';
     }
 
-    return numbers;
+    if (numbers.length <= 2) {
+      return numbers;
+    }
+
+    if (numbers.length <= 4) {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    }
+
+    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4)}`;
   };
 
   const handleDateChange = text => {
