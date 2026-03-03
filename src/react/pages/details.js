@@ -109,15 +109,15 @@ const ClientDetails = ({ route, navigation }) => {
 
   const tabs = isPessoaJuridica
     ? [
-        { key: 0, label: 'Geral' },
-        { key: 1, label: 'Clientes' },
-        { key: 2, label: 'Funcionarios' },
-        { key: 3, label: 'Contratos' },
+        { key: 0, label: global.t?.t('customers', 'title', 'general') },
+        { key: 1, label: global.t?.t('customers', 'title', 'clients') },
+        { key: 2, label: global.t?.t('customers', 'title', 'employees') },
+        { key: 3, label: global.t?.t('customers', 'title', 'contracts') },
       ]
     : [
-        { key: 0, label: 'Geral' },
-        { key: 1, label: 'Usuarios' },
-        { key: 2, label: 'Contratos' },
+        { key: 0, label: global.t?.t('customers', 'title', 'general') },
+        { key: 1, label: global.t?.t('customers', 'title', 'users') },
+        { key: 2, label: global.t?.t('customers', 'title', 'contracts') },
       ];
 
   useEffect(() => {
