@@ -104,6 +104,10 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     return emailRegex.test(email);
   };
 
+  const normalizeEmail = value => String(value || '').trim().toLowerCase();
+
+  const resolveItemId = value => String(extractId(value) || value || '');
+
   const openModal = (type, item = null) => {
     setModalType(type);
     setEditingItem(item);
@@ -132,6 +136,27 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
       const phoneDigits = extractPhoneDigits(formData.phone);
       if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
         showError('Telefone com DDD é obrigatório.');
+        return;
+      }
+
+      const currentEditId = resolveItemId(editingItem?.id);
+      const hasDuplicatePhone = phones.some(item => {
+        const itemDigits = extractPhoneDigits(item?.value || '');
+        const itemId = resolveItemId(item?.id);
+
+        if (!itemDigits) {
+          return false;
+        }
+
+        if (currentEditId && itemId === currentEditId) {
+          return false;
+        }
+
+        return itemDigits === phoneDigits;
+      });
+
+      if (hasDuplicatePhone) {
+        showError('Telefone ja cadastrado para este cliente.');
         return;
       }
 
@@ -198,8 +223,30 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
         );
       }
     } else if (modalType === 'email') {
-      if (!formData.value || !validateEmail(formData.value)) {
-        showError('Email válido é obrigatório.');
+      const normalizedEmail = normalizeEmail(formData.value);
+      if (!normalizedEmail || !validateEmail(normalizedEmail)) {
+        showError('Email valido e obrigatorio.');
+        return;
+      }
+
+      const currentEditId = resolveItemId(editingItem?.id);
+      const hasDuplicateEmail = emails.some(item => {
+        const itemEmail = normalizeEmail(item?.value || '');
+        const itemId = resolveItemId(item?.id);
+
+        if (!itemEmail) {
+          return false;
+        }
+
+        if (currentEditId && itemId === currentEditId) {
+          return false;
+        }
+
+        return itemEmail === normalizedEmail;
+      });
+
+      if (hasDuplicateEmail) {
+        showError('E-mail ja cadastrado para este cliente.');
         return;
       }
 
@@ -215,7 +262,7 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
         }
 
         const emailData = {
-          email: String(formData.value || '').trim(),
+          email: normalizedEmail,
           people: peopleIri,
         };
 
@@ -496,3 +543,4 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
 };
 
 export default ContactTab;
+
