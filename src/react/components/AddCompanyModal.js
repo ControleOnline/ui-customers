@@ -11,12 +11,25 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 
+const toBrDateString = date => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear());
+  return `${day}/${month}/${year}`;
+};
+
 const AddCompanyModal = ({ visible, onClose, onSave }) => {
   const {showError} = useMessage();
+  const defaultDate = new Date();
   const [formData, setFormData] = useState({
     name: '',
     alias: '',
-    foundationDate: new Date(),
+    foundationDate: defaultDate,
+    foundationDateInput: toBrDateString(defaultDate),
     peopleType: 'J',
     firstEmployeeName: '',
     firstEmployeeAlias: '',
@@ -36,6 +49,7 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
   const dateLabel = isPessoaFisica
     ? 'Data de Nascimento'
     : 'Data de Funda\u00E7\u00E3o';
+  const modalTitle = isPessoaFisica ? 'Nova Pessoa' : 'Nova Empresa';
 
   const handleSave = async () => {
     if (!formData.name.trim() || !formData.alias.trim()) {
@@ -59,10 +73,37 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
 
     setIsLoading(true);
     try {
+      let parsedFoundationDate = formData.foundationDate;
+      if (formData.foundationDateInput) {
+        const normalized = formatDateInput(formData.foundationDateInput);
+        if (normalized.length !== 10) {
+          showError('Informe uma data valida no formato DD/MM/AAAA.');
+          setIsLoading(false);
+          return;
+        }
+
+        const [day, month, year] = normalized
+          .split('/')
+          .map(part => parseInt(part, 10));
+        const candidate = new Date(year, month - 1, day);
+        const validDate =
+          candidate.getFullYear() === year &&
+          candidate.getMonth() === month - 1 &&
+          candidate.getDate() === day;
+
+        if (!validDate) {
+          showError('Informe uma data valida no formato DD/MM/AAAA.');
+          setIsLoading(false);
+          return;
+        }
+
+        parsedFoundationDate = candidate;
+      }
+
       const companyData = {
         name: formData.name.trim(),
         alias: formData.alias.trim(),
-        foundationDate: formData.foundationDate.toISOString().split('T')[0],
+        foundationDate: parsedFoundationDate.toISOString().split('T')[0],
         peopleType: formData.peopleType,
         link_type: 'client',
         'extra-data': {},
@@ -85,10 +126,12 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
   };
 
   const handleClose = () => {
+    const resetDate = new Date();
     setFormData({
       name: '',
       alias: '',
-      foundationDate: new Date(),
+      foundationDate: resetDate,
+      foundationDateInput: toBrDateString(resetDate),
       peopleType: 'J',
       firstEmployeeName: '',
       firstEmployeeAlias: '',
@@ -111,6 +154,7 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
 
   const handleDateChange = text => {
     const formatted = formatDateInput(text);
+    setFormData(prev => ({ ...prev, foundationDateInput: formatted }));
 
     if (formatted.length === 10) {
       const parts = formatted.split('/');
@@ -121,7 +165,10 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
       if (day >= 1 && day <= 31 && month >= 0 && month <= 11 && year >= 1900) {
         const newDate = new Date(year, month, day);
         if (!isNaN(newDate.getTime())) {
-          setFormData(prev => ({ ...prev, foundationDate: newDate }));
+          setFormData(prev => ({
+            ...prev,
+            foundationDate: newDate,
+          }));
         }
       }
     }
@@ -164,7 +211,7 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
               fontWeight: '700',
               color: '#0F172A',
             }}>
-            Nova Empresa
+            {modalTitle}
           </Text>
           <TouchableOpacity
             onPress={handleClose}
@@ -398,7 +445,7 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
               <Icon name="calendar-today" size={20} color="#6c757d" />
               <TextInput
                 placeholder="DD/MM/AAAA"
-                value={formData.foundationDate.toLocaleDateString('pt-BR')}
+                value={formData.foundationDateInput}
                 onChangeText={handleDateChange}
                 style={{
                   flex: 1,

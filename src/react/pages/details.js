@@ -45,6 +45,8 @@ const ClientDetails = ({ route, navigation }) => {
   useEffect(() => {
     let mounted = true;
     setClient(initialClient || null);
+    setActiveTab(0);
+    scrollRef.current?.scrollTo({ x: 0, animated: false });
 
     const clientId = extractId(initialClient?.id || initialClient?.['@id']);
     if (!clientId || !getPeople) {
