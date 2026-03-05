@@ -208,59 +208,59 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       <View style={customStyles.modalOverlay}>
         <View style={customStyles.modalContainer}>
           <Text style={customStyles.modalTitle}>
-            {editingItem ? global.t?.t('addressesTab', 'title', 'editAddress') : global.t?.t('addressesTab', 'title', 'addAddress')}
+            {editingItem ? global.t?.t('address', 'title', 'editAddress') : global.t?.t('address', 'title', 'addAddress')}
           </Text>
           <TextInput
             style={customStyles.modalInput}
-            placeholder={global.t?.t('addressesTab', 'title', 'zipCode')}
+            placeholder={global.t?.t('address', 'title', 'zipCode')}
             value={formData.zipCode || ''}
             onChangeText={text => setFormData({...formData, zipCode: text})}
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder={global.t?.t('addressesTab', 'title', 'street')}
+            placeholder={global.t?.t('address', 'title', 'street')}
             value={formData.street || ''}
             onChangeText={text => setFormData({...formData, street: text})}
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder={global.t?.t('addressesTab', 'title', 'number')}
+            placeholder={global.t?.t('address', 'title', 'number')}
             value={formData.number || ''}
             onChangeText={text => setFormData({...formData, number: text})}
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder={global.t?.t('addressesTab', 'title', 'complement')}
+            placeholder={global.t?.t('address', 'title', 'complement')}
             value={formData.complement || ''}
             onChangeText={text => setFormData({...formData, complement: text})}
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder={global.t?.t('addressesTab', 'title', 'district')}
+            placeholder={global.t?.t('address', 'title', 'district')}
             value={formData.district || ''}
             onChangeText={text => setFormData({...formData, district: text})}
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder={global.t?.t('addressesTab', 'title', 'city')}
+            placeholder={global.t?.t('address', 'title', 'city')}
             value={formData.city || ''}
             onChangeText={text => setFormData({...formData, city: text})}
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder={global.t?.t('addressesTab', 'title', 'state')}
+            placeholder={global.t?.t('address', 'title', 'state')}
             value={formData.state || ''}
             onChangeText={text => setFormData({...formData, state: text})}
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder={global.t?.t('addressesTab', 'title', 'country')}
+            placeholder={global.t?.t('address', 'title', 'country')}
             value={formData.country || ''}
             onChangeText={text => setFormData({...formData, country: text})}
           />
           <TextInput
             style={customStyles.modalInput}
-            placeholder={global.t?.t('addressesTab', 'title', 'optionsNicknamePlaceholder')}
+            placeholder={global.t?.t('address', 'title', 'optionsNicknamePlaceholder')}
             value={formData.nickname || ''}
             onChangeText={text => setFormData({...formData, nickname: text})}
           />
@@ -292,7 +292,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       <View style={customStyles.tabContent}>
         <View style={customStyles.section}>
           <View style={customStyles.sectionHeader}>
-            <Text style={customStyles.sectionTitle}>{global.t?.t('addressesTab', 'title', 'addresses')}</Text>
+            <Text style={customStyles.sectionTitle}>{global.t?.t('address', 'title', 'addresses')}</Text>
             {isEditing && (
               <TouchableOpacity onPress={() => openModal(null)}>
                 <Icon name="add" size={24} color={colors.primary} />
@@ -300,7 +300,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
             )}
           </View>
           {addresses.length === 0 ? (
-            <Text style={customStyles.emptyText}>{global.t?.t('addressesTab', 'label', 'noAddressesFound')}</Text>
+            <Text style={customStyles.emptyText}>{global.t?.t('address', 'label', 'noAddressesFound')}</Text>
           ) : (
             addresses.map(address => (
               <View key={address.id} style={customStyles.listItem}>
