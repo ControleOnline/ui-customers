@@ -194,7 +194,7 @@ const Clients = () => {
       if (currentCompany && Object.keys(currentCompany).length > 0) {
         const params = {
           company: '/people/' + currentCompany.id,
-          link_type: 'client',
+          linkType: 'client',
           page: page ?? currentPage,
           itemsPerPage,
         };
@@ -290,7 +290,7 @@ const Clients = () => {
           alias: String(firstEmployee.alias).trim(),
           peopleType: 'F',
           company: `/people/${createdCompanyId}`,
-          link_type: 'employee',
+          linkType: 'employee',
           'extra-data': {},
         };
 

@@ -105,7 +105,7 @@ const AddCompanyModal = ({ visible, onClose, onSave }) => {
         alias: formData.alias.trim(),
         foundationDate: parsedFoundationDate.toISOString().split('T')[0],
         peopleType: formData.peopleType,
-        link_type: 'client',
+        linkType: 'client',
         'extra-data': {},
       };
 

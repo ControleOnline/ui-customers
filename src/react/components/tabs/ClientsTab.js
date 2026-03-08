@@ -45,7 +45,7 @@ const ClientsTab = ({ client, customStyles }) => {
       try {
         const response = await peopleActions.getItems({
           company: `/people/${parentPeopleId}`,
-          link_type: 'client',
+          linkType: 'client',
           itemsPerPage: 100,
         });
 

@@ -96,7 +96,7 @@ const EmployeesTab = ({ client, customStyles }) => {
     try {
       const response = await peopleActions.getItems({
         company: `/people/${parentPeopleId}`,
-        link_type: 'employee',
+        linkType: 'employee',
         peopleType: 'F',
         itemsPerPage: 100,
       });
@@ -172,7 +172,7 @@ const EmployeesTab = ({ client, customStyles }) => {
         alias,
         peopleType: 'F',
         company: `/people/${parentPeopleId}`,
-        link_type: 'employee',
+        linkType: 'employee',
         'extra-data': {},
       };
 
