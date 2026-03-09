@@ -7,8 +7,10 @@ const customersRoutes = [
     name: 'ClientsIndex',
     component: Clients,
     options: {
+      showCompanyFilter: env.APP_TYPE === 'CRM',
       headerShown: true,
       headerBackVisible: true,
+      companyFilterMode: 'icon',
       title: 'Clientes',
       showBottomToolBar: env.APP_TYPE === 'CRM',
     },
