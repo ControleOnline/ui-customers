@@ -60,7 +60,17 @@ const parseBrDateToYmd = value => {
     .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 };
 
-const EmployeesTab = ({ client, customStyles }) => {
+const EmployeesTab = ({
+  client,
+  customStyles,
+  title = 'Funcionarios',
+  emptyText = 'Nenhum funcionario vinculado',
+  errorText = 'Nao foi possivel carregar os funcionarios vinculados.',
+  createTitle = 'Adicionar Funcionario',
+  requiredErrorText = 'Nome e apelido do funcionario sao obrigatorios.',
+  createSuccessText = 'Funcionario cadastrado com sucesso.',
+  createErrorText = 'Nao foi possivel cadastrar o funcionario.',
+}) => {
   const navigation = useNavigation();
   const { showError, showSuccess } = useMessage();
 
@@ -114,11 +124,11 @@ const EmployeesTab = ({ client, customStyles }) => {
       setEmployees(normalized);
     } catch (fetchError) {
       setEmployees([]);
-      setError('Nao foi possivel carregar os funcionarios vinculados.');
+      setError(errorText);
     } finally {
       setIsLoading(false);
     }
-  }, [parentPeopleId, peopleActions]);
+  }, [errorText, parentPeopleId, peopleActions]);
 
   useEffect(() => {
     fetchEmployees();
@@ -147,7 +157,7 @@ const EmployeesTab = ({ client, customStyles }) => {
     const alias = String(formData.alias || '').trim();
 
     if (!name || !alias) {
-      showError('Nome e apelido do funcionario sao obrigatorios.');
+      showError(requiredErrorText);
       return;
     }
 
@@ -161,7 +171,7 @@ const EmployeesTab = ({ client, customStyles }) => {
     }
 
     if (!peopleActions?.company || !parentPeopleId) {
-      showError('Nao foi possivel cadastrar o funcionario.');
+      showError(createErrorText);
       return;
     }
 
@@ -181,11 +191,11 @@ const EmployeesTab = ({ client, customStyles }) => {
       }
 
       await peopleActions.company(payload);
-      showSuccess('Funcionario cadastrado com sucesso.');
+      showSuccess(createSuccessText);
       handleCloseModal();
       fetchEmployees();
     } catch (saveError) {
-      showError(saveError?.message || 'Nao foi possivel cadastrar o funcionario.');
+      showError(saveError?.message || createErrorText);
     } finally {
       setIsSaving(false);
     }
@@ -196,7 +206,7 @@ const EmployeesTab = ({ client, customStyles }) => {
       <View style={customStyles.tabContent}>
         <View style={customStyles.section}>
           <View style={customStyles.sectionHeader}>
-            <Text style={customStyles.sectionTitle}>Funcionarios</Text>
+            <Text style={customStyles.sectionTitle}>{title}</Text>
             <TouchableOpacity onPress={handleOpenModal}>
               <Icon name="add" size={24} color={colors.primary} />
             </TouchableOpacity>
@@ -209,7 +219,7 @@ const EmployeesTab = ({ client, customStyles }) => {
           ) : error ? (
             <Text style={customStyles.emptyText}>{error}</Text>
           ) : employees.length === 0 ? (
-            <Text style={customStyles.emptyText}>Nenhum funcionario vinculado</Text>
+            <Text style={customStyles.emptyText}>{emptyText}</Text>
           ) : (
             employees.map(item => (
               <TouchableOpacity
@@ -264,7 +274,7 @@ const EmployeesTab = ({ client, customStyles }) => {
               borderBottomColor: '#F1F5F9',
             }}>
             <Text style={{ fontSize: 20, fontWeight: '700', color: '#0F172A' }}>
-              Adicionar Funcionario
+              {createTitle}
             </Text>
             <TouchableOpacity
               onPress={handleCloseModal}

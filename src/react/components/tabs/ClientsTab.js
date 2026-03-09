@@ -12,7 +12,14 @@ import { colors } from '@controleonline/../../src/styles/colors';
 
 const extractId = value => String(value || '').replace(/\D/g, '');
 
-const ClientsTab = ({ client, customStyles }) => {
+const ClientsTab = ({
+  client,
+  customStyles,
+  title = 'Clientes',
+  linkType = 'client',
+  emptyText = 'Nenhum cliente vinculado',
+  errorText = 'Nao foi possivel carregar os clientes vinculados.',
+}) => {
   const navigation = useNavigation();
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +52,7 @@ const ClientsTab = ({ client, customStyles }) => {
       try {
         const response = await peopleActions.getItems({
           company: `/people/${parentPeopleId}`,
-          linkType: 'client',
+          linkType,
           itemsPerPage: 100,
         });
 
@@ -61,7 +68,7 @@ const ClientsTab = ({ client, customStyles }) => {
       } catch (fetchError) {
         if (mounted) {
           setClients([]);
-          setError('Nao foi possivel carregar os clientes vinculados.');
+          setError(errorText);
         }
       } finally {
         if (mounted) {
@@ -75,13 +82,13 @@ const ClientsTab = ({ client, customStyles }) => {
     return () => {
       mounted = false;
     };
-  }, [parentPeopleId, peopleActions]);
+  }, [errorText, linkType, parentPeopleId, peopleActions]);
 
   return (
     <View style={customStyles.tabContent}>
       <View style={customStyles.section}>
         <View style={customStyles.sectionHeader}>
-          <Text style={customStyles.sectionTitle}>Clientes</Text>
+          <Text style={customStyles.sectionTitle}>{title}</Text>
         </View>
 
         {isLoading ? (
@@ -91,7 +98,7 @@ const ClientsTab = ({ client, customStyles }) => {
         ) : error ? (
           <Text style={customStyles.emptyText}>{error}</Text>
         ) : clients.length === 0 ? (
-          <Text style={customStyles.emptyText}>Nenhum cliente vinculado</Text>
+          <Text style={customStyles.emptyText}>{emptyText}</Text>
         ) : (
           clients.map(item => (
             <TouchableOpacity

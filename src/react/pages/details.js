@@ -110,8 +110,8 @@ const ClientDetails = ({ route, navigation }) => {
   const tabs = isPessoaJuridica
     ? [
         { key: 0, label: global.t?.t('customers', 'title', 'general') },
-        { key: 1, label: global.t?.t('customers', 'title', 'clients') },
-        { key: 2, label: global.t?.t('customers', 'title', 'employees') },
+        { key: 1, label: 'Vendedores' },
+        { key: 2, label: 'Contatos' },
         { key: 3, label: global.t?.t('customers', 'title', 'contracts') },
       ]
     : [
@@ -277,7 +277,17 @@ const ClientDetails = ({ route, navigation }) => {
                 contentContainerStyle={{ paddingBottom: 80 }}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
-                {isPessoaJuridica ? <ClientsTab {...tabProps} /> : <UsersTab {...tabProps} />}
+                {isPessoaJuridica ? (
+                  <ClientsTab
+                    {...tabProps}
+                    title="Vendedores"
+                    linkType="sales"
+                    emptyText="Nenhum vendedor vinculado"
+                    errorText="Nao foi possivel carregar os vendedores vinculados."
+                  />
+                ) : (
+                  <UsersTab {...tabProps} />
+                )}
               </ScrollView>
             ) : tab.key === 2 && isPessoaJuridica ? (
               <ScrollView
@@ -285,7 +295,16 @@ const ClientDetails = ({ route, navigation }) => {
                 contentContainerStyle={{ paddingBottom: 80 }}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
-                <EmployeesTab {...tabProps} />
+                <EmployeesTab
+                  {...tabProps}
+                  title="Contatos"
+                  emptyText="Nenhum contato vinculado"
+                  errorText="Nao foi possivel carregar os contatos vinculados."
+                  createTitle="Adicionar Contato"
+                  requiredErrorText="Nome e apelido do contato sao obrigatorios."
+                  createSuccessText="Contato cadastrado com sucesso."
+                  createErrorText="Nao foi possivel cadastrar o contato."
+                />
               </ScrollView>
             ) : (
               <ScrollView
