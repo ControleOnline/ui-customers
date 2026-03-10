@@ -6,7 +6,7 @@ const Prospects = () => {
   return (
     <People
       context={{
-        linkType: 'prospect',
+        context: 'prospect',
         title: 'Prospects',
         searchPlaceholder: 'Buscar prospect...',
         emptyTitle: 'Nenhum prospect',
