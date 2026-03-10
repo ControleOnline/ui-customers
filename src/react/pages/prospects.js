@@ -6,12 +6,12 @@ const Prospects = () => {
   return (
     <People
       context={{
-        context: 'prospect',
-        title: 'Prospects',
-        searchPlaceholder: 'Buscar prospect...',
-        emptyTitle: 'Nenhum prospect',
-        emptySearchTitle: 'Nenhum prospect encontrado',
-        emptySubtitle: 'Adicione seu primeiro prospect',
+        context: global.t?.t('people', 'title', 'prospect'),
+        title: global.t?.t('people', 'title', 'prospects'),
+        searchPlaceholder: global.t?.t('people', 'searchPlaceholder', 'searchProspect'),
+        emptyTitle: global.t?.t('people', 'title', 'emptyProspect'),
+        emptySearchTitle: global.t?.t('people', 'title', 'emptySearchProspect'),
+        emptySubtitle: global.t?.t('people', 'title', 'addFirstProspect'),
       }}
     />
   );
