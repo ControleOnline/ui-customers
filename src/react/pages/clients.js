@@ -7,11 +7,11 @@ const Clients = () => {
     <People
       context={{
         context: 'client',
-        title: 'Clientes',
-        searchPlaceholder: 'Buscar cliente...',
-        emptyTitle: 'Nenhum cliente',
-        emptySearchTitle: 'Nenhum cliente encontrado',
-        emptySubtitle: 'Adicione seu primeiro cliente',
+        title: global.t?.t('people', 'title', 'clients'),
+        searchPlaceholder: global.t?.t('people', 'searchPlaceholder', 'searchClient'),
+        emptyTitle: global.t?.t('people', 'title', 'emptyClient'),
+        emptySearchTitle: global.t?.t('people', 'title', 'emptySearchClient'),
+        emptySubtitle: global.t?.t('people', 'title', 'addFirstClient'),
       }}
     />
   );
