@@ -12,13 +12,13 @@ import { colors } from '@controleonline/../../src/styles/colors';
 
 const extractId = value => String(value || '').replace(/\D/g, '');
 
-const ClientsTab = ({
+const SalesmanTab = ({
   client,
   customStyles,
-  title = 'Clientes',
-  linkType = 'client',
-  emptyText = 'Nenhum cliente vinculado',
-  errorText = 'Nao foi possivel carregar os clientes vinculados.',
+  title,
+  linkType,
+  emptyText,
+  errorText,
 }) => {
   const navigation = useNavigation();
   const [clients, setClients] = useState([]);
@@ -51,8 +51,9 @@ const ClientsTab = ({
 
       try {
         const response = await peopleActions.getItems({
-          company: `/people/${parentPeopleId}`,
-          linkType,
+          peopleType: 'F',
+          'link.people': `/people/${parentPeopleId}`,
+          'link.linkType': 'client',
           itemsPerPage: 100,
         });
 
@@ -127,4 +128,4 @@ const ClientsTab = ({
   );
 };
 
-export default ClientsTab;
+export default SalesmanTab;

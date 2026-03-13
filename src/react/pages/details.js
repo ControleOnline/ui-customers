@@ -14,7 +14,7 @@ import { colors } from '@controleonline/../../src/styles/colors';
 
 import GeneralTab from '../components/tabs/GeneralTab';
 import UsersTab from '../components/tabs/UsersTab';
-import ClientsTab from '../components/tabs/ClientsTab';
+import SalesmanTab from '../components/tabs/SalesmanTab';
 import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 
@@ -278,10 +278,10 @@ const ClientDetails = ({ route, navigation }) => {
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
                 {isPessoaJuridica ? (
-                  <ClientsTab
+                  <SalesmanTab
                     {...tabProps}
                     title="Vendedores"
-                    linkType="sales"
+                    linkType="salesman"
                     emptyText="Nenhum vendedor vinculado"
                     errorText="Nao foi possivel carregar os vendedores vinculados."
                   />
