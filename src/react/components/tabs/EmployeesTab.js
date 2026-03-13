@@ -105,7 +105,7 @@ const EmployeesTab = ({
 
     try {
       const response = await peopleActions.getItems({
-        company: `/people/${parentPeopleId}`,
+        'link.company': `/people/${parentPeopleId}`,
         'link.linkType': ['employee','owner'],
         peopleType: 'F',
         itemsPerPage: 100,
