@@ -281,7 +281,7 @@ const ClientDetails = ({ route, navigation }) => {
                   <SalesmanTab
                     {...tabProps}
                     title="Vendedores"
-                    linkType="salesman"
+                    linkType="sellers-client"
                     emptyText="Nenhum vendedor vinculado"
                     errorText="Nao foi possivel carregar os vendedores vinculados."
                   />

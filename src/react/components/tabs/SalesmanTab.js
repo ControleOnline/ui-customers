@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   ActivityIndicator,
   Text,
@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
-import { useStores } from '@store';
+import { useStore } from '@store';
 import { colors } from '@controleonline/../../src/styles/colors';
 
 const extractId = value => String(value || '').replace(/\D/g, '');
@@ -21,101 +21,53 @@ const SalesmanTab = ({
   errorText,
 }) => {
   const navigation = useNavigation();
-  const [clients, setClients] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const peopleStore = useStores(state => state.people) || {};
-  const peopleActions = peopleStore.actions || {};
+  const peopleLinkStore = useStore('people_link');
 
-  const parentPeopleId = useMemo(
-    () => extractId(client?.id || client?.['@id']),
-    [client?.id, client?.['@id']],
-  );
+  const clients = peopleLinkStore.getters.items;
+  const isLoading = peopleLinkStore.getters.isLoading;
+  const error = peopleLinkStore.getters.error;
+
+
 
   useEffect(() => {
-    let mounted = true;
+    peopleLinkStore.actions.getItems({
+      people: client?.['@id'],
+      linkType: linkType,
+      itemsPerPage: 100,
+    });
+  }, []);
 
-    const fetchClients = async () => {
-      if (!parentPeopleId || !peopleActions?.getItems) {
-        if (mounted) {
-          setClients([]);
-          setError('');
-          setIsLoading(false);
-        }
-        return;
-      }
-
-      setIsLoading(true);
-      setError('');
-
-      try {
-        const response = await peopleActions.getItems({
-          peopleType: 'F',
-          'link.people': `/people/${parentPeopleId}`,
-          'link.linkType': 'client',
-          itemsPerPage: 100,
-        });
-
-        const items = Array.isArray(response) ? response : [];
-        const normalized = items.filter(item => {
-          const itemId = extractId(item?.id || item?.['@id']);
-          return itemId && itemId !== parentPeopleId;
-        });
-
-        if (mounted) {
-          setClients(normalized);
-        }
-      } catch (fetchError) {
-        if (mounted) {
-          setClients([]);
-          setError(errorText);
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchClients();
-
-    return () => {
-      mounted = false;
-    };
-  }, [errorText, linkType, parentPeopleId, peopleActions]);
 
   return (
     <View style={customStyles.tabContent}>
       <View style={customStyles.section}>
-        <View style={customStyles.sectionHeader}>
-          <Text style={customStyles.sectionTitle}>{title}</Text>
-        </View>
-
         {isLoading ? (
           <View style={{ paddingVertical: 20, alignItems: 'center' }}>
             <ActivityIndicator size="small" color={colors.primary} />
           </View>
         ) : error ? (
-          <Text style={customStyles.emptyText}>{error}</Text>
+          <Text style={customStyles.emptyText}>{errorText}</Text>
         ) : clients.length === 0 ? (
           <Text style={customStyles.emptyText}>{emptyText}</Text>
         ) : (
           clients.map(item => (
             <TouchableOpacity
-              key={String(item?.id || item?.['@id'])}
+              key={String(item?.company?.id || item?.company?.['@id'])}
               style={customStyles.listItem}
               activeOpacity={0.8}
-              onPress={() => navigation.navigate('ClientDetails', { client: item })}>
+              onPress={() =>
+                navigation.navigate('ClientDetails', { client: item?.company })
+              }>
               <View style={customStyles.itemContent}>
                 <Icon name="people" size={20} color={colors.primary} />
                 <View>
                   <Text style={customStyles.itemText}>
-                    {String(item?.name || '-')}
+                    {String(item?.company?.name || '-')}
                   </Text>
                   <Text style={customStyles.itemSubtext}>
-                    {`ID: ${extractId(item?.id || item?.['@id']) || '-'}`}
-                    {item?.alias ? ` - ${String(item.alias)}` : ''}
+                    {`ID: ${extractId(item?.company?.id || item?.company?.['@id']) || '-'}`}
+                    {item?.company?.alias ? ` - ${String(item?.company?.alias)}` : ''}
                   </Text>
                 </View>
               </View>
