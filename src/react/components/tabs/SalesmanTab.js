@@ -48,7 +48,7 @@ const SalesmanTab = ({
           </View>
         ) : error ? (
           <Text style={customStyles.emptyText}>{errorText}</Text>
-        ) : clients.length === 0 ? (
+        ) : !clients || clients?.length === 0 ? (
           <Text style={customStyles.emptyText}>{emptyText}</Text>
         ) : (
           clients.map(item => (
