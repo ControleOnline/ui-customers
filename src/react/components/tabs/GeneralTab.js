@@ -129,9 +129,9 @@ const GeneralTab = ({
   }, [client?.id, client?.name, client?.alias, client?.foundationDate, client?.peopleType]);
 
   const isPessoaFisica = registrationForm.peopleType === 'F';
-  const nameLabel = isPessoaFisica ? 'Nome' : 'Razao Social';
-  const aliasLabel = isPessoaFisica ? 'Apelido' : 'Nome Fantasia';
-  const dateLabel = isPessoaFisica ? 'Data de Nascimento' : 'Data de Fundacao';
+  const nameLabel = isPessoaFisica ? global.t?.t('users','label','name') : global.t?.t('users','label','companyName');
+  const aliasLabel = isPessoaFisica ? global.t?.t('users','label','nickname') : global.t?.t('users','label','fantasyName');
+  const dateLabel = isPessoaFisica ? global.t?.t('users','label','birthDate') : global.t?.t('users','label','foundationDate');
 
   const hasRegistrationChanges = useMemo(() => {
     return (
@@ -151,7 +151,7 @@ const GeneralTab = ({
     const alias = normalizeText(registrationForm.alias);
 
     if (!name || !alias) {
-      showError?.('Nome e apelido sao obrigatorios.');
+      showError?.(GeneralTab.t?.t('users','error','nameAndAliasRequired'));
       return;
     }
 
@@ -159,13 +159,13 @@ const GeneralTab = ({
     if (registrationForm.dateBr) {
       foundationDate = parseBrDateToYmd(registrationForm.dateBr);
       if (!foundationDate) {
-        showError?.('Data invalida. Use o formato DD/MM/AAAA.');
+        showError?.(GeneralTab.t?.t('users','error','invalidDate'));
         return;
       }
     }
 
     if (!onSaveClientData) {
-      showError?.('Salvamento indisponivel nesta tela.');
+      showError?.(GeneralTab.t?.t('users','error','saveUnavailable'));
       return;
     }
 
@@ -200,9 +200,9 @@ const GeneralTab = ({
 
       setRegistrationForm(updated);
       setOriginalRegistrationForm(updated);
-      showSuccess?.('Dados cadastrais atualizados com sucesso.');
+      showSuccess?.(global.t?.t('users','success','registrationUpdated'));
     } catch (error) {
-      showError?.('Nao foi possivel salvar os dados cadastrais.');
+      showError?.(global.t?.t('users','error','registrationUpdateFailed'));
     } finally {
       setIsSavingRegistration(false);
     }
@@ -285,7 +285,7 @@ const GeneralTab = ({
                   dateBr: formatDateInput(text),
                 }))
               }
-              placeholder="DD/MM/AAAA"
+              placeholder="DD/MM/AAAA" // @todo // mostrar também no padrão americano, MM/DD/AAAA
               keyboardType="numeric"
               maxLength={10}
               style={{
@@ -352,7 +352,7 @@ const GeneralTab = ({
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>
-                Salvar alteracoes
+                {global.t?.t('users','button','saveChanges')}
               </Text>
             )}
           </TouchableOpacity>
