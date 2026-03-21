@@ -208,7 +208,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       <View style={customStyles.modalOverlay}>
         <View style={customStyles.modalContainer}>
           <Text style={customStyles.modalTitle}>
-            {editingItem ? global.t?.t('address', 'title', 'editAddress') : global.t?.t('address', 'title', 'addAddress')}
+            {editingItem ? global.t?.t('address', 'title', 'editAddress') : global.t?.t('address', 'title', 'address')}
           </Text>
           <TextInput
             style={customStyles.modalInput}
