@@ -2,12 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
+  Platform,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useStores } from '@store';
@@ -60,6 +62,13 @@ const parseBrDateToYmd = value => {
     .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 };
 
+const LINK_TYPE_OPTIONS = [
+  { value: 'employee', translationKey: 'employee' },
+  { value: 'owner', translationKey: 'owner' },
+  { value: 'director', translationKey: 'director' },
+  { value: 'manager', translationKey: 'manager' },
+];
+
 const EmployeesTab = ({
   client,
   customStyles,
@@ -83,7 +92,15 @@ const EmployeesTab = ({
     name: '',
     alias: '',
     foundationDateBr: '',
+    linkType: 'employee',
   });
+  const [linkTypeOptions, setLinkTypeOptions] = useState(
+    LINK_TYPE_OPTIONS.map(option => ({
+      value: option.value,
+      label: '',
+    })),
+  );
+  const pickerMode = Platform.OS === 'android' ? 'dropdown' : undefined;
 
   const peopleStore = useStores(state => state.people) || {};
   const peopleActions = peopleStore.actions || {};
@@ -106,7 +123,7 @@ const EmployeesTab = ({
     try {
       const response = await peopleActions.getItems({
         'link.company': `/people/${parentPeopleId}`,
-        'link.linkType': ['employee','owner'],
+        'link.linkType': ['employee', 'owner', 'director', 'manager'],
         peopleType: 'F',
         itemsPerPage: 100,
       });
@@ -134,11 +151,21 @@ const EmployeesTab = ({
     fetchEmployees();
   }, [fetchEmployees]);
 
+  useEffect(() => {
+    setLinkTypeOptions(
+      LINK_TYPE_OPTIONS.map(option => ({
+        value: option.value,
+        label: global.t?.t('people', 'label', option.translationKey),
+      })),
+    );
+  }, []);
+
   const resetForm = () => {
     setFormData({
       name: '',
       alias: '',
       foundationDateBr: '',
+      linkType: 'employee',
     });
   };
 
@@ -182,7 +209,7 @@ const EmployeesTab = ({
         alias,
         peopleType: 'F',
         company: `/people/${parentPeopleId}`,
-        linkType: 'employee',
+        linkType: formData.linkType,
         'extra-data': {},
       };
 
@@ -389,6 +416,42 @@ const EmployeesTab = ({
                   keyboardType="numeric"
                   maxLength={10}
                 />
+              </View>
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: '#212529',
+                  marginBottom: 8,
+                }}>
+                Tipo de Vinculo
+              </Text>
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#e9ecef',
+                  borderRadius: 12,
+                  backgroundColor: '#f8f9fa',
+                  overflow: 'hidden',
+                }}>
+                <Picker
+                  selectedValue={formData.linkType}
+                  onValueChange={value =>
+                    setFormData(prev => ({ ...prev, linkType: value }))
+                  }
+                  mode={pickerMode}
+                  style={{ color: '#212529' }}>
+                  {linkTypeOptions.map(option => (
+                    <Picker.Item
+                      key={option.value}
+                      label={option.label}
+                      value={option.value}
+                    />
+                  ))}
+                </Picker>
               </View>
             </View>
           </ScrollView>
