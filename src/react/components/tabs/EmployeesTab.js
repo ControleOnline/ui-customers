@@ -72,13 +72,13 @@ const LINK_TYPE_OPTIONS = [
 const EmployeesTab = ({
   client,
   customStyles,
-  title = 'Funcionarios',
-  emptyText = 'Nenhum funcionario vinculado',
-  errorText = 'Nao foi possivel carregar os funcionarios vinculados.',
-  createTitle = 'Adicionar Funcionario',
-  requiredErrorText = 'Nome e apelido do funcionario sao obrigatorios.',
-  createSuccessText = 'Funcionario cadastrado com sucesso.',
-  createErrorText = 'Nao foi possivel cadastrar o funcionario.',
+  txt_title = global.t?.t('people','title','contact'),
+  txt_title_emptyText = global.t?.t('people','title','emptyText'),
+  txt_title_addPeople = global.t?.t('people','title','addPeople'),
+  txt_message_loadError = global.t?.t('people','message','loadError'),
+  txt_message_requiredError = global.t?.t('people','message','requiredError'),
+  txt_message_createError = global.t?.t('people','message','createError'),
+  txt_message_createSuccess = global.t?.t('people','message','createSuccess'),
 }) => {
   const navigation = useNavigation();
   const { showError, showSuccess } = useMessage();
@@ -141,11 +141,11 @@ const EmployeesTab = ({
       setEmployees(normalized);
     } catch (fetchError) {
       setEmployees([]);
-      setError(errorText);
+      setError(txt_message_loadError);
     } finally {
       setIsLoading(false);
     }
-  }, [errorText, parentPeopleId, peopleActions]);
+  }, [txt_message_loadError, parentPeopleId, peopleActions]);
 
   useEffect(() => {
     fetchEmployees();
@@ -184,7 +184,7 @@ const EmployeesTab = ({
     const alias = String(formData.alias || '').trim();
 
     if (!name || !alias) {
-      showError(requiredErrorText);
+      showError(txt_message_requiredError);
       return;
     }
 
@@ -198,7 +198,7 @@ const EmployeesTab = ({
     }
 
     if (!peopleActions?.company || !parentPeopleId) {
-      showError(createErrorText);
+      showError(txt_message_createError);
       return;
     }
 
@@ -218,11 +218,11 @@ const EmployeesTab = ({
       }
 
       await peopleActions.company(payload);
-      showSuccess(createSuccessText);
+      showSuccess(txt_message_createSuccess);
       handleCloseModal();
       fetchEmployees();
     } catch (saveError) {
-      showError(saveError?.message || createErrorText);
+      showError(saveError?.message || txt_message_createError);
     } finally {
       setIsSaving(false);
     }
@@ -233,7 +233,7 @@ const EmployeesTab = ({
       <View style={customStyles.tabContent}>
         <View style={customStyles.section}>
           <View style={customStyles.sectionHeader}>
-            <Text style={customStyles.sectionTitle}>{title}</Text>
+            <Text style={customStyles.sectionTitle}>{txt_title}</Text>
             <TouchableOpacity onPress={handleOpenModal}>
               <Icon name="add" size={24} color={colors.primary} />
             </TouchableOpacity>
@@ -244,9 +244,9 @@ const EmployeesTab = ({
               <ActivityIndicator size="small" color={colors.primary} />
             </View>
           ) : error ? (
-            <Text style={customStyles.emptyText}>{error}</Text>
+            <Text style={customStyles.txt_title_emptyText}>{error}</Text>
           ) : employees.length === 0 ? (
-            <Text style={customStyles.emptyText}>{emptyText}</Text>
+            <Text style={customStyles.txt_title_emptyText}>{txt_title_emptyText}</Text>
           ) : (
             employees.map(item => (
               <TouchableOpacity
@@ -301,7 +301,7 @@ const EmployeesTab = ({
               borderBottomColor: '#F1F5F9',
             }}>
             <Text style={{ fontSize: 20, fontWeight: '700', color: '#0F172A' }}>
-              {createTitle}
+              {txt_title_addPeople}
             </Text>
             <TouchableOpacity
               onPress={handleCloseModal}
