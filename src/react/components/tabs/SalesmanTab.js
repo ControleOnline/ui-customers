@@ -57,7 +57,7 @@ const SalesmanTab = ({
               style={customStyles.listItem}
               activeOpacity={0.8}
               onPress={() =>
-                navigation.navigate('ClientDetails', { client: item?.company })
+                navigation.push('ClientDetails', { client: item?.company })
               }>
               <View style={customStyles.itemContent}>
                 <Icon name="people" size={20} color={colors.primary} />

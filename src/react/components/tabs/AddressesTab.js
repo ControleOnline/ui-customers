@@ -42,9 +42,19 @@ const normalizeZipCode = value =>
 const normalizeAddress = address => ({
   id: normalizeId(address?.id || address?.['@id']),
   street: address?.street?.street || address?.street || '',
-  number: address?.number || '',
-  city: address?.street?.city?.city || address?.city || '',
-  state: address?.street?.city?.state?.state || address?.state || '',
+  number: String(address?.number || '').trim(),
+  city:
+    address?.street?.district?.city?.city ||
+    address?.street?.city?.city ||
+    address?.city ||
+    '',
+  state:
+    address?.street?.district?.city?.state?.uf ||
+    address?.street?.district?.city?.state?.state ||
+    address?.street?.city?.state?.uf ||
+    address?.street?.city?.state?.state ||
+    address?.state ||
+    '',
   zipCode:
     (typeof address?.zipCode === 'object'
       ? address?.zipCode?.cep
@@ -54,9 +64,17 @@ const normalizeAddress = address => ({
     address?.cep ||
     '',
   complement: address?.complement || '',
-  district: address?.street?.district?.district || address?.district || '',
+  district:
+    address?.street?.district?.district ||
+    address?.district ||
+    '',
   country:
-    address?.street?.city?.state?.country?.countryname || address?.country || '',
+    address?.street?.district?.city?.state?.country?.countrycode ||
+    address?.street?.district?.city?.state?.country?.countryname ||
+    address?.street?.city?.state?.country?.countrycode ||
+    address?.street?.city?.state?.country?.countryname ||
+    address?.country ||
+    '',
   nickname: address?.nickname || '',
 });
 
@@ -116,10 +134,18 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
 
     const street = normalizeString(formData.street);
     const city = normalizeString(formData.city);
+    const district = normalizeString(formData.district);
+    const state = normalizeString(formData.state);
+    const country = normalizeString(formData.country);
+    const number = String(formData.number || '')
+      .replace(/\D/g, '')
+      .trim();
     const zipCode = normalizeZipCode(formData.zipCode);
 
-    if (!street || !city) {
-      showError('Rua e cidade sao obrigatorios.');
+    if (!street || !city || !district || !state || !country || !number) {
+      showError(
+        'Rua, numero, bairro, cidade, estado e pais sao obrigatorios.',
+      );
       return;
     }
     if (!zipCode) {
@@ -135,25 +161,20 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     const payload = {
       street,
       city,
+      district,
+      state,
+      country,
       people: peopleIri,
-      number: normalizeString(formData.number),
+      number: parseInt(number, 10),
       complement: normalizeString(formData.complement),
-      state: normalizeString(formData.state),
-      district: normalizeString(formData.district),
-      country: normalizeString(formData.country),
       nickname: normalizeString(formData.nickname) || 'DEFAULT',
       cep: zipCode,
-      postal_code: zipCode,
     };
 
     try {
-      let saved;
-      if (editingItem) {
-        payload.id = editingItem.id;
-        saved = await actions.save(payload);
-      } else {
-        saved = await actions.save(payload);
-      }
+      // Backend de endereco (api-platform-common) usa somente POST discovery.
+      // No modo edicao, criamos o novo endereco e removemos o antigo quando houver troca real.
+      const saved = await actions.save(payload);
 
       const normalizedSaved = normalizeAddress(saved || payload);
       const updatedAddresses = editingItem
@@ -161,6 +182,18 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
             item.id === editingItem.id ? normalizedSaved : item,
           )
         : [...addresses, normalizedSaved];
+
+      const oldId = extractId(editingItem?.id);
+      const newId = extractId(normalizedSaved?.id);
+      if (
+        editingItem &&
+        actions?.remove &&
+        oldId &&
+        newId &&
+        oldId !== newId
+      ) {
+        await actions.remove(oldId);
+      }
 
       setAddresses(updatedAddresses);
       onUpdateClient?.('address', mapAddressesForClient(updatedAddresses));
