@@ -17,10 +17,26 @@ import UsersTab from '../components/tabs/UsersTab';
 import SalesmanTab from '../components/tabs/SalesmanTab';
 import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
+import ProductsTab from '../components/tabs/ProductsTab';
+
+const resolveContextKey = rawContext => {
+  if (!rawContext) {
+    return '';
+  }
+
+  if (typeof rawContext === 'string') {
+    return rawContext.trim().toLowerCase();
+  }
+
+  return String(rawContext?.context || '')
+    .trim()
+    .toLowerCase();
+};
 
 const ClientDetails = ({ route, navigation }) => {
   const { width } = Dimensions.get('window');
   const { client: initialClient } = route.params || {};
+  const detailContext = resolveContextKey(route.params?.context);
   const [client, setClient] = useState(initialClient);
   const [isLoadingClient, setIsLoadingClient] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
@@ -106,18 +122,25 @@ const ClientDetails = ({ route, navigation }) => {
   };
 
   const isPessoaJuridica = String(client?.peopleType || '').toUpperCase() === 'J';
+  const isProviderContext = ['provider', 'providers'].includes(detailContext);
 
   const tabs = isPessoaJuridica
     ? [
-        { key: 0, label: global.t?.t('people', 'title', 'general') },
-        { key: 1, label: global.t?.t('people', 'title', 'sellers') },
-        { key: 2, label: global.t?.t('people', 'title', 'contacts') },
-        { key: 3, label: global.t?.t('people', 'title', 'contracts') },
+        { key: 'general', label: global.t?.t('people', 'title', 'general') },
+        { key: 'sellers', label: global.t?.t('people', 'title', 'sellers') },
+        { key: 'contacts', label: global.t?.t('people', 'title', 'contacts') },
+        ...(isProviderContext
+          ? [{ key: 'products', label: global.t?.t('people', 'title', 'products') || 'Produtos' }]
+          : []),
+        { key: 'contracts', label: global.t?.t('people', 'title', 'contracts') },
       ]
     : [
-        { key: 0, label: global.t?.t('people', 'title', 'general') },
-        { key: 1, label: global.t?.t('people', 'title', 'users') },
-        { key: 2, label: global.t?.t('people', 'title', 'contracts') },
+        { key: 'general', label: global.t?.t('people', 'title', 'general') },
+        { key: 'users', label: global.t?.t('people', 'title', 'users') },
+        ...(isProviderContext
+          ? [{ key: 'products', label: global.t?.t('people', 'title', 'products') || 'Produtos' }]
+          : []),
+        { key: 'contracts', label: global.t?.t('people', 'title', 'contracts') },
       ];
 
   useEffect(() => {
@@ -236,16 +259,16 @@ const ClientDetails = ({ route, navigation }) => {
         {tabs.map(tab => (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
-            onPress={() => handleTabPress(tab.key)}>
+            style={[styles.tabButton, activeTab === tabs.findIndex(item => item.key === tab.key) && styles.tabButtonActive]}
+            onPress={() => handleTabPress(tabs.findIndex(item => item.key === tab.key))}>
             <Text
               style={[
                 styles.tabButtonText,
-                activeTab === tab.key && styles.tabButtonTextActive,
+                activeTab === tabs.findIndex(item => item.key === tab.key) && styles.tabButtonTextActive,
               ]}>
               {tab.label}
             </Text>
-            {activeTab === tab.key && <View style={styles.activeIndicator} />}
+            {activeTab === tabs.findIndex(item => item.key === tab.key) && <View style={styles.activeIndicator} />}
           </TouchableOpacity>
         ))}
       </View>
@@ -269,9 +292,9 @@ const ClientDetails = ({ route, navigation }) => {
         style={styles.contentContainer}>
         {tabs.map(tab => (
           <View key={tab.key} style={{ width, height: '100%' }}>
-            {tab.key === 0 ? (
+            {tab.key === 'general' ? (
               <GeneralTab {...tabProps} />
-            ) : tab.key === 1 ? (
+            ) : tab.key === 'sellers' || tab.key === 'users' ? (
               <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={{ paddingBottom: 80 }}
@@ -289,7 +312,7 @@ const ClientDetails = ({ route, navigation }) => {
                   <UsersTab {...tabProps} />
                 )}
               </ScrollView>
-            ) : tab.key === 2 && isPessoaJuridica ? (
+            ) : tab.key === 'contacts' ? (
               <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={{ paddingBottom: 80 }}
@@ -305,6 +328,14 @@ const ClientDetails = ({ route, navigation }) => {
                   createSuccessText="Contato cadastrado com sucesso."
                   createErrorText="Nao foi possivel cadastrar o contato."
                 />
+              </ScrollView>
+            ) : tab.key === 'products' ? (
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingBottom: 80 }}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator={false}>
+                <ProductsTab {...tabProps} />
               </ScrollView>
             ) : (
               <ScrollView
