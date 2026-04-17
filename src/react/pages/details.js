@@ -4,13 +4,11 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  StyleSheet,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStores } from '@store';
 import { detailsStyles } from '../styles/details';
-import { colors } from '@controleonline/../../src/styles/colors';
 
 import GeneralTab from '../components/tabs/GeneralTab';
 import UsersTab from '../components/tabs/UsersTab';
@@ -18,6 +16,7 @@ import SalesmanTab from '../components/tabs/SalesmanTab';
 import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 import ProductsTab from '../components/tabs/ProductsTab';
+import styles from './details.page.styles';
 
 const resolveContextKey = rawContext => {
   if (!rawContext) {
@@ -179,7 +178,7 @@ const ClientDetails = ({ route, navigation }) => {
         ))}
       </View>
 
-      <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+      <View style={styles.skeletonContent}>
         <View style={styles.skeletonCard}>
           <View
             style={[
@@ -280,7 +279,7 @@ const ClientDetails = ({ route, navigation }) => {
         nestedScrollEnabled
         directionalLockEnabled
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={styles.scrollContent}
         onScroll={event => {
           const contentOffsetX = event.nativeEvent.contentOffset.x;
           const currentIndex = Math.round(contentOffsetX / width);
@@ -291,12 +290,12 @@ const ClientDetails = ({ route, navigation }) => {
         scrollEventThrottle={16}
         style={styles.contentContainer}>
         {tabs.map(tab => (
-          <View key={tab.key} style={{ width, height: '100%' }}>
+          <View key={tab.key} style={[styles.tabPane, { width }]}>
             {tab.key === 'general' ? (
               <GeneralTab {...tabProps} />
             ) : tab.key === 'sellers' || tab.key === 'users' ? (
               <ScrollView
-                style={{ flex: 1 }}
+                style={styles.tabScroll}
                 contentContainerStyle={{ paddingBottom: 80 }}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
@@ -314,7 +313,7 @@ const ClientDetails = ({ route, navigation }) => {
               </ScrollView>
             ) : tab.key === 'contacts' ? (
               <ScrollView
-                style={{ flex: 1 }}
+                style={styles.tabScroll}
                 contentContainerStyle={{ paddingBottom: 80 }}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
@@ -331,7 +330,7 @@ const ClientDetails = ({ route, navigation }) => {
               </ScrollView>
             ) : tab.key === 'products' ? (
               <ScrollView
-                style={{ flex: 1 }}
+                style={styles.tabScroll}
                 contentContainerStyle={{ paddingBottom: 80 }}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
@@ -339,7 +338,7 @@ const ClientDetails = ({ route, navigation }) => {
               </ScrollView>
             ) : (
               <ScrollView
-                style={{ flex: 1 }}
+                style={styles.tabScroll}
                 contentContainerStyle={{ paddingBottom: 80 }}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
@@ -352,103 +351,5 @@ const ClientDetails = ({ route, navigation }) => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  headerProfile: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    backgroundColor: '#F8FAFC',
-  },
-  avatarContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  profileName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 4,
-    textAlign: 'center',
-    maxWidth: '86%',
-  },
-  profileId: {
-    fontSize: 14,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  tabsHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    position: 'relative',
-  },
-  tabButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  tabButtonTextActive: {
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    width: '60%',
-    height: 3,
-    backgroundColor: colors.primary,
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  skeletonCircle: {
-    backgroundColor: '#E2E8F0',
-  },
-  skeletonLine: {
-    backgroundColor: '#E2E8F0',
-    borderRadius: 8,
-  },
-  skeletonTab: {
-    flex: 1,
-    height: 36,
-    marginHorizontal: 8,
-    marginVertical: 10,
-    borderRadius: 10,
-    backgroundColor: '#E2E8F0',
-  },
-  skeletonCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-});
 
 export default ClientDetails;
