@@ -1,5 +1,6 @@
 import { useStores } from '@store';
 import React, { useEffect, useState } from 'react';
+
 import {
   Modal,
   Text,
@@ -9,10 +10,33 @@ import {
   View,
   Keyboard,
 } from 'react-native';
+
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 import { colors } from '@controleonline/../../src/styles/colors';
+
+import {
+  inlineStyle_265_6,
+  inlineStyle_266_12,
+  inlineStyle_279_14,
+  inlineStyle_288_16,
+  inlineStyle_291_49,
+  inlineStyle_299_10,
+  inlineStyle_302_16,
+  inlineStyle_303_18,
+  inlineStyle_304_18,
+  inlineStyle_308_18,
+  inlineStyle_314_24,
+  inlineStyle_324_16,
+  inlineStyle_325_18,
+  inlineStyle_327_14,
+  inlineStyle_341_16,
+  inlineStyle_343_14,
+  inlineStyle_350_20,
+  inlineStyle_353_14,
+  inlineStyle_360_20,
+} from './DocumentsTab.styles';
 
 const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -262,58 +286,37 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     <AnimatedModal
       visible={showModal}
       onRequestClose={closeModal}
-      style={{ justifyContent: 'flex-end' }}>
-      <View style={{
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        maxHeight: '80%',
-        width: '100%',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 10,
-      }}>
+      style={inlineStyle_265_6}>
+      <View style={inlineStyle_266_12}>
         {/* Header */}
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 24,
-          paddingVertical: 20,
-          borderBottomWidth: 1,
-          borderBottomColor: '#F1F5F9',
-        }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: '#0F172A' }}>
+        <View style={inlineStyle_279_14}>
+          <Text style={inlineStyle_288_16}>
             {editingItem ? 'Editar Documento' : 'Adicionar Documento'}
           </Text>
-          <TouchableOpacity onPress={closeModal} style={{
-            width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center'
-          }}>
+          <TouchableOpacity onPress={closeModal} style={inlineStyle_291_49}>
             <Icon name="close" size={20} color="#64748B" />
           </TouchableOpacity>
         </View>
 
         <ScrollView
-          style={{ padding: 24 }}
+          style={inlineStyle_299_10}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag">
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Tipo</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <View style={inlineStyle_302_16}>
+            <Text style={inlineStyle_303_18}>Tipo</Text>
+            <View style={inlineStyle_304_18}>
               {getAvailableDocumentTypes().map(type => (
                 <TouchableOpacity
                   key={type.documentType}
-                  style={{
-                    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1,
-                    borderColor: formData.type === type['@id'] ? '#007bff' : '#dee2e6',
-                    backgroundColor: formData.type === type['@id'] ? '#e7f3ff' : '#f8f9fa',
-                  }}
+                  style={inlineStyle_308_18({
+                    formData: formData,
+                    type: type,
+                  })}
                   onPress={() => setFormData({ ...formData, type: type['@id'] })}>
-                  <Text style={{
-                    fontSize: 14, color: formData.type === type['@id'] ? '#007bff' : '#64748B', fontWeight: formData.type === type['@id'] ? '600' : '400'
-                  }}>
+                  <Text style={inlineStyle_314_24({
+                    formData: formData,
+                    type: type,
+                  })}>
                     {type.documentType}
                   </Text>
                 </TouchableOpacity>
@@ -321,13 +324,10 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             </View>
           </View>
 
-          <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Número do Documento</Text>
+          <View style={inlineStyle_324_16}>
+            <Text style={inlineStyle_325_18}>Número do Documento</Text>
             <TextInput
-              style={{
-                borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
-                fontSize: 16, backgroundColor: '#f8f9fa'
-              }}
+              style={inlineStyle_327_14}
               placeholder="Número do documento"
               value={applyMask(formData.value || '', formData.type)}
               onChangeText={text => {
@@ -338,26 +338,22 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             />
           </View>
 
-          <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={inlineStyle_341_16}>
             <TouchableOpacity
-              style={{
-                flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#64748B', alignItems: 'center'
-              }}
+              style={inlineStyle_343_14}
               onPress={() => {
                 Keyboard.dismiss();
                 closeModal();
               }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#64748B' }}>Cancelar</Text>
+              <Text style={inlineStyle_350_20}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={{
-                flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#007bff', alignItems: 'center'
-              }}
+              style={inlineStyle_353_14}
               onPress={() => {
                 Keyboard.dismiss();
                 handleSave();
               }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>Salvar</Text>
+              <Text style={inlineStyle_360_20}>Salvar</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

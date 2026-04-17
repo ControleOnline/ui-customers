@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import {
   Text,
   TouchableOpacity,
@@ -7,11 +8,52 @@ import {
   View,
   Keyboard,
 } from 'react-native';
+
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 import { colors } from '@controleonline/../../src/styles/colors';
+
+import {
+  inlineStyle_174_6,
+  inlineStyle_175_12,
+  inlineStyle_188_14,
+  inlineStyle_197_16,
+  inlineStyle_200_49,
+  inlineStyle_208_10,
+  inlineStyle_213_20,
+  inlineStyle_214_22,
+  inlineStyle_216_18,
+  inlineStyle_224_20,
+  inlineStyle_225_22,
+  inlineStyle_226_22,
+  inlineStyle_228_20,
+  inlineStyle_239_20,
+  inlineStyle_248_20,
+  inlineStyle_249_22,
+  inlineStyle_250_22,
+  inlineStyle_252_20,
+  inlineStyle_263_20,
+  inlineStyle_275_20,
+  inlineStyle_276_22,
+  inlineStyle_278_18,
+  inlineStyle_288_20,
+  inlineStyle_289_22,
+  inlineStyle_290_22,
+  inlineStyle_292_20,
+  inlineStyle_303_20,
+  inlineStyle_312_20,
+  inlineStyle_313_22,
+  inlineStyle_314_22,
+  inlineStyle_316_20,
+  inlineStyle_327_20,
+  inlineStyle_339_16,
+  inlineStyle_341_14,
+  inlineStyle_348_20,
+  inlineStyle_351_14,
+  inlineStyle_358_20,
+} from './UsersTab.styles';
 
 const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -171,64 +213,37 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     <AnimatedModal
       visible={showModal}
       onRequestClose={closeModal}
-      style={{ justifyContent: 'flex-end' }}>
-      <View style={{
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        maxHeight: '80%',
-        width: '100%',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 10,
-      }}>
+      style={inlineStyle_174_6}>
+      <View style={inlineStyle_175_12}>
         {/* Header */}
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 24,
-          paddingVertical: 20,
-          borderBottomWidth: 1,
-          borderBottomColor: '#F1F5F9',
-        }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: '#0F172A' }}>
+        <View style={inlineStyle_188_14}>
+          <Text style={inlineStyle_197_16}>
             {editingItem ? 'Editar Senha do Usuário' : 'Adicionar Usuário'}
           </Text>
-          <TouchableOpacity onPress={closeModal} style={{
-            width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center'
-          }}>
+          <TouchableOpacity onPress={closeModal} style={inlineStyle_200_49}>
             <Icon name="close" size={20} color="#64748B" />
           </TouchableOpacity>
         </View>
 
         <ScrollView
-          style={{ padding: 24 }}
+          style={inlineStyle_208_10}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag">
           {editingItem ? (
             <View>
-              <View style={{ marginBottom: 20 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Usuário</Text>
+              <View style={inlineStyle_213_20}>
+                <Text style={inlineStyle_214_22}>Usuário</Text>
                 <TextInput
-                  style={{
-                    borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
-                    fontSize: 16, backgroundColor: '#e9ecef', color: '#6c757d'
-                  }}
+                  style={inlineStyle_216_18}
                   value={formData.username}
                   editable={false}
                 />
               </View>
-              <View style={{ marginBottom: 20 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Nova senha (opcional)</Text>
-                <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <View style={inlineStyle_224_20}>
+                <Text style={inlineStyle_225_22}>Nova senha (opcional)</Text>
+                <View style={inlineStyle_226_22}>
                   <TextInput
-                    style={{
-                      borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
-                      paddingRight: 48, fontSize: 16, backgroundColor: '#f8f9fa'
-                    }}
+                    style={inlineStyle_228_20}
                     placeholder="Nova senha (opcional)"
                     value={formData.password}
                     onChangeText={text => setFormData({ ...formData, password: text })}
@@ -236,7 +251,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   />
                   <TouchableOpacity
                     onPress={() => setShowPassword(prev => !prev)}
-                    style={{ position: 'absolute', right: 14, alignSelf: 'stretch', justifyContent: 'center' }}>
+                    style={inlineStyle_239_20}>
                     <Icon
                       name={showPassword ? 'visibility-off' : 'visibility'}
                       size={20}
@@ -245,14 +260,11 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   </TouchableOpacity>
                 </View>
               </View>
-              <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Confirmar nova senha</Text>
-                <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <View style={inlineStyle_248_20}>
+                <Text style={inlineStyle_249_22}>Confirmar nova senha</Text>
+                <View style={inlineStyle_250_22}>
                   <TextInput
-                    style={{
-                      borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
-                      paddingRight: 48, fontSize: 16, backgroundColor: '#f8f9fa'
-                    }}
+                    style={inlineStyle_252_20}
                     placeholder="Confirmar nova senha"
                     value={formData.confirmPassword}
                     onChangeText={text => setFormData({ ...formData, confirmPassword: text })}
@@ -260,7 +272,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   />
                   <TouchableOpacity
                     onPress={() => setShowConfirmPassword(prev => !prev)}
-                    style={{ position: 'absolute', right: 14, alignSelf: 'stretch', justifyContent: 'center' }}>
+                    style={inlineStyle_263_20}>
                     <Icon
                       name={showConfirmPassword ? 'visibility-off' : 'visibility'}
                       size={20}
@@ -272,27 +284,21 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             </View>
           ) : (
             <View>
-              <View style={{ marginBottom: 20 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Usuário</Text>
+              <View style={inlineStyle_275_20}>
+                <Text style={inlineStyle_276_22}>Usuário</Text>
                 <TextInput
-                  style={{
-                    borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
-                    fontSize: 16, backgroundColor: '#f8f9fa'
-                  }}
+                  style={inlineStyle_278_18}
                   placeholder="Nome de usuário"
                   value={formData.username}
                   onChangeText={text => setFormData({ ...formData, username: text })}
                   autoCapitalize="none"
                 />
               </View>
-              <View style={{ marginBottom: 20 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Senha</Text>
-                <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <View style={inlineStyle_288_20}>
+                <Text style={inlineStyle_289_22}>Senha</Text>
+                <View style={inlineStyle_290_22}>
                   <TextInput
-                    style={{
-                      borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
-                      paddingRight: 48, fontSize: 16, backgroundColor: '#f8f9fa'
-                    }}
+                    style={inlineStyle_292_20}
                     placeholder="Senha"
                     value={formData.password}
                     onChangeText={text => setFormData({ ...formData, password: text })}
@@ -300,7 +306,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   />
                   <TouchableOpacity
                     onPress={() => setShowPassword(prev => !prev)}
-                    style={{ position: 'absolute', right: 14, alignSelf: 'stretch', justifyContent: 'center' }}>
+                    style={inlineStyle_303_20}>
                     <Icon
                       name={showPassword ? 'visibility-off' : 'visibility'}
                       size={20}
@@ -309,14 +315,11 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   </TouchableOpacity>
                 </View>
               </View>
-              <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Confirmar Senha</Text>
-                <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <View style={inlineStyle_312_20}>
+                <Text style={inlineStyle_313_22}>Confirmar Senha</Text>
+                <View style={inlineStyle_314_22}>
                   <TextInput
-                    style={{
-                      borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
-                      paddingRight: 48, fontSize: 16, backgroundColor: '#f8f9fa'
-                    }}
+                    style={inlineStyle_316_20}
                     placeholder="Confirmar senha"
                     value={formData.confirmPassword}
                     onChangeText={text => setFormData({ ...formData, confirmPassword: text })}
@@ -324,7 +327,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   />
                   <TouchableOpacity
                     onPress={() => setShowConfirmPassword(prev => !prev)}
-                    style={{ position: 'absolute', right: 14, alignSelf: 'stretch', justifyContent: 'center' }}>
+                    style={inlineStyle_327_20}>
                     <Icon
                       name={showConfirmPassword ? 'visibility-off' : 'visibility'}
                       size={20}
@@ -336,26 +339,22 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             </View>
           )}
 
-          <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={inlineStyle_339_16}>
             <TouchableOpacity
-              style={{
-                flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#64748B', alignItems: 'center'
-              }}
+              style={inlineStyle_341_14}
               onPress={() => {
                 Keyboard.dismiss();
                 closeModal();
               }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#64748B' }}>Cancelar</Text>
+              <Text style={inlineStyle_348_20}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={{
-                flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#007bff', alignItems: 'center'
-              }}
+              style={inlineStyle_351_14}
               onPress={() => {
                 Keyboard.dismiss();
                 handleSave();
               }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>Salvar</Text>
+              <Text style={inlineStyle_358_20}>Salvar</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

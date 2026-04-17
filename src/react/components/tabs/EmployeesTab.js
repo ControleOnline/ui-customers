@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
 import {
   ActivityIndicator,
   Keyboard,
@@ -9,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
 import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -16,6 +18,35 @@ import { useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { colors } from '@controleonline/../../src/styles/colors';
+
+import {
+  inlineStyle_243_18,
+  inlineStyle_279_8,
+  inlineStyle_281_10,
+  inlineStyle_294_12,
+  inlineStyle_303_18,
+  inlineStyle_308_14,
+  inlineStyle_321_12,
+  inlineStyle_324_18,
+  inlineStyle_326_16,
+  inlineStyle_338_16,
+  inlineStyle_351_18,
+  inlineStyle_353_16,
+  inlineStyle_365_16,
+  inlineStyle_378_18,
+  inlineStyle_380_16,
+  inlineStyle_389_16,
+  inlineStyle_408_18,
+  inlineStyle_422_18,
+  inlineStyle_424_16,
+  inlineStyle_433_16,
+  inlineStyle_446_18,
+  inlineStyle_460_12,
+  inlineStyle_472_14,
+  inlineStyle_480_20,
+  inlineStyle_491_14,
+  inlineStyle_498_20,
+} from './EmployeesTab.styles';
 
 const extractId = value => String(value || '').replace(/\D/g, '');
 
@@ -240,7 +271,7 @@ const EmployeesTab = ({
           </View>
 
           {isLoading ? (
-            <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+            <View style={inlineStyle_243_18}>
               <ActivityIndicator size="small" color={colors.primary} />
             </View>
           ) : error ? (
@@ -272,129 +303,63 @@ const EmployeesTab = ({
           )}
         </View>
       </View>
-
       <AnimatedModal
         visible={showModal}
         onRequestClose={handleCloseModal}
-        style={{ justifyContent: 'flex-end' }}>
+        style={inlineStyle_279_8}>
         <View
-          style={{
-            backgroundColor: '#fff',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            maxHeight: '85%',
-            width: '100%',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 12,
-            elevation: 10,
-          }}>
+          style={inlineStyle_281_10}>
           <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: 24,
-              paddingVertical: 20,
-              borderBottomWidth: 1,
-              borderBottomColor: '#F1F5F9',
-            }}>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#0F172A' }}>
+            style={inlineStyle_294_12}>
+            <Text style={inlineStyle_303_18}>
               {txt_title_addPeople}
             </Text>
             <TouchableOpacity
               onPress={handleCloseModal}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: '#F1F5F9',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+              style={inlineStyle_308_14}>
               <Icon name="close" size={20} color="#64748B" />
             </TouchableOpacity>
           </View>
 
           <ScrollView
-            style={{ padding: 24 }}
+            style={inlineStyle_321_12}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag">
-            <View style={{ marginBottom: 20 }}>
+            <View style={inlineStyle_324_18}>
               <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '600',
-                  color: '#212529',
-                  marginBottom: 8,
-                }}>
+                style={inlineStyle_326_16}>
                 Nome *
               </Text>
               <TextInput
                 value={formData.name}
                 onChangeText={text => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="Digite o nome"
-                style={{
-                  borderWidth: 1,
-                  borderColor: '#e9ecef',
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  fontSize: 16,
-                  backgroundColor: '#f8f9fa',
-                }}
+                style={inlineStyle_338_16}
                 placeholderTextColor="#6c757d"
               />
             </View>
 
-            <View style={{ marginBottom: 20 }}>
+            <View style={inlineStyle_351_18}>
               <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '600',
-                  color: '#212529',
-                  marginBottom: 8,
-                }}>
+                style={inlineStyle_353_16}>
                 Apelido *
               </Text>
               <TextInput
                 value={formData.alias}
                 onChangeText={text => setFormData(prev => ({ ...prev, alias: text }))}
                 placeholder="Digite o apelido"
-                style={{
-                  borderWidth: 1,
-                  borderColor: '#e9ecef',
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  fontSize: 16,
-                  backgroundColor: '#f8f9fa',
-                }}
+                style={inlineStyle_365_16}
                 placeholderTextColor="#6c757d"
               />
             </View>
 
-            <View style={{ marginBottom: 8 }}>
+            <View style={inlineStyle_378_18}>
               <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '600',
-                  color: '#212529',
-                  marginBottom: 8,
-                }}>
+                style={inlineStyle_380_16}>
                 Data de Nascimento
               </Text>
               <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: '#e9ecef',
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  backgroundColor: '#f8f9fa',
-                }}>
+                style={inlineStyle_389_16}>
                 <Icon name="calendar-today" size={20} color="#6c757d" />
                 <TextInput
                   value={formData.foundationDateBr}
@@ -405,13 +370,7 @@ const EmployeesTab = ({
                     }))
                   }
                   placeholder="DD/MM/AAAA"
-                  style={{
-                    flex: 1,
-                    paddingVertical: 12,
-                    paddingHorizontal: 12,
-                    fontSize: 16,
-                    color: '#212529',
-                  }}
+                  style={inlineStyle_408_18}
                   placeholderTextColor="#6c757d"
                   keyboardType="numeric"
                   maxLength={10}
@@ -419,31 +378,20 @@ const EmployeesTab = ({
               </View>
             </View>
 
-            <View style={{ marginBottom: 20 }}>
+            <View style={inlineStyle_422_18}>
               <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '600',
-                  color: '#212529',
-                  marginBottom: 8,
-                }}>
+                style={inlineStyle_424_16}>
                 Tipo de Vinculo
               </Text>
               <View
-                style={{
-                  borderWidth: 1,
-                  borderColor: '#e9ecef',
-                  borderRadius: 12,
-                  backgroundColor: '#f8f9fa',
-                  overflow: 'hidden',
-                }}>
+                style={inlineStyle_433_16}>
                 <Picker
                   selectedValue={formData.linkType}
                   onValueChange={value =>
                     setFormData(prev => ({ ...prev, linkType: value }))
                   }
                   mode={pickerMode}
-                  style={{ color: '#212529' }}>
+                  style={inlineStyle_446_18}>
                   {linkTypeOptions.map(option => (
                     <Picker.Item
                       key={option.value}
@@ -457,27 +405,14 @@ const EmployeesTab = ({
           </ScrollView>
 
           <View
-            style={{
-              flexDirection: 'row',
-              padding: 20,
-              gap: 12,
-              borderTopWidth: 1,
-              borderTopColor: '#e9ecef',
-            }}>
+            style={inlineStyle_460_12}>
             <TouchableOpacity
               onPress={() => {
                 Keyboard.dismiss();
                 handleCloseModal();
               }}
-              style={{
-                flex: 1,
-                paddingVertical: 14,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: '#6c757d',
-                alignItems: 'center',
-              }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#6c757d' }}>
+              style={inlineStyle_472_14}>
+              <Text style={inlineStyle_480_20}>
                 Cancelar
               </Text>
             </TouchableOpacity>
@@ -488,14 +423,11 @@ const EmployeesTab = ({
                 handleSaveEmployee();
               }}
               disabled={isSaving}
-              style={{
-                flex: 1,
-                paddingVertical: 14,
-                borderRadius: 12,
-                backgroundColor: isSaving ? '#6c757d' : colors.primary,
-                alignItems: 'center',
-              }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
+              style={inlineStyle_491_14({
+                colors: colors,
+                isSaving: isSaving,
+              })}>
+              <Text style={inlineStyle_498_20}>
                 {isSaving ? 'Salvando...' : 'Salvar'}
               </Text>
             </TouchableOpacity>

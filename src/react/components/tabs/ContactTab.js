@@ -1,15 +1,35 @@
 import React, { useMemo, useState, useEffect } from 'react';
+
 import {
   View,
   Text,
   TouchableOpacity,
   TextInput,
 } from 'react-native';
+
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 import { colors } from '@controleonline/../../src/styles/colors';
+
+import {
+  inlineStyle_363_18,
+  inlineStyle_365_14,
+  inlineStyle_382_18,
+  inlineStyle_384_14,
+  inlineStyle_404_8,
+  inlineStyle_405_14,
+  inlineStyle_418_16,
+  inlineStyle_427_18,
+  inlineStyle_430_51,
+  inlineStyle_437_16,
+  inlineStyle_439_18,
+  inlineStyle_441_16,
+  inlineStyle_445_22,
+  inlineStyle_448_16,
+  inlineStyle_452_22,
+} from './ContactTab.styles';
 
 const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -360,12 +380,9 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
       if (modalType === 'phone') {
         return (
           <View>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Telefone</Text>
+            <Text style={inlineStyle_363_18}>Telefone</Text>
             <TextInput
-              style={{
-                borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
-                fontSize: 16, backgroundColor: '#f8f9fa'
-              }}
+              style={inlineStyle_365_14}
               placeholder="Ex: (11) 99999-9999"
               value={formData.phone || ''}
               onChangeText={text =>
@@ -379,12 +396,9 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
       } else if (modalType === 'email') {
         return (
           <View>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#212529', marginBottom: 8 }}>Email</Text>
+            <Text style={inlineStyle_382_18}>Email</Text>
             <TextInput
-              style={{
-                borderWidth: 1, borderColor: '#e9ecef', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
-                fontSize: 16, backgroundColor: '#f8f9fa'
-              }}
+              style={inlineStyle_384_14}
               placeholder="email@exemplo.com"
               value={formData.value || ''}
               onChangeText={text => setFormData({ ...formData, value: text })}
@@ -401,55 +415,30 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
       <AnimatedModal
         visible={showModal}
         onRequestClose={closeModal}
-        style={{ justifyContent: 'flex-end' }}>
-        <View style={{
-          backgroundColor: '#fff',
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-          maxHeight: '80%',
-          width: '100%',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 10,
-        }}>
+        style={inlineStyle_404_8}>
+        <View style={inlineStyle_405_14}>
           {/* Header */}
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: 24,
-            paddingVertical: 20,
-            borderBottomWidth: 1,
-            borderBottomColor: '#F1F5F9',
-          }}>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#0F172A' }}>
+          <View style={inlineStyle_418_16}>
+            <Text style={inlineStyle_427_18}>
               {editingItem ? (modalType === 'phone' ? 'Editar Telefone' : 'Editar Email') : (modalType === 'phone' ? 'Adicionar Telefone' : 'Adicionar Email')}
             </Text>
-            <TouchableOpacity onPress={closeModal} style={{
-              width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center'
-            }}>
+            <TouchableOpacity onPress={closeModal} style={inlineStyle_430_51}>
               <Icon name="close" size={20} color="#64748B" />
             </TouchableOpacity>
           </View>
 
-          <View style={{ padding: 24 }}>
+          <View style={inlineStyle_437_16}>
             {renderModalContent()}
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
+            <View style={inlineStyle_439_18}>
               <TouchableOpacity
-                style={{
-                  flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#64748B', alignItems: 'center'
-                }}
+                style={inlineStyle_441_16}
                 onPress={closeModal}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#64748B' }}>Cancelar</Text>
+                <Text style={inlineStyle_445_22}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{
-                  flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#007bff', alignItems: 'center'
-                }}
+                style={inlineStyle_448_16}
                 onPress={handleSave}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>Salvar</Text>
+                <Text style={inlineStyle_452_22}>Salvar</Text>
               </TouchableOpacity>
             </View>
           </View>

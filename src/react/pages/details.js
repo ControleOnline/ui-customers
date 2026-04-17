@@ -1,4 +1,5 @@
 import React, { useState, useLayoutEffect, useEffect } from 'react';
+
 import {
   Text,
   View,
@@ -6,10 +7,10 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStores } from '@store';
 import { detailsStyles } from '../styles/details';
-
 import GeneralTab from '../components/tabs/GeneralTab';
 import UsersTab from '../components/tabs/UsersTab';
 import SalesmanTab from '../components/tabs/SalesmanTab';
@@ -17,6 +18,13 @@ import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 import ProductsTab from '../components/tabs/ProductsTab';
 import styles from './details.page.styles';
+
+import {
+  inlineStyle_299_16,
+  inlineStyle_317_16,
+  inlineStyle_334_16,
+  inlineStyle_342_16,
+} from './details.styles';
 
 const resolveContextKey = rawContext => {
   if (!rawContext) {
@@ -253,7 +261,6 @@ const ClientDetails = ({ route, navigation }) => {
 
         <Text style={styles.profileId}>{`ID: ${client.id}`}</Text>
       </View>
-
       <View style={styles.tabsHeader}>
         {tabs.map(tab => (
           <TouchableOpacity
@@ -271,7 +278,6 @@ const ClientDetails = ({ route, navigation }) => {
           </TouchableOpacity>
         ))}
       </View>
-
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -296,7 +302,7 @@ const ClientDetails = ({ route, navigation }) => {
             ) : tab.key === 'sellers' || tab.key === 'users' ? (
               <ScrollView
                 style={styles.tabScroll}
-                contentContainerStyle={{ paddingBottom: 80 }}
+                contentContainerStyle={inlineStyle_299_16}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
                 {isPessoaJuridica ? (
@@ -314,7 +320,7 @@ const ClientDetails = ({ route, navigation }) => {
             ) : tab.key === 'contacts' ? (
               <ScrollView
                 style={styles.tabScroll}
-                contentContainerStyle={{ paddingBottom: 80 }}
+                contentContainerStyle={inlineStyle_317_16}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
                 <EmployeesTab
@@ -331,7 +337,7 @@ const ClientDetails = ({ route, navigation }) => {
             ) : tab.key === 'products' ? (
               <ScrollView
                 style={styles.tabScroll}
-                contentContainerStyle={{ paddingBottom: 80 }}
+                contentContainerStyle={inlineStyle_334_16}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
                 <ProductsTab {...tabProps} />
@@ -339,7 +345,7 @@ const ClientDetails = ({ route, navigation }) => {
             ) : (
               <ScrollView
                 style={styles.tabScroll}
-                contentContainerStyle={{ paddingBottom: 80 }}
+                contentContainerStyle={inlineStyle_342_16}
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}>
                 <ContractsTab {...tabProps} />

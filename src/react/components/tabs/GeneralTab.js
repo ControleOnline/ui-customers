@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+
 import {
   ActivityIndicator,
   ScrollView,
@@ -8,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 import { colors } from '@controleonline/../../src/styles/colors';
@@ -15,6 +17,28 @@ import ContactTab from './ContactTab';
 import DocumentsTab from './DocumentsTab';
 import AddressesTab from './AddressesTab';
 
+import {
+  inlineStyle_213_6,
+  inlineStyle_222_14,
+  inlineStyle_223_16,
+  inlineStyle_230_12,
+  inlineStyle_244_14,
+  inlineStyle_245_16,
+  inlineStyle_252_12,
+  inlineStyle_266_14,
+  inlineStyle_267_16,
+  inlineStyle_271_12,
+  inlineStyle_279_64,
+  inlineStyle_291_14,
+  inlineStyle_303_14,
+  inlineStyle_304_16,
+  inlineStyle_308_12,
+  inlineStyle_319_18,
+  inlineStyle_341_12,
+  inlineStyle_354_20,
+} from './GeneralTab.styles';
+
+import { inlineStyle_237_6 } from './GeneralTab.styles';
 const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
 
 const normalizeEnable = value => {
@@ -210,8 +234,8 @@ const GeneralTab = ({
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: '#fff' }}
-      contentContainerStyle={{ paddingBottom: 80 }}
+      style={inlineStyle_213_6}
+      contentContainerStyle={inlineStyle_237_6}
       nestedScrollEnabled
       showsVerticalScrollIndicator={false}>
       <View style={customStyles.section}>
@@ -219,64 +243,39 @@ const GeneralTab = ({
           <Text style={customStyles.sectionTitle}>Dados Cadastrais</Text>
         </View>
 
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#334155', marginBottom: 6 }}>
+        <View style={inlineStyle_222_14}>
+          <Text style={inlineStyle_223_16}>
             {nameLabel}
           </Text>
           <TextInput
             value={registrationForm.name}
             onChangeText={text => setRegistrationForm(prev => ({ ...prev, name: text }))}
             placeholder={nameLabel}
-            style={{
-              borderWidth: 1,
-              borderColor: '#E2E8F0',
-              borderRadius: 10,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              fontSize: 15,
-              color: '#0F172A',
-              backgroundColor: '#F8FAFC',
-            }}
+            style={inlineStyle_230_12}
             placeholderTextColor="#94A3B8"
           />
         </View>
 
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#334155', marginBottom: 6 }}>
+        <View style={inlineStyle_244_14}>
+          <Text style={inlineStyle_245_16}>
             {aliasLabel}
           </Text>
           <TextInput
             value={registrationForm.alias}
             onChangeText={text => setRegistrationForm(prev => ({ ...prev, alias: text }))}
             placeholder={aliasLabel}
-            style={{
-              borderWidth: 1,
-              borderColor: '#E2E8F0',
-              borderRadius: 10,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              fontSize: 15,
-              color: '#0F172A',
-              backgroundColor: '#F8FAFC',
-            }}
+            style={inlineStyle_252_12}
             placeholderTextColor="#94A3B8"
           />
         </View>
 
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#334155', marginBottom: 6 }}>
+        <View style={inlineStyle_266_14}>
+          <Text style={inlineStyle_267_16}>
             {dateLabel}
           </Text>
           <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              borderWidth: 1,
-              borderColor: '#E2E8F0',
-              borderRadius: 10,
-              backgroundColor: '#F8FAFC',
-            }}>
-            <Icon name="event" size={18} color={colors.primary} style={{ marginLeft: 10 }} />
+            style={inlineStyle_271_12}>
+            <Icon name="event" size={18} color={colors.primary} style={inlineStyle_279_64} />
             <TextInput
               value={registrationForm.dateBr}
               onChangeText={text =>
@@ -288,35 +287,19 @@ const GeneralTab = ({
               placeholder="DD/MM/AAAA" // @todo // mostrar também no padrão americano, MM/DD/AAAA
               keyboardType="numeric"
               maxLength={10}
-              style={{
-                flex: 1,
-                paddingHorizontal: 10,
-                paddingVertical: 10,
-                fontSize: 15,
-                color: '#0F172A',
-              }}
+              style={inlineStyle_291_14}
               placeholderTextColor="#94A3B8"
             />
           </View>
         </View>
 
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#334155', marginBottom: 6 }}>
+        <View style={inlineStyle_303_14}>
+          <Text style={inlineStyle_304_16}>
             Acesso do usuário
           </Text>
           <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              borderWidth: 1,
-              borderColor: '#E2E8F0',
-              borderRadius: 10,
-              backgroundColor: '#F8FAFC',
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-            }}>
-            <Text style={{ fontSize: 14, color: '#475569' }}>
+            style={inlineStyle_308_12}>
+            <Text style={inlineStyle_319_18}>
               {registrationForm.enable ? 'Liberado' : 'Bloqueado'}
             </Text>
             <Switch
@@ -338,27 +321,21 @@ const GeneralTab = ({
             onPress={saveRegistration}
             disabled={!hasRegistrationChanges || isSavingRegistration}
             activeOpacity={0.85}
-            style={{
-              height: 42,
-              borderRadius: 10,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor:
-                !hasRegistrationChanges || isSavingRegistration
-                  ? '#CBD5E1'
-                  : colors.primary,
-            }}>
+            style={inlineStyle_341_12({
+              colors: colors,
+              hasRegistrationChanges: hasRegistrationChanges,
+              isSavingRegistration: isSavingRegistration,
+            })}>
             {isSavingRegistration ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>
+              <Text style={inlineStyle_354_20}>
                 {global.t?.t('users','button','saveChanges')}
               </Text>
             )}
           </TouchableOpacity>
         )}
       </View>
-
       <ContactTab
         client={client}
         customStyles={customStyles}

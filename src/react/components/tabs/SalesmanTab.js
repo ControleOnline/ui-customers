@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo } from 'react';
+
 import {
   ActivityIndicator,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
 import { colors } from '@controleonline/../../src/styles/colors';
-
+import { inlineStyle_46_16 } from './SalesmanTab.styles';
 const extractId = value => String(value || '').replace(/\D/g, '');
 
 const SalesmanTab = ({
@@ -43,7 +45,7 @@ const SalesmanTab = ({
     <View style={customStyles.tabContent}>
       <View style={customStyles.section}>
         {isLoading ? (
-          <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+          <View style={inlineStyle_46_16}>
             <ActivityIndicator size="small" color={colors.primary} />
           </View>
         ) : error ? (
