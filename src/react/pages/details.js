@@ -43,6 +43,7 @@ const resolveContextKey = rawContext => {
 const ClientDetails = ({ route, navigation }) => {
   const { width } = Dimensions.get('window');
   const { client: initialClient } = route.params || {};
+  const rawContext = route.params?.context;
   const detailContext = resolveContextKey(route.params?.context);
   const [client, setClient] = useState(initialClient);
   const [isLoadingClient, setIsLoadingClient] = useState(true);
@@ -55,6 +56,12 @@ const ClientDetails = ({ route, navigation }) => {
   const savePeople = peopleActions?.save;
 
   const extractId = value => String(value || '').replace(/\D/g, '');
+  const parentCompanyIri = String(rawContext?.parentCompanyIri || '').startsWith('/people/')
+    ? String(rawContext.parentCompanyIri)
+    : '';
+  const initialContactLinkType = String(rawContext?.linkType || '')
+    .trim()
+    .toLowerCase();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -247,6 +254,8 @@ const ClientDetails = ({ route, navigation }) => {
     isEditing: true,
     onUpdateClient: updateClientData,
     onSaveClientData: persistClientData,
+    parentCompanyIri,
+    initialContactLinkType,
   };
 
   return (

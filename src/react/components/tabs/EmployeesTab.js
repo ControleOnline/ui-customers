@@ -100,6 +100,21 @@ const LINK_TYPE_OPTIONS = [
   { value: 'manager', translationKey: 'manager' },
 ];
 
+const normalizeLinkType = value => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return ['employee', 'owner', 'director', 'manager'].includes(normalized)
+    ? normalized
+    : 'employee';
+};
+
+const resolveEmployeeLinkType = employee =>
+  normalizeLinkType(
+    employee?.linkType ||
+      employee?.link?.linkType ||
+      employee?.peopleLink?.linkType ||
+      (Array.isArray(employee?.link) ? employee.link[0]?.linkType : ''),
+  );
+
 const EmployeesTab = ({
   client,
   customStyles,
@@ -284,7 +299,16 @@ const EmployeesTab = ({
                 key={String(item?.id || item?.['@id'])}
                 style={customStyles.listItem}
                 activeOpacity={0.8}
-                onPress={() => navigation.push('ClientDetails', { client: item })}>
+                onPress={() =>
+                  navigation.push('ClientDetails', {
+                    client: item,
+                    context: {
+                      context: 'contacts',
+                      parentCompanyIri: `/people/${parentPeopleId}`,
+                      linkType: resolveEmployeeLinkType(item),
+                    },
+                  })
+                }>
                 <View style={customStyles.itemContent}>
                   <Icon name="person" size={20} color={colors.primary} />
                   <View>

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import {
   ActivityIndicator,
+  Platform,
   ScrollView,
   Switch,
   Text,
@@ -10,7 +11,9 @@ import {
   View,
 } from 'react-native';
 
+import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useStore } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 import { colors } from '@controleonline/../../src/styles/colors';
 import ContactTab from './ContactTab';
@@ -115,21 +118,58 @@ const parseBrDateToYmd = value => {
     .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 };
 
+const LINK_TYPE_OPTIONS = [
+  { value: 'employee', translationKey: 'employee' },
+  { value: 'owner', translationKey: 'owner' },
+  { value: 'director', translationKey: 'director' },
+  { value: 'manager', translationKey: 'manager' },
+];
+
+const normalizeLinkType = value => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return ['employee', 'owner', 'director', 'manager'].includes(normalized)
+    ? normalized
+    : 'employee';
+};
+
+const toPeopleIri = value => {
+  const directIri = String(value?.['@id'] || '').trim();
+  if (directIri.startsWith('/people/')) {
+    return directIri;
+  }
+
+  const id = String(value?.id || '').replace(/\D/g, '');
+  return id ? `/people/${id}` : '';
+};
+
 const GeneralTab = ({
   client,
   customStyles,
   isEditing,
   onUpdateClient,
   onSaveClientData,
+  parentCompanyIri,
+  initialContactLinkType,
 }) => {
   const {showError, showSuccess} = useMessage();
+  const peopleLinkStore = useStore('people_link');
+  const peopleLinkActions = peopleLinkStore?.actions || {};
   const [isSavingRegistration, setIsSavingRegistration] = useState(false);
+  const [isSavingLinkType, setIsSavingLinkType] = useState(false);
+  const [peopleLinkId, setPeopleLinkId] = useState('');
+  const [linkTypeOptions, setLinkTypeOptions] = useState(
+    LINK_TYPE_OPTIONS.map(option => ({
+      value: option.value,
+      label: option.value,
+    })),
+  );
   const [registrationForm, setRegistrationForm] = useState({
     name: '',
     alias: '',
     dateBr: '',
     enable: false,
     peopleType: 'J',
+    linkType: 'employee',
   });
   const [originalRegistrationForm, setOriginalRegistrationForm] = useState({
     name: '',
@@ -137,7 +177,16 @@ const GeneralTab = ({
     dateBr: '',
     enable: false,
     peopleType: 'J',
+    linkType: 'employee',
   });
+
+  const pickerMode = Platform.OS === 'android' ? 'dropdown' : undefined;
+  const contactPeopleIri = useMemo(() => toPeopleIri(client), [client]);
+  const canEditLinkType =
+    isEditing &&
+    String(registrationForm.peopleType || '').toUpperCase() === 'F' &&
+    String(parentCompanyIri || '').startsWith('/people/') &&
+    String(contactPeopleIri || '').startsWith('/people/');
 
   useEffect(() => {
     const initial = {
@@ -146,11 +195,54 @@ const GeneralTab = ({
       dateBr: formatYmdToBr(client?.foundationDate),
       enable: normalizeEnable(client?.enable ?? client?.enabled),
       peopleType: String(client?.peopleType || 'J').toUpperCase(),
+      linkType: normalizeLinkType(initialContactLinkType),
     };
 
     setRegistrationForm(initial);
     setOriginalRegistrationForm(initial);
-  }, [client?.id, client?.name, client?.alias, client?.foundationDate, client?.peopleType]);
+  }, [client?.id, client?.name, client?.alias, client?.foundationDate, client?.peopleType, initialContactLinkType]);
+
+  useEffect(() => {
+    setLinkTypeOptions(
+      LINK_TYPE_OPTIONS.map(option => ({
+        value: option.value,
+        label: global.t?.t('people', 'label', option.translationKey),
+      })),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!canEditLinkType || !peopleLinkActions?.getItems) {
+      return;
+    }
+
+    let cancelled = false;
+
+    peopleLinkActions
+      .getItems({
+        people: contactPeopleIri,
+        company: parentCompanyIri,
+        itemsPerPage: 1,
+      })
+      .then(items => {
+        if (cancelled || !Array.isArray(items) || items.length === 0) {
+          return;
+        }
+
+        const link = items[0];
+        const nextLinkType = normalizeLinkType(link?.linkType);
+        const nextLinkId = String(link?.id || link?.['@id'] || '').replace(/\D/g, '');
+
+        setPeopleLinkId(nextLinkId);
+        setRegistrationForm(prev => ({ ...prev, linkType: nextLinkType }));
+        setOriginalRegistrationForm(prev => ({ ...prev, linkType: nextLinkType }));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canEditLinkType, contactPeopleIri, parentCompanyIri, peopleLinkActions]);
 
   const isPessoaFisica = registrationForm.peopleType === 'F';
   const nameLabel = isPessoaFisica ? global.t?.t('users','label','name') : global.t?.t('users','label','companyName');
@@ -162,12 +254,15 @@ const GeneralTab = ({
       normalizeText(registrationForm.name) !== normalizeText(originalRegistrationForm.name) ||
       normalizeText(registrationForm.alias) !== normalizeText(originalRegistrationForm.alias) ||
       String(registrationForm.dateBr || '') !== String(originalRegistrationForm.dateBr || '') ||
-      Boolean(registrationForm.enable) !== Boolean(originalRegistrationForm.enable)
+      Boolean(registrationForm.enable) !== Boolean(originalRegistrationForm.enable) ||
+      (canEditLinkType &&
+        normalizeLinkType(registrationForm.linkType) !==
+          normalizeLinkType(originalRegistrationForm.linkType))
     );
-  }, [registrationForm, originalRegistrationForm]);
+  }, [canEditLinkType, registrationForm, originalRegistrationForm]);
 
   const saveRegistration = async () => {
-    if (!isEditing || isSavingRegistration || !hasRegistrationChanges) {
+    if (!isEditing || isSavingRegistration || isSavingLinkType || !hasRegistrationChanges) {
       return;
     }
 
@@ -195,6 +290,21 @@ const GeneralTab = ({
 
     setIsSavingRegistration(true);
     try {
+      if (canEditLinkType && peopleLinkActions?.save) {
+        setIsSavingLinkType(true);
+        const savedLink = await peopleLinkActions.save({
+          ...(peopleLinkId ? { id: peopleLinkId } : {}),
+          company: parentCompanyIri,
+          people: contactPeopleIri,
+          linkType: normalizeLinkType(registrationForm.linkType),
+        });
+
+        const nextLinkId = String(savedLink?.id || savedLink?.['@id'] || '').replace(/\D/g, '');
+        if (nextLinkId) {
+          setPeopleLinkId(nextLinkId);
+        }
+      }
+
       const payload = {
         name,
         alias,
@@ -210,6 +320,9 @@ const GeneralTab = ({
       onUpdateClient?.('name', name);
       onUpdateClient?.('alias', alias);
       onUpdateClient?.('enable', Boolean(registrationForm.enable));
+      if (canEditLinkType) {
+        onUpdateClient?.('linkType', normalizeLinkType(registrationForm.linkType));
+      }
       if (foundationDate) {
         onUpdateClient?.('foundationDate', foundationDate);
       }
@@ -220,6 +333,7 @@ const GeneralTab = ({
         alias,
         enable: Boolean(registrationForm.enable),
         dateBr: foundationDate ? formatYmdToBr(foundationDate) : registrationForm.dateBr,
+        linkType: normalizeLinkType(registrationForm.linkType),
       };
 
       setRegistrationForm(updated);
@@ -228,6 +342,7 @@ const GeneralTab = ({
     } catch (error) {
       showError?.(global.t?.t('users','error','registrationUpdateFailed'));
     } finally {
+      setIsSavingLinkType(false);
       setIsSavingRegistration(false);
     }
   };
@@ -316,17 +431,43 @@ const GeneralTab = ({
           </View>
         </View>
 
+        {canEditLinkType && (
+          <View style={inlineStyle_244_14}>
+            <Text style={inlineStyle_245_16}>Tipo de Vinculo</Text>
+            <View style={inlineStyle_271_12}>
+              <Picker
+                selectedValue={registrationForm.linkType}
+                onValueChange={value =>
+                  setRegistrationForm(prev => ({
+                    ...prev,
+                    linkType: normalizeLinkType(value),
+                  }))
+                }
+                mode={pickerMode}
+                style={inlineStyle_291_14}>
+                {linkTypeOptions.map(option => (
+                  <Picker.Item
+                    key={option.value}
+                    label={option.label || option.value}
+                    value={option.value}
+                  />
+                ))}
+              </Picker>
+            </View>
+          </View>
+        )}
+
         {isEditing && (
           <TouchableOpacity
             onPress={saveRegistration}
-            disabled={!hasRegistrationChanges || isSavingRegistration}
+            disabled={!hasRegistrationChanges || isSavingRegistration || isSavingLinkType}
             activeOpacity={0.85}
             style={inlineStyle_341_12({
               colors: colors,
               hasRegistrationChanges: hasRegistrationChanges,
-              isSavingRegistration: isSavingRegistration,
+              isSavingRegistration: isSavingRegistration || isSavingLinkType,
             })}>
-            {isSavingRegistration ? (
+            {isSavingRegistration || isSavingLinkType ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text style={inlineStyle_354_20}>
