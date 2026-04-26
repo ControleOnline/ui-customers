@@ -339,7 +339,7 @@ const GeneralTab = ({
       setRegistrationForm(updated);
       setOriginalRegistrationForm(updated);
       showSuccess?.(global.t?.t('users','success','registrationUpdated'));
-    } catch (error) {
+    } catch {
       showError?.(global.t?.t('users','error','registrationUpdateFailed'));
     } finally {
       setIsSavingLinkType(false);
@@ -477,12 +477,14 @@ const GeneralTab = ({
           </TouchableOpacity>
         )}
       </View>
-      <ContactTab
-        client={client}
-        customStyles={customStyles}
-        isEditing={isEditing}
-        onUpdateClient={onUpdateClient}
-      />
+      {isPessoaFisica && (
+        <ContactTab
+          client={client}
+          customStyles={customStyles}
+          isEditing={isEditing}
+          onUpdateClient={onUpdateClient}
+        />
+      )}
       <DocumentsTab
         client={client}
         customStyles={customStyles}
