@@ -45,6 +45,7 @@ const ClientDetails = ({ route, navigation }) => {
   const { client: initialClient } = route.params || {};
   const rawContext = route.params?.context;
   const detailContext = resolveContextKey(route.params?.context);
+  const requestedInitialTab = String(route.params?.initialTab || '').trim();
   const [client, setClient] = useState(initialClient);
   const [isLoadingClient, setIsLoadingClient] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
@@ -63,6 +64,29 @@ const ClientDetails = ({ route, navigation }) => {
     .trim()
     .toLowerCase();
 
+  const resolveInitialTabIndex = nextClient => {
+    if (!requestedInitialTab) return 0;
+
+    const nextIsPessoaJuridica = String(nextClient?.peopleType || '').toUpperCase() === 'J';
+    const nextIsProviderContext = ['provider', 'providers'].includes(detailContext);
+    const keys = nextIsPessoaJuridica
+      ? [
+          'general',
+          'sellers',
+          'contacts',
+          ...(nextIsProviderContext ? ['products'] : []),
+          'contracts',
+        ]
+      : [
+          'general',
+          'users',
+          ...(nextIsProviderContext ? ['products'] : []),
+          'contracts',
+        ];
+    const index = keys.indexOf(requestedInitialTab);
+    return index >= 0 ? index : 0;
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: '',
@@ -74,9 +98,10 @@ const ClientDetails = ({ route, navigation }) => {
 
   useEffect(() => {
     let mounted = true;
+    const initialTabIndex = resolveInitialTabIndex(initialClient);
     setClient(initialClient || null);
-    setActiveTab(0);
-    scrollRef.current?.scrollTo({ x: 0, animated: false });
+    setActiveTab(initialTabIndex);
+    scrollRef.current?.scrollTo({ x: initialTabIndex * width, animated: false });
 
     const clientId = extractId(initialClient?.id || initialClient?.['@id']);
     if (!clientId || !getPeople) {
@@ -109,7 +134,7 @@ const ClientDetails = ({ route, navigation }) => {
     return () => {
       mounted = false;
     };
-  }, [initialClient, getPeople]);
+  }, [initialClient, getPeople, requestedInitialTab, detailContext, width]);
 
   const updateClientData = (field, data) => {
     setClient(prevClient => ({ ...prevClient, [field]: data }));

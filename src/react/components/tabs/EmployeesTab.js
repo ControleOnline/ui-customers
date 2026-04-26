@@ -299,7 +299,8 @@ const EmployeesTab = ({
                 key={String(item?.id || item?.['@id'])}
                 style={customStyles.listItem}
                 activeOpacity={0.8}
-                onPress={() =>
+                onPress={() => {
+                  navigation.setParams?.({ initialTab: 'contacts' });
                   navigation.push('ClientDetails', {
                     client: item,
                     context: {
@@ -307,8 +308,8 @@ const EmployeesTab = ({
                       parentCompanyIri: `/people/${parentPeopleId}`,
                       linkType: resolveEmployeeLinkType(item),
                     },
-                  })
-                }>
+                  });
+                }}>
                 <View style={customStyles.itemContent}>
                   <Icon name="person" size={20} color={colors.primary} />
                   <View>

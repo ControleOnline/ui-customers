@@ -115,8 +115,9 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   }, [client]);
 
   const openModal = item => {
-    setEditingItem(item || null);
-    setFormData(item || {});
+    const normalizedItem = item ? normalizeAddress(item) : {};
+    setEditingItem(item ? normalizedItem : null);
+    setFormData(normalizedItem);
     setShowModal(true);
   };
 
@@ -137,19 +138,23 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     const district = normalizeString(formData.district);
     const state = normalizeString(formData.state);
     const country = normalizeString(formData.country);
-    const number = String(formData.number || '')
-      .replace(/\D/g, '')
-      .trim();
+    const number = String(formData.number || '').trim();
     const zipCode = normalizeZipCode(formData.zipCode);
 
-    if (!street || !city || !district || !state || !country || !number) {
-      showError(
-        'Rua, numero, bairro, cidade, estado e pais sao obrigatorios.',
-      );
-      return;
-    }
     if (!zipCode) {
       showError('CEP e obrigatorio.');
+      return;
+    }
+    if (!street || !number || !district || !city || !state || !country) {
+      const missingFields = [
+        !street ? 'rua' : null,
+        !number ? 'numero' : null,
+        !district ? 'bairro' : null,
+        !city ? 'cidade' : null,
+        !state ? 'estado' : null,
+        !country ? 'pais' : null,
+      ].filter(Boolean);
+      showError(`Preencha: ${missingFields.join(', ')}.`);
       return;
     }
 
@@ -165,8 +170,8 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       state,
       country,
       people: peopleIri,
-      number: parseInt(number, 10),
-      complement: normalizeString(formData.complement),
+      number,
+      complement: normalizeString(formData.complement) || '',
       nickname: normalizeString(formData.nickname) || 'DEFAULT',
       cep: zipCode,
     };
@@ -176,7 +181,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       // No modo edicao, criamos o novo endereco e removemos o antigo quando houver troca real.
       const saved = await actions.save(payload);
 
-      const normalizedSaved = normalizeAddress(saved || payload);
+      const normalizedSaved = normalizeAddress({ ...payload, ...(saved || {}) });
       const updatedAddresses = editingItem
         ? addresses.map(item =>
             item.id === editingItem.id ? normalizedSaved : item,
