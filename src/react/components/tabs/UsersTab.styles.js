@@ -261,3 +261,59 @@ export const inlineStyle_358_20 = {
   fontWeight: '600',
   color: '#fff',
 };
+
+export const inlineStyle_364_18 = {
+  marginBottom: 20,
+};
+
+export const inlineStyle_365_20 = {
+  borderWidth: 1,
+  borderColor: '#e2e8f0',
+  borderRadius: 12,
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  fontSize: 16,
+  backgroundColor: '#f8fafc',
+  color: '#0f172a',
+};
+
+export const inlineStyle_366_18 = {
+  marginBottom: 24,
+};
+
+export const inlineStyle_367_16 = {
+  minHeight: 112,
+  borderWidth: 1,
+  borderColor: '#e2e8f0',
+  borderRadius: 12,
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  fontSize: 15,
+  backgroundColor: '#f8fafc',
+  color: '#0f172a',
+  textAlignVertical: 'top',
+};
+
+export const inlineStyle_368_12 = {
+  marginTop: 8,
+  fontSize: 13,
+  lineHeight: 18,
+  color: '#64748b',
+};
+
+export const inlineStyle_369_16 = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 12,
+  paddingVertical: 16,
+};
+
+export const inlineStyle_370_20 = {
+  flex: 1,
+  minHeight: 48,
+  paddingVertical: 14,
+  borderRadius: 12,
+  backgroundColor: '#007bff',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
