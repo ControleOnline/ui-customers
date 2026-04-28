@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect, useMemo } from 'react';
 
 import {
   Text,
@@ -42,27 +42,43 @@ const resolveContextKey = rawContext => {
 
 const ClientDetails = ({ route, navigation }) => {
   const { width } = Dimensions.get('window');
-  const { client: initialClient } = route.params || {};
-  const rawContext = route.params?.context;
-  const detailContext = resolveContextKey(route.params?.context);
+  const routeParams = route.params || {};
+  const clientId = String(routeParams?.clientId || routeParams?.id || '').replace(/\D/g, '');
+  const detailContext = resolveContextKey(routeParams?.contextKey);
   const requestedInitialTab = String(route.params?.initialTab || '').trim();
-  const [client, setClient] = useState(initialClient);
-  const [isLoadingClient, setIsLoadingClient] = useState(true);
-  const [activeTab, setActiveTab] = useState(0);
-
   const scrollRef = React.useRef(null);
   const peopleStore = useStores(state => state.people) || {};
   const peopleActions = peopleStore?.actions || {};
+  const peopleGetters = peopleStore?.getters || {};
   const getPeople = peopleActions?.get;
   const savePeople = peopleActions?.save;
 
   const extractId = value => String(value || '').replace(/\D/g, '');
-  const parentCompanyIri = String(rawContext?.parentCompanyIri || '').startsWith('/people/')
-    ? String(rawContext.parentCompanyIri)
-    : '';
-  const initialContactLinkType = String(rawContext?.linkType || '')
+  const parentCompanyId = extractId(routeParams?.parentCompanyId);
+  const parentCompanyIri = parentCompanyId ? `/people/${parentCompanyId}` : '';
+  const initialContactLinkType = String(routeParams?.linkType || '')
     .trim()
     .toLowerCase();
+  const cachedClient = useMemo(() => {
+    if (!clientId) {
+      return null;
+    }
+
+    const currentItem = peopleGetters?.item;
+    if (extractId(currentItem?.id || currentItem?.['@id']) === clientId) {
+      return currentItem;
+    }
+
+    const items = Array.isArray(peopleGetters?.items) ? peopleGetters.items : [];
+    return (
+      items.find(item => extractId(item?.id || item?.['@id']) === clientId) || null
+    );
+  }, [clientId, peopleGetters?.item, peopleGetters?.items]);
+  const [client, setClient] = useState(cachedClient);
+  const [isLoadingClient, setIsLoadingClient] = useState(
+    Boolean(clientId) && !cachedClient,
+  );
+  const [activeTab, setActiveTab] = useState(0);
 
   const resolveInitialTabIndex = nextClient => {
     if (!requestedInitialTab) return 0;
@@ -98,12 +114,10 @@ const ClientDetails = ({ route, navigation }) => {
 
   useEffect(() => {
     let mounted = true;
-    const initialTabIndex = resolveInitialTabIndex(initialClient);
-    setClient(initialClient || null);
+    const initialTabIndex = resolveInitialTabIndex(cachedClient);
     setActiveTab(initialTabIndex);
     scrollRef.current?.scrollTo({ x: initialTabIndex * width, animated: false });
 
-    const clientId = extractId(initialClient?.id || initialClient?.['@id']);
     if (!clientId || !getPeople) {
       setIsLoadingClient(false);
       return () => {
@@ -111,19 +125,29 @@ const ClientDetails = ({ route, navigation }) => {
       };
     }
 
-    setIsLoadingClient(true);
+    if (!cachedClient) {
+      setIsLoadingClient(true);
+    }
+
     getPeople(clientId)
       .then(fullClient => {
         if (!mounted || !fullClient) {
           return;
         }
-        setClient(prev => ({ ...(prev || {}), ...fullClient }));
+
+        setClient(previousClient => {
+          const nextClient = { ...(previousClient || cachedClient || {}), ...fullClient };
+          const nextTabIndex = resolveInitialTabIndex(nextClient);
+          setActiveTab(nextTabIndex);
+          scrollRef.current?.scrollTo({ x: nextTabIndex * width, animated: false });
+          return nextClient;
+        });
       })
       .catch(() => {
         if (!mounted) {
           return;
         }
-        setClient(initialClient || null);
+        setClient(cachedClient || null);
       })
       .finally(() => {
         if (mounted) {
@@ -134,7 +158,7 @@ const ClientDetails = ({ route, navigation }) => {
     return () => {
       mounted = false;
     };
-  }, [initialClient, getPeople, requestedInitialTab, detailContext, width]);
+  }, [clientId, getPeople, requestedInitialTab, detailContext, width]);
 
   const updateClientData = (field, data) => {
     setClient(prevClient => ({ ...prevClient, [field]: data }));
@@ -142,7 +166,7 @@ const ClientDetails = ({ route, navigation }) => {
 
   const persistClientData = async partialData => {
     const clientId = extractId(
-      client?.id || client?.['@id'] || initialClient?.id || initialClient?.['@id'],
+      client?.id || client?.['@id'],
     );
 
     if (!clientId || !savePeople) {

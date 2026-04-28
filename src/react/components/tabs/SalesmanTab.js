@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 
 import {
   ActivityIndicator,
@@ -17,14 +17,15 @@ const extractId = value => String(value || '').replace(/\D/g, '');
 const SalesmanTab = ({
   client,
   customStyles,
-  title,
   linkType,
   emptyText,
   errorText,
 }) => {
   const navigation = useNavigation();
 
+  const peopleStore = useStore('people');
   const peopleLinkStore = useStore('people_link');
+  const peopleActions = peopleStore?.actions || {};
 
   const clients = peopleLinkStore.getters.items;
   const isLoading = peopleLinkStore.getters.isLoading;
@@ -58,9 +59,15 @@ const SalesmanTab = ({
               key={String(item?.company?.id || item?.company?.['@id'])}
               style={customStyles.listItem}
               activeOpacity={0.8}
-              onPress={() =>
-                navigation.push('ClientDetails', { client: item?.company })
-              }>
+              onPress={() => {
+                const clientId = extractId(item?.company?.id || item?.company?.['@id']);
+                if (!clientId) {
+                  return;
+                }
+
+                peopleActions?.setItem?.(item?.company);
+                navigation.push('ClientDetails', { clientId });
+              }}>
               <View style={customStyles.itemContent}>
                 <Icon name="people" size={20} color={colors.primary} />
                 <View>

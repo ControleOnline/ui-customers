@@ -185,7 +185,7 @@ const EmployeesTab = ({
       });
 
       setEmployees(normalized);
-    } catch (fetchError) {
+    } catch {
       setEmployees([]);
       setError(txt_message_loadError);
     } finally {
@@ -300,14 +300,18 @@ const EmployeesTab = ({
                 style={customStyles.listItem}
                 activeOpacity={0.8}
                 onPress={() => {
-                  navigation.setParams?.({ initialTab: 'contacts' });
+                  const clientId = extractId(item?.id || item?.['@id']);
+                  if (!clientId) {
+                    return;
+                  }
+
+                  peopleActions?.setItem?.(item);
                   navigation.push('ClientDetails', {
-                    client: item,
-                    context: {
-                      context: 'contacts',
-                      parentCompanyIri: `/people/${parentPeopleId}`,
-                      linkType: resolveEmployeeLinkType(item),
-                    },
+                    clientId,
+                    contextKey: 'contacts',
+                    initialTab: 'contacts',
+                    parentCompanyId: parentPeopleId,
+                    linkType: resolveEmployeeLinkType(item),
                   });
                 }}>
                 <View style={customStyles.itemContent}>

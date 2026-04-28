@@ -1,8 +1,8 @@
 import Clients from '@controleonline/ui-customers/src/react/pages/clients';
+import Employees from '@controleonline/ui-customers/src/react/pages/employees';
 import Providers from '@controleonline/ui-customers/src/react/pages/provider';
 import Prospects from '@controleonline/ui-customers/src/react/pages/prospects';
 import Client from '@controleonline/ui-customers/src/react/pages/details';
-import { env } from '@env';
 
 const customersRoutes = [
   {
@@ -26,6 +26,18 @@ const customersRoutes = [
       headerBackVisible: true,
       companyFilterMode: 'icon',
       title: global.t?.t('people', 'title', 'clientes'),
+      showBottomToolBar: true,
+    },
+  },
+  {
+    name: 'EmployeesIndex',
+    component: Employees,
+    options: {
+      showCompanyFilter: true,
+      headerShown: true,
+      headerBackVisible: true,
+      companyFilterMode: 'icon',
+      title: global.t?.t('people', 'label', 'employee'),
       showBottomToolBar: true,
     },
   },
