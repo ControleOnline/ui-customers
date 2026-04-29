@@ -226,6 +226,12 @@ export const detailsStyles = StyleSheet.create({
     minWidth: 0,
   },
 
+  locationButton: {
+    paddingVertical: 4,
+    paddingRight: 4,
+    alignSelf: 'flex-start',
+  },
+
   itemText: {
     fontSize: 16,
     color: '#212529',
@@ -369,6 +375,64 @@ export const detailsStyles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  navigationModalDescription: {
+    fontSize: 15,
+    color: '#6c757d',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+
+  navigationAddressCard: {
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    borderRadius: 12,
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+    marginBottom: 16,
+  },
+
+  navigationAddressTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#212529',
+  },
+
+  navigationAddressSubtitle: {
+    fontSize: 14,
+    color: '#6c757d',
+    marginTop: 4,
+  },
+
+  navigationOptions: {
+    gap: 12,
+    marginBottom: 16,
+  },
+
+  navigationOptionButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    alignItems: 'center',
+  },
+
+  navigationOptionButtonPrimary: {
+    backgroundColor: '#007bff',
+    borderColor: '#007bff',
+  },
+
+  navigationOptionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#212529',
+  },
+
+  navigationOptionButtonTextPrimary: {
+    color: '#fff',
   },
 
   // Error state

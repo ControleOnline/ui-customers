@@ -8,3 +8,6 @@
 
 ## Quando usar
 - Prompts sobre clientes, prospects, detalhes de cliente e cadastros comerciais ligados ao relacionamento.
+
+## Regras de detalhe
+- No detalhe de cliente/prospect, o pin de cada endereco deve abrir uma escolha de navegacao com pelo menos `Google Maps` e `Waze`.

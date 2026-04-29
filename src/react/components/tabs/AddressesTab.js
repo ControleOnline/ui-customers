@@ -1,6 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   Keyboard,
+  Linking,
   Modal,
   Text,
   TextInput,
@@ -10,6 +11,11 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useStores} from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
+import {
+  buildGoogleMapsNavigationUrl,
+  buildNavigationMapQuery,
+  buildWazeNavigationUrl,
+} from '@controleonline/ui-common/src/react/utils/mapNavigation';
 import {colors} from '@controleonline/../../src/styles/colors';
 
 const extractId = value => String(value || '').replace(/\D/g, '');
@@ -38,6 +44,40 @@ const normalizeZipCode = value =>
   String(value || '')
     .replace(/\D/g, '')
     .slice(0, 8);
+
+const buildAddressMapQuery = address => {
+  const streetLine = [normalizeString(address?.street), normalizeString(address?.number)]
+    .filter(Boolean)
+    .join(', ');
+  const cityStateLine = [normalizeString(address?.city), normalizeString(address?.state)]
+    .filter(Boolean)
+    .join(' - ');
+
+  return buildNavigationMapQuery([
+    streetLine,
+    normalizeString(address?.district),
+    cityStateLine,
+    normalizeString(address?.country),
+    normalizeZipCode(address?.zipCode),
+    normalizeString(address?.complement),
+  ]);
+};
+
+const buildAddressPrimaryLine = address =>
+  [normalizeString(address?.street), normalizeString(address?.number)]
+    .filter(Boolean)
+    .join(', ');
+
+const buildAddressSecondaryLine = address =>
+  [
+    normalizeString(address?.district),
+    [normalizeString(address?.city), normalizeString(address?.state)]
+      .filter(Boolean)
+      .join(' - '),
+    normalizeString(address?.country),
+  ]
+    .filter(Boolean)
+    .join(' • ');
 
 const normalizeAddress = address => ({
   id: normalizeId(address?.id || address?.['@id']),
@@ -101,6 +141,8 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
+  const [showNavigationModal, setShowNavigationModal] = useState(false);
+  const [navigationAddress, setNavigationAddress] = useState(null);
 
   const addressStore = useStores(state => state.address) || {};
   const actions = addressStore.actions || {};
@@ -125,6 +167,45 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     setShowModal(false);
     setEditingItem(null);
     setFormData({});
+  };
+
+  const closeNavigationModal = () => {
+    setShowNavigationModal(false);
+    setNavigationAddress(null);
+  };
+
+  const openNavigationModal = address => {
+    const normalizedAddress = normalizeAddress(address);
+    const mapQuery = buildAddressMapQuery(normalizedAddress);
+
+    if (!mapQuery) {
+      showError('Nao foi possivel montar a navegacao para este endereco.');
+      return;
+    }
+
+    setNavigationAddress(normalizedAddress);
+    setShowNavigationModal(true);
+  };
+
+  const handleOpenNavigation = async appName => {
+    const mapQuery = buildAddressMapQuery(navigationAddress);
+    const url =
+      appName === 'waze'
+        ? buildWazeNavigationUrl({mapQuery})
+        : buildGoogleMapsNavigationUrl({mapQuery});
+
+    if (!url) {
+      showError('Nao foi possivel montar a navegacao para este endereco.');
+      return;
+    }
+
+    closeNavigationModal();
+
+    try {
+      await Linking.openURL(url);
+    } catch {
+      showError('Nao foi possivel abrir o aplicativo de navegacao.');
+    }
   };
 
   const handleSave = async () => {
@@ -234,7 +315,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           setAddresses(updatedAddresses);
           onUpdateClient?.('address', mapAddressesForClient(updatedAddresses));
           showSuccess('Endereco removido com sucesso!');
-        } catch (error) {
+        } catch {
           showError('Falha ao remover endereco. Tente novamente.');
         }
       },
@@ -325,6 +406,66 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     </Modal>
   );
 
+  const renderNavigationModal = () => {
+    const primaryLine = buildAddressPrimaryLine(navigationAddress);
+    const secondaryLine = buildAddressSecondaryLine(navigationAddress);
+
+    return (
+      <Modal
+        visible={showNavigationModal}
+        transparent
+        animationType="fade"
+        onRequestClose={closeNavigationModal}>
+        <View style={customStyles.modalOverlay}>
+          <View style={customStyles.modalContainer}>
+            <Text style={customStyles.modalTitle}>Abrir endereco</Text>
+            <Text style={customStyles.navigationModalDescription}>
+              Escolha qual aplicativo deseja usar para navegar ate este endereco.
+            </Text>
+            <View style={customStyles.navigationAddressCard}>
+              <Text style={customStyles.navigationAddressTitle}>
+                {primaryLine || 'Endereco'}
+              </Text>
+              {secondaryLine ? (
+                <Text style={customStyles.navigationAddressSubtitle}>
+                  {secondaryLine}
+                </Text>
+              ) : null}
+            </View>
+            <View style={customStyles.navigationOptions}>
+              <TouchableOpacity
+                style={[
+                  customStyles.navigationOptionButton,
+                  customStyles.navigationOptionButtonPrimary,
+                ]}
+                onPress={() => handleOpenNavigation('google')}>
+                <Text
+                  style={[
+                    customStyles.navigationOptionButtonText,
+                    customStyles.navigationOptionButtonTextPrimary,
+                  ]}>
+                  Google Maps
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={customStyles.navigationOptionButton}
+                onPress={() => handleOpenNavigation('waze')}>
+                <Text style={customStyles.navigationOptionButtonText}>
+                  Waze
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={customStyles.modalCancelButton}
+              onPress={closeNavigationModal}>
+              <Text style={customStyles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <>
       <View style={customStyles.tabContent}>
@@ -343,7 +484,11 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
             addresses.map(address => (
               <View key={address.id} style={customStyles.listItem}>
                 <View style={customStyles.itemContent}>
-                  <Icon name="location-on" size={20} color={colors.primary} />
+                  <TouchableOpacity
+                    onPress={() => openNavigationModal(address)}
+                    style={customStyles.locationButton}>
+                    <Icon name="location-on" size={20} color={colors.primary} />
+                  </TouchableOpacity>
                   <View>
                     <Text style={customStyles.itemText}>
                       {address.street}
@@ -377,6 +522,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
         </View>
       </View>
       {renderModal()}
+      {renderNavigationModal()}
     </>
   );
 };
