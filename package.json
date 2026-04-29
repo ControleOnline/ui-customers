@@ -5,7 +5,9 @@
   "description": "ControleOnline customers Quasar UI Component",
   "license": "MIT",
   "main": "src/vue/index.js",
-  "scripts": {},
+  "scripts": {
+    "test:user-management": "node --test src/tests/react/utils/userManagement.test.js"
+  },
   "repository": {
     "type": "git",
 
