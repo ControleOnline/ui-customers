@@ -10,6 +10,10 @@ const Clients = () => {
         defaultContext: 'client',
         title: global.t?.t('people', 'title', 'clients'),
         searchPlaceholder: global.t?.t('people', 'searchPlaceholder', 'searchClient'),
+        modalTitleByType: {
+          client: 'Cadastro de Cliente',
+          prospect: 'Cadastro de Prospect',
+        },
         emptyTitle: global.t?.t('people', 'title', 'emptyClient'),
         emptySearchTitle: global.t?.t('people', 'title', 'emptySearchClient'),
         emptySubtitle: global.t?.t('people', 'title', 'addFirstClient'),

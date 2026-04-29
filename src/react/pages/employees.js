@@ -9,6 +9,10 @@ const Employees = () => {
         defaultContext: 'employee',
         title: global.t?.t('people', 'label', 'employee'),
         searchPlaceholder: global.t?.t('people', 'label', 'employee'),
+        modalTitleByType: {
+          employee: 'Cadastro de Funcionario',
+          owner: 'Cadastro de Proprietario',
+        },
         typeSelectorLabel: global.t?.t('people', 'label', 'contactRole'),
       }}
     />
