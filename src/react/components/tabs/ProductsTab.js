@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -93,6 +93,28 @@ const buildMeta = relation => {
 const ProductsTab = ({ client, customStyles }) => {
   const navigation = useNavigation();
 
+  const providerPayload = useMemo(
+    () => ({
+      id: extractId(client?.id || client?.['@id']),
+      '@id': client?.['@id'] || (extractId(client?.id || client?.['@id']) ? `/people/${extractId(client?.id || client?.['@id'])}` : ''),
+      alias: String(client?.alias || '').trim(),
+      name: String(client?.name || '').trim(),
+      peopleType: client?.peopleType || '',
+    }),
+    [client?.id, client?.['@id'], client?.alias, client?.name, client?.peopleType],
+  );
+
+  const openCreateProduct = useCallback(() => {
+    if (!providerPayload.id) {
+      return;
+    }
+
+    navigation.push('ProductDetails', {
+      context: 'products',
+      initialProvider: providerPayload,
+    });
+  }, [navigation, providerPayload]);
+
   const relations = useMemo(() => {
     const safeRelations = Array.isArray(client?.productPeople) ? [...client.productPeople] : [];
 
@@ -124,7 +146,7 @@ const ProductsTab = ({ client, customStyles }) => {
   return (
     <View style={customStyles.section}>
       <View style={styles.sectionHeader}>
-        <View>
+        <View style={styles.sectionHeaderCopy}>
           <Text style={customStyles.sectionTitle}>Produtos fornecidos</Text>
           <Text style={styles.sectionSubtitle}>
             {relations.length === 1
@@ -132,12 +154,34 @@ const ProductsTab = ({ client, customStyles }) => {
               : `${relations.length} produtos vinculados a este fornecedor`}
           </Text>
         </View>
+
+        {providerPayload.id ? (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={openCreateProduct}
+            activeOpacity={0.85}>
+            <Icon name="add" size={18} color="#FFFFFF" />
+            <Text style={styles.addButtonText}>Produto</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       {relations.length === 0 ? (
-        <Text style={customStyles.emptyText}>
-          Nenhum produto vinculado a este fornecedor.
-        </Text>
+        <View style={styles.emptyState}>
+          <Text style={customStyles.emptyText}>
+            Nenhum produto vinculado a este fornecedor.
+          </Text>
+
+          {providerPayload.id ? (
+            <TouchableOpacity
+              style={styles.emptyActionButton}
+              onPress={openCreateProduct}
+              activeOpacity={0.85}>
+              <Icon name="add-box" size={18} color="#FFFFFF" />
+              <Text style={styles.emptyActionButtonText}>Adicionar produto</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       ) : (
         relations.map(relation => {
           const product = relation?.product || {};

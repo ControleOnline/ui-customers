@@ -2,12 +2,53 @@ import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  sectionHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 12,
   },
   sectionSubtitle: {
     marginTop: 4,
     fontSize: 13,
     color: '#64748B',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  addButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  emptyState: {
+    marginTop: 4,
+  },
+  emptyActionButton: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 12,
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  emptyActionButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   card: {
     borderWidth: 1,
