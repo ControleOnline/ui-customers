@@ -5,9 +5,11 @@ const Employees = () => {
   return (
     <People
       context={{
-        context: 'employee',
+        context: ['employee', 'owner'],
+        defaultContext: 'employee',
         title: global.t?.t('people', 'label', 'employee'),
         searchPlaceholder: global.t?.t('people', 'label', 'employee'),
+        typeSelectorLabel: global.t?.t('people', 'label', 'contactRole'),
       }}
     />
   );

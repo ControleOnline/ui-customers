@@ -6,7 +6,8 @@ const Clients = () => {
   return (
     <People
       context={{
-        context: 'client',
+        context: ['client', 'prospect'],
+        defaultContext: 'client',
         title: global.t?.t('people', 'title', 'clients'),
         searchPlaceholder: global.t?.t('people', 'searchPlaceholder', 'searchClient'),
         emptyTitle: global.t?.t('people', 'title', 'emptyClient'),
