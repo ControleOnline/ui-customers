@@ -1,0 +1,24 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  users-tab-validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate diff formatting
+        run: git diff --check
+
+      - name: Run targeted user management tests
+        run: npm run test:user-management
