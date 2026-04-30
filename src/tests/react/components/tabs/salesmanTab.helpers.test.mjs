@@ -9,9 +9,10 @@ import {
 } from '../../../../react/components/tabs/salesmanTab.helpers.js';
 
 test('canManageSalesmen libera contexto administrativo', () => {
-  assert.equal(canManageSalesmen({ permission: ['salesman'] }), false);
-  assert.equal(canManageSalesmen({ permission: ['salesman', 'super'] }), true);
-  assert.equal(canManageSalesmen({ permission: ['admin'] }), true);
+  assert.equal(canManageSalesmen('CRM'), false);
+  assert.equal(canManageSalesmen('crm'), false);
+  assert.equal(canManageSalesmen('MANAGER'), true);
+  assert.equal(canManageSalesmen(' manager '), true);
 });
 
 test('normalizeSalesmanLink preserva vendedor e comissoes do vinculo', () => {

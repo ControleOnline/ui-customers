@@ -13,24 +13,12 @@ export const toPeopleIri = value => {
   return id ? `/people/${id}` : '';
 };
 
-export const normalizePermissionList = permission => {
-  if (Array.isArray(permission)) {
-    return permission
-      .map(item => String(item || '').trim().toLowerCase())
-      .filter(Boolean);
-  }
+export const normalizeAppType = value =>
+  String(value || '')
+    .trim()
+    .toUpperCase();
 
-  const normalized = String(permission || '').trim().toLowerCase();
-  return normalized ? [normalized] : [];
-};
-
-export const canManageSalesmen = currentCompany => {
-  const permissions = normalizePermissionList(currentCompany?.permission);
-
-  return permissions.some(permission =>
-    ['admin', 'super', 'manager', 'owner', 'director'].includes(permission),
-  );
-};
+export const canManageSalesmen = appType => normalizeAppType(appType) === 'MANAGER';
 
 export const normalizeCommissionValue = value => {
   const normalized = String(value ?? '')

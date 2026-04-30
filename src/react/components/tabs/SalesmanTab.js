@@ -135,6 +135,7 @@ const inlineStyle_primaryButtonText = {
 };
 
 const SalesmanTab = ({
+  appType,
   client,
   customStyles,
   linkType,
@@ -155,8 +156,8 @@ const SalesmanTab = ({
     currentCompany?.id || currentCompany?.['@id'],
   );
   const canManage = useMemo(
-    () => canManageSalesmen(currentCompany),
-    [currentCompany],
+    () => canManageSalesmen(appType),
+    [appType],
   );
   const clientIri = useMemo(() => toPeopleIri(client), [client]);
   const [linkedSalesmen, setLinkedSalesmen] = useState([]);
