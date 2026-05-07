@@ -1,0 +1,23 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - task-2
+
+jobs:
+  salesman-tab:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run salesman tab helper test
+        run: npm run test:salesman-tab

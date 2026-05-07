@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { env } from '@env';
 import { useStores } from '@store';
 import { detailsStyles } from '../styles/details';
 import GeneralTab from '../components/tabs/GeneralTab';
@@ -42,6 +43,7 @@ const resolveContextKey = rawContext => {
 
 const ClientDetails = ({ route, navigation }) => {
   const { width } = Dimensions.get('window');
+  const appType = String(env?.APP_TYPE || '').trim().toUpperCase();
   const routeParams = route.params || {};
   const clientId = String(routeParams?.clientId || routeParams?.id || '').replace(/\D/g, '');
   const detailContext = resolveContextKey(routeParams?.contextKey);
@@ -366,6 +368,7 @@ const ClientDetails = ({ route, navigation }) => {
                 {isPessoaJuridica ? (
                   <SalesmanTab
                     {...tabProps}
+                    appType={appType}
                     title="Vendedores"
                     linkType="sellers-client"
                     emptyText="Nenhum vendedor vinculado"
