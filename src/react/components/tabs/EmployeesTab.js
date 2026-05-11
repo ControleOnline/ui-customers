@@ -17,7 +17,12 @@ import { useNavigation } from '@react-navigation/native';
 import { useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
+import { api } from '@controleonline/ui-common/src/api';
 import { colors } from '@controleonline/../../src/styles/colors';
+import {
+  buildEmployeeContactsFromPeopleLinks,
+  normalizeEmployeeLinkType,
+} from './employeeContacts';
 
 import {
   inlineStyle_243_18,
@@ -100,15 +105,8 @@ const LINK_TYPE_OPTIONS = [
   { value: 'manager', translationKey: 'manager' },
 ];
 
-const normalizeLinkType = value => {
-  const normalized = String(value || '').trim().toLowerCase();
-  return ['employee', 'owner', 'director', 'manager'].includes(normalized)
-    ? normalized
-    : 'employee';
-};
-
 const resolveEmployeeLinkType = employee =>
-  normalizeLinkType(
+  normalizeEmployeeLinkType(
     employee?.linkType ||
       employee?.link?.linkType ||
       employee?.peopleLink?.linkType ||
@@ -157,7 +155,7 @@ const EmployeesTab = ({
   );
 
   const fetchEmployees = useCallback(async () => {
-    if (!parentPeopleId || !peopleActions?.getItems) {
+    if (!parentPeopleId) {
       setEmployees([]);
       setError('');
       return;
@@ -167,21 +165,17 @@ const EmployeesTab = ({
     setError('');
 
     try {
-      const response = await peopleActions.getItems({
-        'link.company': `/people/${parentPeopleId}`,
-        'link.linkType': ['employee', 'owner', 'director', 'manager'],
-        peopleType: 'F',
-        itemsPerPage: 100,
+      // Company contacts are stored in people_links; filtering /people can miss valid links.
+      const response = await api.fetch('/people_links', {
+        params: {
+          company: `/people/${parentPeopleId}`,
+          linkType: ['employee', 'owner', 'director', 'manager'],
+          itemsPerPage: 100,
+        },
       });
 
-      const items = Array.isArray(response) ? response : [];
-      const normalized = items.filter(item => {
-        const itemId = extractId(item?.id || item?.['@id']);
-        return (
-          itemId &&
-          itemId !== parentPeopleId &&
-          String(item?.peopleType || '').toUpperCase() !== 'J'
-        );
+      const normalized = buildEmployeeContactsFromPeopleLinks(response, {
+        parentPeopleId,
       });
 
       setEmployees(normalized);
@@ -191,7 +185,7 @@ const EmployeesTab = ({
     } finally {
       setIsLoading(false);
     }
-  }, [txt_message_loadError, parentPeopleId, peopleActions]);
+  }, [txt_message_loadError, parentPeopleId]);
 
   useEffect(() => {
     fetchEmployees();
@@ -255,7 +249,7 @@ const EmployeesTab = ({
         alias,
         peopleType: 'F',
         company: `/people/${parentPeopleId}`,
-        linkType: formData.linkType,
+        linkType: normalizeEmployeeLinkType(formData.linkType),
         'extra-data': {},
       };
 
