@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import {
   ActivityIndicator,
@@ -12,48 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
 import { colors } from '@controleonline/../../src/styles/colors';
 import { inlineStyle_46_16 } from './SalesmanTab.styles';
-
 const extractId = value => String(value || '').replace(/\D/g, '');
-
-const toPeopleIri = value => {
-  const directIri = String(value?.['@id'] || '').trim();
-  if (directIri.startsWith('/people/')) {
-    return directIri;
-  }
-
-  const id = extractId(value?.id);
-  return id ? `/people/${id}` : '';
-};
-
-const normalizeSalesLinks = (items, clientIri, requiredLinkType) => {
-  const clientId = extractId(clientIri);
-  const normalizedRequiredLinkType = String(requiredLinkType || '')
-    .trim()
-    .toLowerCase();
-  const seenCompanyIds = new Set();
-
-  return (Array.isArray(items) ? items : []).reduce((acc, item) => {
-    const companyId = extractId(item?.company?.id || item?.company?.['@id']);
-    const peopleId = extractId(item?.people?.id || item?.people?.['@id']);
-    const itemLinkType = String(item?.linkType || '').trim().toLowerCase();
-
-    if (
-      !companyId ||
-      !peopleId ||
-      !clientId ||
-      peopleId !== clientId ||
-      itemLinkType !== normalizedRequiredLinkType ||
-      companyId === clientId ||
-      seenCompanyIds.has(companyId)
-    ) {
-      return acc;
-    }
-
-    seenCompanyIds.add(companyId);
-    acc.push(item);
-    return acc;
-  }, []);
-};
 
 const SalesmanTab = ({
   client,
@@ -67,59 +26,21 @@ const SalesmanTab = ({
   const peopleStore = useStore('people');
   const peopleLinkStore = useStore('people_link');
   const peopleActions = peopleStore?.actions || {};
-  const peopleLinkActions = peopleLinkStore?.actions || {};
 
-  const clientIri = useMemo(() => toPeopleIri(client), [client]);
-  const [salesmen, setSalesmen] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const clients = peopleLinkStore.getters.items;
+  const isLoading = peopleLinkStore.getters.isLoading;
+  const error = peopleLinkStore.getters.error;
+
+
 
   useEffect(() => {
-    let cancelled = false;
+    peopleLinkStore.actions.getItems({
+      people: client?.['@id'],
+      linkType: linkType,
+      itemsPerPage: 100,
+    });
+  }, []);
 
-    if (!clientIri || !linkType || !peopleLinkActions?.getItems) {
-      setSalesmen([]);
-      setError('');
-      setIsLoading(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    setIsLoading(true);
-    setError('');
-
-    peopleLinkActions
-      .getItems({
-        people: clientIri,
-        linkType,
-        itemsPerPage: 100,
-      })
-      .then(items => {
-        if (cancelled) {
-          return;
-        }
-
-        setSalesmen(normalizeSalesLinks(items, clientIri, linkType));
-      })
-      .catch(() => {
-        if (cancelled) {
-          return;
-        }
-
-        setSalesmen([]);
-        setError(errorText);
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [clientIri, errorText, linkType, peopleLinkActions]);
 
   return (
     <View style={customStyles.tabContent}>
@@ -129,13 +50,13 @@ const SalesmanTab = ({
             <ActivityIndicator size="small" color={colors.primary} />
           </View>
         ) : error ? (
-          <Text style={customStyles.emptyText}>{error}</Text>
-        ) : salesmen.length === 0 ? (
+          <Text style={customStyles.emptyText}>{errorText}</Text>
+        ) : !clients || clients?.length === 0 ? (
           <Text style={customStyles.emptyText}>{emptyText}</Text>
         ) : (
-          salesmen.map(item => (
+          clients.map(item => (
             <TouchableOpacity
-              key={String(item?.id || `${item?.company?.id || item?.company?.['@id']}`)}
+              key={String(item?.company?.id || item?.company?.['@id'])}
               style={customStyles.listItem}
               activeOpacity={0.8}
               onPress={() => {

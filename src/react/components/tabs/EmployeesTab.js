@@ -100,125 +100,34 @@ const LINK_TYPE_OPTIONS = [
   { value: 'manager', translationKey: 'manager' },
 ];
 
-const EMPLOYEE_LINK_TYPES = LINK_TYPE_OPTIONS.map(option => option.value);
-
-const resolveAllowedLinkTypes = allowedLinkTypes => {
-  const normalized = (Array.isArray(allowedLinkTypes) ? allowedLinkTypes : [])
-    .map(value => String(value || '').trim().toLowerCase())
-    .filter(value => EMPLOYEE_LINK_TYPES.includes(value));
-
-  return normalized.length > 0 ? normalized : EMPLOYEE_LINK_TYPES;
-};
-
-const parseLinkType = value => {
+const normalizeLinkType = value => {
   const normalized = String(value || '').trim().toLowerCase();
-  return EMPLOYEE_LINK_TYPES.includes(normalized) ? normalized : '';
-};
-
-const collectLinkTypes = source => {
-  const candidates = [
-    source?.linkType,
-    source?.link?.linkType,
-    source?.peopleLink?.linkType,
-    ...(Array.isArray(source?.link) ? source.link.map(item => item?.linkType) : []),
-    ...(Array.isArray(source?.peopleLink)
-      ? source.peopleLink.map(item => item?.linkType)
-      : []),
-  ]
-    .map(parseLinkType)
-    .filter(Boolean);
-
-  return [...new Set(candidates)];
+  return ['employee', 'owner', 'director', 'manager'].includes(normalized)
+    ? normalized
+    : 'employee';
 };
 
 const resolveEmployeeLinkType = employee =>
-  collectLinkTypes(employee)[0] || 'employee';
-
-const normalizeEmployeesFromPeopleItems = (
-  items,
-  parentPeopleId,
-  allowedLinkTypes,
-) => {
-  const seenIds = new Set();
-
-  return (Array.isArray(items) ? items : []).filter(item => {
-    const itemId = extractId(item?.id || item?.['@id']);
-    const itemLinkTypes = collectLinkTypes(item);
-
-    if (
-      !itemId ||
-      itemId === parentPeopleId ||
-      seenIds.has(itemId) ||
-      String(item?.peopleType || '').toUpperCase() === 'J' ||
-      (itemLinkTypes.length > 0 &&
-        !itemLinkTypes.some(linkType => allowedLinkTypes.includes(linkType)))
-    ) {
-      return false;
-    }
-
-    seenIds.add(itemId);
-    return true;
-  });
-};
-
-const normalizeEmployeesFromPeopleLinks = (
-  items,
-  parentPeopleId,
-  allowedLinkTypes,
-) => {
-  const seenIds = new Set();
-
-  return (Array.isArray(items) ? items : []).reduce((acc, link) => {
-    const person = link?.people;
-    const personId = extractId(person?.id || person?.['@id']);
-    const normalizedLinkType = parseLinkType(link?.linkType);
-
-    if (
-      !personId ||
-      personId === parentPeopleId ||
-      seenIds.has(personId) ||
-      String(person?.peopleType || '').toUpperCase() === 'J' ||
-      !allowedLinkTypes.includes(normalizedLinkType)
-    ) {
-      return acc;
-    }
-
-    seenIds.add(personId);
-    acc.push({
-      ...person,
-      linkType: normalizedLinkType,
-      peopleLink: link,
-    });
-    return acc;
-  }, []);
-};
+  normalizeLinkType(
+    employee?.linkType ||
+      employee?.link?.linkType ||
+      employee?.peopleLink?.linkType ||
+      (Array.isArray(employee?.link) ? employee.link[0]?.linkType : ''),
+  );
 
 const EmployeesTab = ({
   client,
   customStyles,
-  title,
-  emptyText,
-  createTitle,
-  errorText,
-  requiredErrorText,
-  createErrorText,
-  createSuccessText,
-  allowedLinkTypes,
-  txt_title = title || global.t?.t('people','title','contact'),
-  txt_title_emptyText = emptyText || global.t?.t('people','title','emptyText'),
-  txt_title_addPeople = createTitle || global.t?.t('people','title','addPeople'),
-  txt_message_loadError = errorText || global.t?.t('people','message','loadError'),
-  txt_message_requiredError = requiredErrorText || global.t?.t('people','message','requiredError'),
-  txt_message_createError = createErrorText || global.t?.t('people','message','createError'),
-  txt_message_createSuccess = createSuccessText || global.t?.t('people','message','createSuccess'),
+  txt_title = global.t?.t('people','title','contact'),
+  txt_title_emptyText = global.t?.t('people','title','emptyText'),
+  txt_title_addPeople = global.t?.t('people','title','addPeople'),
+  txt_message_loadError = global.t?.t('people','message','loadError'),
+  txt_message_requiredError = global.t?.t('people','message','requiredError'),
+  txt_message_createError = global.t?.t('people','message','createError'),
+  txt_message_createSuccess = global.t?.t('people','message','createSuccess'),
 }) => {
   const navigation = useNavigation();
   const { showError, showSuccess } = useMessage();
-  const normalizedAllowedLinkTypes = useMemo(
-    () => resolveAllowedLinkTypes(allowedLinkTypes),
-    [allowedLinkTypes],
-  );
-  const defaultLinkType = normalizedAllowedLinkTypes[0] || 'employee';
 
   const [employees, setEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -229,7 +138,7 @@ const EmployeesTab = ({
     name: '',
     alias: '',
     foundationDateBr: '',
-    linkType: defaultLinkType,
+    linkType: 'employee',
   });
   const [linkTypeOptions, setLinkTypeOptions] = useState(
     LINK_TYPE_OPTIONS.map(option => ({
@@ -240,9 +149,7 @@ const EmployeesTab = ({
   const pickerMode = Platform.OS === 'android' ? 'dropdown' : undefined;
 
   const peopleStore = useStores(state => state.people) || {};
-  const peopleLinkStore = useStores(state => state.people_link) || {};
   const peopleActions = peopleStore.actions || {};
-  const peopleLinkActions = peopleLinkStore.actions || {};
 
   const parentPeopleId = useMemo(
     () => extractId(client?.id || client?.['@id']),
@@ -250,7 +157,7 @@ const EmployeesTab = ({
   );
 
   const fetchEmployees = useCallback(async () => {
-    if (!parentPeopleId) {
+    if (!parentPeopleId || !peopleActions?.getItems) {
       setEmployees([]);
       setError('');
       return;
@@ -260,36 +167,22 @@ const EmployeesTab = ({
     setError('');
 
     try {
-      let normalized = [];
+      const response = await peopleActions.getItems({
+        'link.company': `/people/${parentPeopleId}`,
+        'link.linkType': ['employee', 'owner', 'director', 'manager'],
+        peopleType: 'F',
+        itemsPerPage: 100,
+      });
 
-      if (peopleLinkActions?.getItems) {
-        const links = await peopleLinkActions.getItems({
-          company: `/people/${parentPeopleId}`,
-          linkType: normalizedAllowedLinkTypes,
-          itemsPerPage: 100,
-        });
-
-        normalized = normalizeEmployeesFromPeopleLinks(
-          links,
-          parentPeopleId,
-          normalizedAllowedLinkTypes,
+      const items = Array.isArray(response) ? response : [];
+      const normalized = items.filter(item => {
+        const itemId = extractId(item?.id || item?.['@id']);
+        return (
+          itemId &&
+          itemId !== parentPeopleId &&
+          String(item?.peopleType || '').toUpperCase() !== 'J'
         );
-      }
-
-      if (normalized.length === 0 && peopleActions?.getItems) {
-        const peopleItems = await peopleActions.getItems({
-          'link.company': `/people/${parentPeopleId}`,
-          'link.linkType': normalizedAllowedLinkTypes,
-          peopleType: 'F',
-          itemsPerPage: 100,
-        });
-
-        normalized = normalizeEmployeesFromPeopleItems(
-          peopleItems,
-          parentPeopleId,
-          normalizedAllowedLinkTypes,
-        );
-      }
+      });
 
       setEmployees(normalized);
     } catch {
@@ -298,13 +191,7 @@ const EmployeesTab = ({
     } finally {
       setIsLoading(false);
     }
-  }, [
-    txt_message_loadError,
-    parentPeopleId,
-    peopleActions,
-    peopleLinkActions,
-    normalizedAllowedLinkTypes,
-  ]);
+  }, [txt_message_loadError, parentPeopleId, peopleActions]);
 
   useEffect(() => {
     fetchEmployees();
@@ -312,30 +199,19 @@ const EmployeesTab = ({
 
   useEffect(() => {
     setLinkTypeOptions(
-      LINK_TYPE_OPTIONS
-        .filter(option => normalizedAllowedLinkTypes.includes(option.value))
-        .map(option => ({
-          value: option.value,
-          label: global.t?.t('people', 'label', option.translationKey),
-        })),
+      LINK_TYPE_OPTIONS.map(option => ({
+        value: option.value,
+        label: global.t?.t('people', 'label', option.translationKey),
+      })),
     );
-  }, [normalizedAllowedLinkTypes]);
-
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      linkType: normalizedAllowedLinkTypes.includes(prev.linkType)
-        ? prev.linkType
-        : defaultLinkType,
-    }));
-  }, [defaultLinkType, normalizedAllowedLinkTypes]);
+  }, []);
 
   const resetForm = () => {
     setFormData({
       name: '',
       alias: '',
       foundationDateBr: '',
-      linkType: defaultLinkType,
+      linkType: 'employee',
     });
   };
 
@@ -379,9 +255,7 @@ const EmployeesTab = ({
         alias,
         peopleType: 'F',
         company: `/people/${parentPeopleId}`,
-        linkType: normalizedAllowedLinkTypes.includes(formData.linkType)
-          ? formData.linkType
-          : defaultLinkType,
+        linkType: formData.linkType,
         'extra-data': {},
       };
 

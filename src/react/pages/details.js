@@ -186,9 +186,6 @@ const ClientDetails = ({ route, navigation }) => {
 
   const isPessoaJuridica = String(client?.peopleType || '').toUpperCase() === 'J';
   const isProviderContext = ['provider', 'providers'].includes(detailContext);
-  const contactAllowedLinkTypes = detailContext === 'client'
-    ? ['employee', 'owner']
-    : undefined;
 
   const tabs = isPessoaJuridica
     ? [
@@ -386,7 +383,6 @@ const ClientDetails = ({ route, navigation }) => {
                 showsVerticalScrollIndicator={false}>
                 <EmployeesTab
                   {...tabProps}
-                  allowedLinkTypes={contactAllowedLinkTypes}
                   title="Contatos"
                   emptyText="Nenhum contato vinculado"
                   errorText="Nao foi possivel carregar os contatos vinculados."
