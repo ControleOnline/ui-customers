@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 import { colors } from '@controleonline/../../src/styles/colors';
+import {resolveContactMutationMessage} from './contactMutationMessage';
 
 import {
   inlineStyle_363_18,
@@ -30,6 +31,15 @@ import {
   inlineStyle_448_16,
   inlineStyle_452_22,
 } from './ContactTab.styles';
+
+const STORE_ERROR_META_KEY = '__storeMeta';
+
+const withHandledStoreError = payload => ({
+  ...(payload || {}),
+  [STORE_ERROR_META_KEY]: {
+    skipSystemError: true,
+  },
+});
 
 const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -204,7 +214,9 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           phoneData.id = editingItem.id;
         }
 
-        const saved = await actionsPhones.save(phoneData);
+        const saved = await actionsPhones.save(
+          withHandledStoreError(phoneData),
+        );
         const savedId = extractId(saved?.id || saved?.['@id'] || editingItem?.id);
 
         const phoneItem = {
@@ -239,7 +251,10 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
         closeModal();
       } catch (error) {
         showError(
-          `Falha ao ${editingItem ? 'atualizar' : 'adicionar'} telefone. Tente novamente.`,
+          resolveContactMutationMessage(
+            error,
+            `Falha ao ${editingItem ? 'atualizar' : 'adicionar'} telefone. Tente novamente.`,
+          ),
         );
       }
     } else if (modalType === 'email') {
@@ -290,7 +305,9 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           emailData.id = editingItem.id;
         }
 
-        const saved = await actionsEmails.save(emailData);
+        const saved = await actionsEmails.save(
+          withHandledStoreError(emailData),
+        );
         const savedId = extractId(saved?.id || saved?.['@id'] || editingItem?.id);
 
         const emailItem = {
@@ -320,7 +337,10 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
         closeModal();
       } catch (error) {
         showError(
-          `Falha ao ${editingItem ? 'atualizar' : 'adicionar'} email. Tente novamente.`,
+          resolveContactMutationMessage(
+            error,
+            `Falha ao ${editingItem ? 'atualizar' : 'adicionar'} email. Tente novamente.`,
+          ),
         );
       }
     }
@@ -335,7 +355,9 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
       onConfirm: async () => {
         try {
           if (type === 'phone') {
-            await actionsPhones.remove(id);
+            await actionsPhones.remove(
+              withHandledStoreError({id}),
+            );
             const updatedPhones = phones.filter(p => p.id !== id);
             setPhones(updatedPhones);
             if (onUpdateClient) {
@@ -353,7 +375,9 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             }
             showSuccess('Telefone removido com sucesso!');
           } else if (type === 'email') {
-            await actionsEmails.remove(id);
+            await actionsEmails.remove(
+              withHandledStoreError({id}),
+            );
             const updatedEmails = emails.filter(e => e.id !== id);
             setEmails(updatedEmails);
             if (onUpdateClient) {
@@ -368,7 +392,10 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           }
         } catch (error) {
           showError(
-            `Falha ao remover ${type === 'phone' ? 'telefone' : 'email'}. Tente novamente.`,
+            resolveContactMutationMessage(
+              error,
+              `Falha ao remover ${type === 'phone' ? 'telefone' : 'email'}. Tente novamente.`,
+            ),
           );
         }
       },
@@ -532,4 +559,3 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
 };
 
 export default ContactTab;
-
