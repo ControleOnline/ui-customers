@@ -66,12 +66,7 @@ export const inlineStyle_304_18 = {
   gap: 8,
 };
 
-export const inlineStyle_308_18 = (
-  {
-    formData: formData,
-    type: type,
-  },
-) => ({
+export const inlineStyle_308_18 = ({ formData, type }) => ({
   paddingHorizontal: 16,
   paddingVertical: 10,
   borderRadius: 12,
@@ -80,12 +75,7 @@ export const inlineStyle_308_18 = (
   backgroundColor: formData.type === type['@id'] ? '#e7f3ff' : '#f8f9fa',
 });
 
-export const inlineStyle_314_24 = (
-  {
-    formData: formData,
-    type: type,
-  },
-) => ({
+export const inlineStyle_314_24 = ({ formData, type }) => ({
   fontSize: 14,
   color: formData.type === type['@id'] ? '#007bff' : '#64748B',
   fontWeight: formData.type === type['@id'] ? '600' : '400',
@@ -144,4 +134,155 @@ export const inlineStyle_360_20 = {
   fontSize: 16,
   fontWeight: '600',
   color: '#fff',
+};
+
+export const attachmentListStyle = {
+  marginTop: 12,
+  gap: 8,
+};
+
+export const attachmentCardStyle = {
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  borderRadius: 12,
+  padding: 12,
+  backgroundColor: '#F8FAFC',
+  gap: 10,
+};
+
+export const attachmentHeaderStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+};
+
+export const attachmentMetaStyle = {
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+};
+
+export const attachmentNameStyle = {
+  flex: 1,
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#0F172A',
+};
+
+export const attachmentSubtextStyle = {
+  fontSize: 12,
+  color: '#64748B',
+  marginTop: 2,
+};
+
+export const attachmentActionsStyle = {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+};
+
+export const attachmentActionButtonStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+  borderWidth: 1,
+  borderColor: '#CBD5E1',
+  borderRadius: 10,
+  paddingHorizontal: 10,
+  paddingVertical: 8,
+  backgroundColor: '#FFFFFF',
+};
+
+export const attachmentActionLabelStyle = {
+  fontSize: 12,
+  fontWeight: '600',
+  color: '#334155',
+};
+
+export const emptyAttachmentTextStyle = {
+  fontSize: 13,
+  color: '#64748B',
+  marginTop: 8,
+};
+
+export const uploadButtonStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  marginTop: 12,
+  borderWidth: 1,
+  borderColor: '#BFDBFE',
+  backgroundColor: '#EFF6FF',
+  borderRadius: 12,
+  paddingVertical: 10,
+  paddingHorizontal: 12,
+};
+
+export const uploadButtonLabelStyle = {
+  fontSize: 13,
+  fontWeight: '600',
+  color: '#2563EB',
+};
+
+export const previewBackdropStyle = {
+  flex: 1,
+  backgroundColor: 'rgba(15, 23, 42, 0.7)',
+  justifyContent: 'center',
+  padding: 20,
+};
+
+export const previewCardStyle = {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 20,
+  overflow: 'hidden',
+  maxHeight: '85%',
+};
+
+export const previewHeaderStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingHorizontal: 20,
+  paddingVertical: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#E2E8F0',
+};
+
+export const previewTitleStyle = {
+  flex: 1,
+  fontSize: 16,
+  fontWeight: '700',
+  color: '#0F172A',
+};
+
+export const previewContentStyle = {
+  padding: 20,
+  gap: 16,
+};
+
+export const previewImageStyle = {
+  width: '100%',
+  height: 260,
+  borderRadius: 16,
+  backgroundColor: '#E2E8F0',
+};
+
+export const previewFallbackStyle = {
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingVertical: 32,
+  gap: 12,
+  borderWidth: 1,
+  borderStyle: 'dashed',
+  borderColor: '#CBD5E1',
+  borderRadius: 16,
+};
+
+export const previewFallbackTextStyle = {
+  fontSize: 14,
+  color: '#475569',
+  textAlign: 'center',
 };
