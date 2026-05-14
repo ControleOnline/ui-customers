@@ -665,7 +665,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                       {String(user.username || user.name || '')}
                     </Text>
                     <Text style={customStyles.itemSubtext}>
-                      {`${String(user.role || '')} • ${formatApiKeyPreview(user.apiKey)}`}
+                      {String(user.role || '')}
                     </Text>
                   </View>
                 </View>
