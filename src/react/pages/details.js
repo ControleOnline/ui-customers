@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { api } from '@controleonline/ui-common/src/api';
 import { useStores } from '@store';
 import { detailsStyles } from '../styles/details';
 import GeneralTab from '../components/tabs/GeneralTab';
@@ -17,6 +18,7 @@ import SalesmanTab from '../components/tabs/SalesmanTab';
 import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 import ProductsTab from '../components/tabs/ProductsTab';
+import { buildEmployeeContactsFromPeopleLinks } from '../components/tabs/employeeContacts';
 import styles from './details.page.styles';
 
 import {
@@ -129,7 +131,27 @@ const ClientDetails = ({ route, navigation }) => {
       setIsLoadingClient(true);
     }
 
-    getPeople(clientId)
+    const loadClient = async () => {
+      if (detailContext === 'contacts' && parentCompanyIri) {
+        const response = await api.fetch('/people_links', {
+          params: {
+            company: parentCompanyIri,
+            people: `/people/${clientId}`,
+            itemsPerPage: 1,
+          },
+        });
+
+        return (
+          buildEmployeeContactsFromPeopleLinks(response, {
+            parentPeopleId: parentCompanyId,
+          })[0] || null
+        );
+      }
+
+      return getPeople(clientId);
+    };
+
+    loadClient()
       .then(fullClient => {
         if (!mounted || !fullClient) {
           return;
@@ -158,7 +180,15 @@ const ClientDetails = ({ route, navigation }) => {
     return () => {
       mounted = false;
     };
-  }, [clientId, getPeople, requestedInitialTab, detailContext, width]);
+  }, [
+    clientId,
+    detailContext,
+    getPeople,
+    parentCompanyId,
+    parentCompanyIri,
+    requestedInitialTab,
+    width,
+  ]);
 
   const updateClientData = (field, data) => {
     setClient(prevClient => ({ ...prevClient, [field]: data }));
