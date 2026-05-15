@@ -4,6 +4,11 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '@controleonline/../../src/styles/colors';
 import styles from './ProductsTab.styles';
+import {
+  buildCreateProductParams,
+  buildInitialProviderPayload,
+  extractId,
+} from '../../domain/productSupplierFlow';
 
 const ROLE_LABELS = {
   supplier: 'Fornecedor',
@@ -12,19 +17,6 @@ const ROLE_LABELS = {
 };
 
 const SUPPLY_TYPES = new Set(['component', 'feedstock', 'package']);
-
-const extractId = value => {
-  if (value === null || value === undefined || value === '') return '';
-  if (typeof value === 'number') return String(value);
-  if (typeof value === 'string') {
-    const match = value.match(/(\d+)$/);
-    return match ? match[1] : value;
-  }
-  if (typeof value === 'object') {
-    return extractId(value.id || value['@id'] || '');
-  }
-  return '';
-};
 
 const formatMoney = value => {
   if (value === null || value === undefined || value === '') return '';
@@ -94,26 +86,18 @@ const ProductsTab = ({ client, customStyles }) => {
   const navigation = useNavigation();
 
   const providerPayload = useMemo(
-    () => ({
-      id: extractId(client?.id || client?.['@id']),
-      '@id': client?.['@id'] || (extractId(client?.id || client?.['@id']) ? `/people/${extractId(client?.id || client?.['@id'])}` : ''),
-      alias: String(client?.alias || '').trim(),
-      name: String(client?.name || '').trim(),
-      peopleType: client?.peopleType || '',
-    }),
+    () => buildInitialProviderPayload(client),
     [client?.id, client?.['@id'], client?.alias, client?.name, client?.peopleType],
   );
 
   const openCreateProduct = useCallback(() => {
-    if (!providerPayload.id) {
+    const params = buildCreateProductParams(client);
+    if (!params) {
       return;
     }
 
-    navigation.push('ProductDetails', {
-      context: 'products',
-      initialProvider: providerPayload,
-    });
-  }, [navigation, providerPayload]);
+    navigation.push('ProductDetails', params);
+  }, [client, navigation]);
 
   const relations = useMemo(() => {
     const safeRelations = Array.isArray(client?.productPeople) ? [...client.productPeople] : [];
