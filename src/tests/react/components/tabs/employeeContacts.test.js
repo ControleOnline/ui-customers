@@ -15,8 +15,9 @@ describe('employeeContacts', () => {
     ).toEqual([{id: 1}])
   })
 
-  it('normalizes unsupported link types to employee', () => {
+  it('normalizes supported link types and falls back to employee', () => {
     expect(normalizeEmployeeLinkType('OWNER')).toBe('owner')
+    expect(normalizeEmployeeLinkType('courier')).toBe('courier')
     expect(normalizeEmployeeLinkType('unknown')).toBe('employee')
   })
 
@@ -37,22 +38,34 @@ describe('employeeContacts', () => {
                 peopleType: 'F',
               },
             },
-            {
-              id: 32,
-              linkType: 'employee',
-              company: {'@id': '/people/31'},
-              people: {
-                id: 33,
-                '@id': '/people/33',
-                name: 'Filial',
-                alias: 'Filial',
-                peopleType: 'J',
-              },
+          {
+            id: 32,
+            linkType: 'employee',
+            company: {'@id': '/people/31'},
+            people: {
+              id: 33,
+              '@id': '/people/33',
+              name: 'Filial',
+              alias: 'Filial',
+              peopleType: 'J',
             },
-          ],
-        },
-        {parentPeopleId: '31'},
-      ),
+          },
+          {
+            id: 34,
+            linkType: 'courier',
+            company: {'@id': '/people/31'},
+            people: {
+              id: 35,
+              '@id': '/people/35',
+              name: 'Rafael',
+              alias: 'Rafa',
+              peopleType: 'F',
+            },
+          },
+        ],
+      },
+      {parentPeopleId: '31'},
+    ),
     ).toEqual([
       expect.objectContaining({
         id: 30,
@@ -64,6 +77,18 @@ describe('employeeContacts', () => {
         peopleLink: expect.objectContaining({
           id: 31,
           linkType: 'owner',
+        }),
+      }),
+      expect.objectContaining({
+        id: 35,
+        '@id': '/people/35',
+        name: 'Rafael',
+        alias: 'Rafa',
+        peopleType: 'F',
+        linkType: 'courier',
+        peopleLink: expect.objectContaining({
+          id: 34,
+          linkType: 'courier',
         }),
       }),
     ])

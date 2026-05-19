@@ -103,6 +103,7 @@ const LINK_TYPE_OPTIONS = [
   { value: 'owner', translationKey: 'owner' },
   { value: 'director', translationKey: 'director' },
   { value: 'manager', translationKey: 'manager' },
+  { value: 'courier', translationKey: 'courier' },
 ];
 
 const resolveEmployeeLinkType = employee =>
@@ -169,7 +170,7 @@ const EmployeesTab = ({
       const response = await api.fetch('/people_links', {
         params: {
           company: `/people/${parentPeopleId}`,
-          linkType: ['employee', 'owner', 'director', 'manager'],
+          linkType: ['employee', 'owner', 'director', 'manager', 'courier'],
           itemsPerPage: 100,
         },
       });

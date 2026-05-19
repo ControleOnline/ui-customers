@@ -123,11 +123,12 @@ const LINK_TYPE_OPTIONS = [
   { value: 'owner', translationKey: 'owner' },
   { value: 'director', translationKey: 'director' },
   { value: 'manager', translationKey: 'manager' },
+  { value: 'courier', translationKey: 'courier' },
 ];
 
 const normalizeLinkType = value => {
   const normalized = String(value || '').trim().toLowerCase();
-  return ['employee', 'owner', 'director', 'manager'].includes(normalized)
+  return ['employee', 'owner', 'director', 'manager', 'courier'].includes(normalized)
     ? normalized
     : 'employee';
 };

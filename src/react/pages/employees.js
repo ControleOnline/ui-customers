@@ -9,7 +9,7 @@ const normalizePeopleType = value =>
     .trim()
     .toUpperCase();
 
-const buildEmployeesContext = routeParams => {
+export const buildEmployeesContext = routeParams => {
   const normalizedSelectedContext = normalizePeopleContextType(routeParams?.selectedContext);
   const normalizedDefaultContext = normalizePeopleContextType(routeParams?.defaultContext);
   const normalizedContext = Array.isArray(routeParams?.context)
@@ -18,7 +18,7 @@ const buildEmployeesContext = routeParams => {
       ? [routeParams.context]
       : normalizedSelectedContext
         ? [normalizedSelectedContext]
-        : ['employee', 'owner'];
+        : ['employee', 'owner', 'courier'];
 
   const defaultContext =
     normalizedDefaultContext ||
