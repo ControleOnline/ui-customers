@@ -133,23 +133,39 @@ const ClientDetails = ({ route, navigation }) => {
     }
 
     const loadClient = async () => {
-      if (detailContext === 'contacts' && parentCompanyIri) {
-        const response = await api.fetch('/people_links', {
-          params: {
-            company: parentCompanyIri,
-            people: `/people/${clientId}`,
-            itemsPerPage: 1,
-          },
-        });
-
-        return (
-          buildEmployeeContactsFromPeopleLinks(response, {
-            parentPeopleId: parentCompanyId,
-          })[0] || null
-        );
+      if (detailContext !== 'contacts' || !parentCompanyIri) {
+        return getPeople(clientId);
       }
 
-      return getPeople(clientId);
+      const [fullClient, peopleLinkResponse] = await Promise.all([
+        getPeople(clientId),
+        api
+          .fetch('/people_links', {
+            params: {
+              company: parentCompanyIri,
+              people: `/people/${clientId}`,
+              itemsPerPage: 1,
+            },
+          })
+          .catch(() => null),
+      ]);
+
+      const linkedContact = buildEmployeeContactsFromPeopleLinks(
+        peopleLinkResponse,
+        {
+          parentPeopleId: parentCompanyId,
+        },
+      )[0];
+
+      if (!linkedContact) {
+        return fullClient;
+      }
+
+      return {
+        ...(fullClient || {}),
+        linkType: linkedContact.linkType || initialContactLinkType,
+        peopleLink: linkedContact.peopleLink,
+      };
     };
 
     loadClient()
@@ -185,6 +201,7 @@ const ClientDetails = ({ route, navigation }) => {
     clientId,
     detailContext,
     getPeople,
+    initialContactLinkType,
     parentCompanyId,
     parentCompanyIri,
     requestedInitialTab,
