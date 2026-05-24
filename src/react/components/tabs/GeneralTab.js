@@ -15,6 +15,10 @@ import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStore } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
+import {
+  formatDisplayUppercase,
+  uppercaseText,
+} from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { colors } from '@controleonline/../../src/styles/colors';
 import ContactTab from './ContactTab';
 import DocumentsTab from './DocumentsTab';
@@ -43,6 +47,7 @@ import {
 
 import { inlineStyle_237_6 } from './GeneralTab.styles';
 const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
+const normalizeIdentityValue = value => formatDisplayUppercase(normalizeText(value));
 
 const normalizeEnable = value => {
   if (typeof value === 'boolean') {
@@ -191,8 +196,8 @@ const GeneralTab = ({
 
   useEffect(() => {
     const initial = {
-      name: normalizeText(client?.name),
-      alias: normalizeText(client?.alias),
+      name: normalizeIdentityValue(client?.name),
+      alias: normalizeIdentityValue(client?.alias),
       dateBr: formatYmdToBr(client?.foundationDate),
       enable: normalizeEnable(client?.enable ?? client?.enabled),
       peopleType: String(client?.peopleType || 'J').toUpperCase(),
@@ -252,8 +257,8 @@ const GeneralTab = ({
 
   const hasRegistrationChanges = useMemo(() => {
     return (
-      normalizeText(registrationForm.name) !== normalizeText(originalRegistrationForm.name) ||
-      normalizeText(registrationForm.alias) !== normalizeText(originalRegistrationForm.alias) ||
+      normalizeIdentityValue(registrationForm.name) !== normalizeIdentityValue(originalRegistrationForm.name) ||
+      normalizeIdentityValue(registrationForm.alias) !== normalizeIdentityValue(originalRegistrationForm.alias) ||
       String(registrationForm.dateBr || '') !== String(originalRegistrationForm.dateBr || '') ||
       Boolean(registrationForm.enable) !== Boolean(originalRegistrationForm.enable) ||
       (canEditLinkType &&
@@ -267,8 +272,8 @@ const GeneralTab = ({
       return;
     }
 
-    const name = normalizeText(registrationForm.name);
-    const alias = normalizeText(registrationForm.alias);
+    const name = normalizeIdentityValue(registrationForm.name);
+    const alias = normalizeIdentityValue(registrationForm.alias);
 
     if (!name || !alias) {
       showError?.(GeneralTab.t?.t('users','error','nameAndAliasRequired'));
@@ -365,7 +370,7 @@ const GeneralTab = ({
           </Text>
           <TextInput
             value={registrationForm.name}
-            onChangeText={text => setRegistrationForm(prev => ({ ...prev, name: text }))}
+            onChangeText={text => setRegistrationForm(prev => ({ ...prev, name: uppercaseText(text) }))}
             placeholder={nameLabel}
             style={inlineStyle_230_12}
             placeholderTextColor="#94A3B8"
@@ -378,7 +383,7 @@ const GeneralTab = ({
           </Text>
           <TextInput
             value={registrationForm.alias}
-            onChangeText={text => setRegistrationForm(prev => ({ ...prev, alias: text }))}
+            onChangeText={text => setRegistrationForm(prev => ({ ...prev, alias: uppercaseText(text) }))}
             placeholder={aliasLabel}
             style={inlineStyle_252_12}
             placeholderTextColor="#94A3B8"

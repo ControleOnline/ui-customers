@@ -18,6 +18,10 @@ import { useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { api } from '@controleonline/ui-common/src/api';
+import {
+  formatDisplayUppercase,
+  uppercaseText,
+} from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { colors } from '@controleonline/../../src/styles/colors';
 import {
   buildEmployeeContactsFromPeopleLinks,
@@ -54,6 +58,7 @@ import {
 } from './EmployeesTab.styles';
 
 const extractId = value => String(value || '').replace(/\D/g, '');
+const normalizeIdentityValue = value => formatDisplayUppercase(value);
 
 const formatDateInput = text => {
   const numbers = String(text || '').replace(/\D/g, '').slice(0, 8);
@@ -221,8 +226,8 @@ const EmployeesTab = ({
   };
 
   const handleSaveEmployee = async () => {
-    const name = String(formData.name || '').trim();
-    const alias = String(formData.alias || '').trim();
+    const name = normalizeIdentityValue(formData.name);
+    const alias = normalizeIdentityValue(formData.alias);
 
     if (!name || !alias) {
       showError(txt_message_requiredError);
@@ -356,7 +361,7 @@ const EmployeesTab = ({
               </Text>
               <TextInput
                 value={formData.name}
-                onChangeText={text => setFormData(prev => ({ ...prev, name: text }))}
+                onChangeText={text => setFormData(prev => ({ ...prev, name: uppercaseText(text) }))}
                 placeholder="Digite o nome"
                 style={inlineStyle_338_16}
                 placeholderTextColor="#6c757d"
@@ -370,7 +375,7 @@ const EmployeesTab = ({
               </Text>
               <TextInput
                 value={formData.alias}
-                onChangeText={text => setFormData(prev => ({ ...prev, alias: text }))}
+                onChangeText={text => setFormData(prev => ({ ...prev, alias: uppercaseText(text) }))}
                 placeholder="Digite o apelido"
                 style={inlineStyle_365_16}
                 placeholderTextColor="#6c757d"

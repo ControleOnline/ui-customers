@@ -10,6 +10,7 @@ import {
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@controleonline/ui-common/src/api';
+import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { useStores } from '@store';
 import { detailsStyles } from '../styles/details';
 import GeneralTab from '../components/tabs/GeneralTab';
@@ -344,7 +345,7 @@ const ClientDetails = ({ route, navigation }) => {
           <Text style={styles.avatarText}>{client.name?.charAt(0)?.toUpperCase()}</Text>
         </View>
         <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">
-          {client.name}
+          {formatDisplayUppercase(client.name)}
         </Text>
 
         <Text style={styles.profileId}>{`ID: ${client.id}`}</Text>
