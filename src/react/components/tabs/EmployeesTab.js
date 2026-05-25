@@ -318,11 +318,11 @@ const EmployeesTab = ({
                   <Icon name="person" size={20} color={colors.primary} />
                   <View>
                     <Text style={customStyles.itemText}>
-                      {String(item?.name || '-')}
+                      {formatDisplayUppercase(item?.name) || '-'}
                     </Text>
                     <Text style={customStyles.itemSubtext}>
                       {`ID: ${extractId(item?.id || item?.['@id']) || '-'}`}
-                      {item?.alias ? ` - ${String(item.alias)}` : ''}
+                      {item?.alias ? ` - ${formatDisplayUppercase(item.alias)}` : ''}
                     </Text>
                   </View>
                 </View>
