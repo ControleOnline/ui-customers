@@ -1,3 +1,16 @@
+/*
+ * Contract imported from AGENTS.md
+ * ## Escopo
+ * - `ui-customers` e o modulo React de cadastro e edicao de clientes.
+ * - Esta pagina concentra detalhes, enderecos e dados de exibicao do cliente.
+ *
+ * ## Estado
+ * - Se existir `src/vue`, ela e apenas legado e nao deve receber este contrato.
+ *
+ * ## Limites
+ * - Nao duplicar validacoes de formato fora dos helpers compartilhados.
+ * - Manter aqui a orquestracao da tela e a edicao do cadastro do cliente.
+ */
 import React, { useState, useLayoutEffect, useEffect, useMemo } from 'react';
 
 import {
