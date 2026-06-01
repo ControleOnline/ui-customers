@@ -1,5 +1,6 @@
 import Clients from '@controleonline/ui-customers/src/react/pages/clients';
 import Employees from '@controleonline/ui-customers/src/react/pages/employees';
+import Franchisees from '@controleonline/ui-customers/src/react/pages/franchisees';
 import Providers from '@controleonline/ui-customers/src/react/pages/provider';
 import Prospects from '@controleonline/ui-customers/src/react/pages/prospects';
 import Client from '@controleonline/ui-customers/src/react/pages/details';
@@ -50,6 +51,18 @@ const customersRoutes = [
       headerBackVisible: true,
       companyFilterMode: 'icon',
       title: global.t?.t('people', 'title', 'prospects'),
+      showBottomToolBar: true,
+    },
+  },
+  {
+    name: 'FranchiseesIndex',
+    component: Franchisees,
+    options: {
+      showCompanyFilter: true,
+      headerShown: true,
+      headerBackVisible: true,
+      companyFilterMode: 'icon',
+      title: global.t?.t('people', 'title', 'franchisees') || 'Franquias',
       showBottomToolBar: true,
     },
   },
