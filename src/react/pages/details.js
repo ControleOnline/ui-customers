@@ -5,7 +5,6 @@
  * - Esta pagina concentra detalhes, enderecos e dados de exibicao do cliente.
  *
  * ## Estado
- * - Se existir `src/vue`, ela e apenas legado e nao deve receber este contrato.
  *
  * ## Limites
  * - Nao duplicar validacoes de formato fora dos helpers compartilhados.
