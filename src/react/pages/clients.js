@@ -11,8 +11,8 @@ const Clients = () => {
         title: global.t?.t('people', 'title', 'clients'),
         searchPlaceholder: global.t?.t('people', 'searchPlaceholder', 'searchClient'),
         modalTitleByType: {
-          client: 'Cadastro de Cliente',
-          prospect: 'Cadastro de Prospect',
+          client: global.t?.t('people', 'title', 'registerClient'),
+          prospect: global.t?.t('people', 'title', 'registerProspect'),
         },
         emptyTitle: global.t?.t('people', 'title', 'emptyClient'),
         emptySearchTitle: global.t?.t('people', 'title', 'emptySearchClient'),
