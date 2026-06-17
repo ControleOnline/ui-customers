@@ -37,7 +37,6 @@ const SalesmanTab = ({
     peopleLinkStore.actions.getItems({
       people: client?.['@id'],
       linkType: linkType,
-      itemsPerPage: 100,
     });
   }, []);
 

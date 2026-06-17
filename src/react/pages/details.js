@@ -156,7 +156,6 @@ const ClientDetails = ({ route, navigation }) => {
             params: {
               company: parentCompanyIri,
               people: `/people/${clientId}`,
-              itemsPerPage: 1,
             },
           })
           .catch(() => null),
@@ -477,3 +476,4 @@ const ClientDetails = ({ route, navigation }) => {
 };
 
 export default ClientDetails;
+// TODO(store-first): quando este arquivo for mexido, mover a leitura para stores, remover api.fetch e evitar repassar dados em objetos quando o store ja resolver isso.

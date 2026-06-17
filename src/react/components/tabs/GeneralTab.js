@@ -228,7 +228,6 @@ const GeneralTab = ({
       .getItems({
         people: contactPeopleIri,
         company: parentCompanyIri,
-        itemsPerPage: 1,
       })
       .then(items => {
         if (cancelled || !Array.isArray(items) || items.length === 0) {
