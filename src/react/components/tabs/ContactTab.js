@@ -507,7 +507,7 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDelete('phone', phone.id)}>
-                      <Icon name="delete" size={20} color="#ff4444" />
+                      <Icon name="delete" size={20} color="#c10015" />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -544,7 +544,7 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDelete('email', email.id)}>
-                      <Icon name="delete" size={20} color="#ff4444" />
+                      <Icon name="delete" size={20} color="#c10015" />
                     </TouchableOpacity>
                   </View>
                 )}

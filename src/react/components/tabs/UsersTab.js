@@ -678,7 +678,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                       <Icon name="visibility" size={20} color={colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDelete(user.id)}>
-                      <Icon name="delete" size={20} color="#ff4444" />
+                      <Icon name="delete" size={20} color="#c10015" />
                     </TouchableOpacity>
                   </View>
                 )}
