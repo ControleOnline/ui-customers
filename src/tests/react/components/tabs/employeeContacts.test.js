@@ -93,4 +93,48 @@ describe('employeeContacts', () => {
       }),
     ])
   })
+
+  it('filters unsupported link types when an allowlist is provided', () => {
+    expect(
+      buildEmployeeContactsFromPeopleLinks(
+        {
+          member: [
+            {
+              id: 40,
+              linkType: 'employee',
+              company: {'@id': '/people/31'},
+              people: {
+                id: 41,
+                '@id': '/people/41',
+                name: 'Marina',
+                alias: 'Mari',
+                peopleType: 'F',
+              },
+            },
+            {
+              id: 42,
+              linkType: 'client',
+              company: {'@id': '/people/31'},
+              people: {
+                id: 43,
+                '@id': '/people/43',
+                name: 'Visitante',
+                alias: 'Visit',
+                peopleType: 'F',
+              },
+            },
+          ],
+        },
+        {
+          parentPeopleId: '31',
+          allowedLinkTypes: ['employee', 'owner'],
+        },
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        id: 41,
+        linkType: 'employee',
+      }),
+    ])
+  })
 })

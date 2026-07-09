@@ -1,13 +1,16 @@
 const EMPLOYEE_CONTACT_LINK_TYPES = ['employee', 'owner', 'director', 'manager', 'courier']
 
 const extractId = value => String(value || '').replace(/\D/g, '')
-
-export const normalizeEmployeeLinkType = value => {
+const normalizeEmployeeLinkTypeStrict = value => {
   const normalized = String(value || '').trim().toLowerCase()
 
   return EMPLOYEE_CONTACT_LINK_TYPES.includes(normalized)
     ? normalized
-    : 'employee'
+    : ''
+}
+
+export const normalizeEmployeeLinkType = value => {
+  return normalizeEmployeeLinkTypeStrict(value) || 'employee'
 }
 
 export const extractPeopleLinkItems = payload => {
@@ -28,14 +31,18 @@ export const extractPeopleLinkItems = payload => {
 
 export const buildEmployeeContactsFromPeopleLinks = (
   payload,
-  {parentPeopleId = ''} = {},
+  {parentPeopleId = '', allowedLinkTypes = EMPLOYEE_CONTACT_LINK_TYPES} = {},
 ) => {
   const companyId = extractId(parentPeopleId)
+  const normalizedAllowedLinkTypes = Array.isArray(allowedLinkTypes)
+    ? allowedLinkTypes.map(normalizeEmployeeLinkTypeStrict).filter(Boolean)
+    : EMPLOYEE_CONTACT_LINK_TYPES
 
   return extractPeopleLinkItems(payload)
     .map(link => {
       const person = link?.people
       const personId = extractId(person?.id || person?.['@id'])
+      const normalizedLinkType = normalizeEmployeeLinkTypeStrict(link?.linkType)
 
       if (!personId || (companyId && personId === companyId)) {
         return null
@@ -45,9 +52,13 @@ export const buildEmployeeContactsFromPeopleLinks = (
         return null
       }
 
+      if (!normalizedLinkType || !normalizedAllowedLinkTypes.includes(normalizedLinkType)) {
+        return null
+      }
+
       return {
         ...(person || {}),
-        linkType: normalizeEmployeeLinkType(link?.linkType),
+        linkType: normalizedLinkType,
         peopleLink: link,
       }
     })

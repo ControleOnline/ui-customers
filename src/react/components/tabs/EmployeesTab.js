@@ -172,15 +172,17 @@ const EmployeesTab = ({
 
     try {
       // Company contacts are stored in people_links; filtering /people can miss valid links.
+      // Some backends reject array filters for linkType in this endpoint, so we fetch by company
+      // and keep only the supported contact roles in the client.
       const response = await api.fetch('/people_links', {
         params: {
           company: `/people/${parentPeopleId}`,
-          linkType: ['employee', 'owner', 'director', 'manager', 'courier'],
         },
       });
 
       const normalized = buildEmployeeContactsFromPeopleLinks(response, {
         parentPeopleId,
+        allowedLinkTypes: LINK_TYPE_OPTIONS.map(option => option.value),
       });
 
       setEmployees(normalized);
