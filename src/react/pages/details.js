@@ -23,8 +23,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@controleonline/ui-common/src/api';
 import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
-import { useStores } from '@store';
-import { detailsStyles } from '../styles/details';
+import { useStore, useStores } from '@store';
+import { createDetailsStyles } from '../styles/details';
 import GeneralTab from '../components/tabs/GeneralTab';
 import UsersTab from '../components/tabs/UsersTab';
 import SalesmanTab from '../components/tabs/SalesmanTab';
@@ -63,10 +63,13 @@ const ClientDetails = ({ route, navigation }) => {
   const requestedInitialTab = String(route.params?.initialTab || '').trim();
   const scrollRef = React.useRef(null);
   const peopleStore = useStores(state => state.people) || {};
+  const themeStore = useStore('theme');
+  const themeColors = themeStore?.getters?.colors || {};
   const peopleActions = peopleStore?.actions || {};
   const peopleGetters = peopleStore?.getters || {};
   const getPeople = peopleActions?.get;
   const savePeople = peopleActions?.save;
+  const detailsStyles = useMemo(() => createDetailsStyles(themeColors), [themeColors]);
 
   const extractId = value => String(value || '').replace(/\D/g, '');
   const parentCompanyId = extractId(routeParams?.parentCompanyId);
