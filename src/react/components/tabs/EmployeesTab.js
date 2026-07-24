@@ -14,10 +14,9 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
-import { useStores } from '@store';
+import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
-import { api } from '@controleonline/ui-common/src/api';
 import {
   formatDisplayUppercase,
   uppercaseText,
@@ -25,6 +24,7 @@ import {
 import { colors } from '@controleonline/../../src/styles/colors';
 import {
   buildEmployeeContactsFromPeopleLinks,
+  buildPeopleLinkReadParams,
   normalizeEmployeeLinkType,
 } from './employeeContacts';
 
@@ -154,6 +154,8 @@ const EmployeesTab = ({
 
   const peopleStore = useStores(state => state.people) || {};
   const peopleActions = peopleStore.actions || {};
+  const peopleLinkStore = useStore('people_link');
+  const getPeopleLinks = peopleLinkStore?.actions?.getItems;
 
   const parentPeopleId = useMemo(
     () => extractId(client?.id || client?.['@id']),
@@ -174,11 +176,11 @@ const EmployeesTab = ({
       // Company contacts are stored in people_links; filtering /people can miss valid links.
       // Some backends reject array filters for linkType in this endpoint, so we fetch by company
       // and keep only the supported contact roles in the client.
-      const response = await api.fetch('/people_links', {
-        params: {
-          company: `/people/${parentPeopleId}`,
-        },
-      });
+      const response = await getPeopleLinks(
+        buildPeopleLinkReadParams({
+          companyId: parentPeopleId,
+        }),
+      );
 
       const normalized = buildEmployeeContactsFromPeopleLinks(response, {
         parentPeopleId,
@@ -192,7 +194,7 @@ const EmployeesTab = ({
     } finally {
       setIsLoading(false);
     }
-  }, [txt_message_loadError, parentPeopleId]);
+  }, [getPeopleLinks, txt_message_loadError, parentPeopleId]);
 
   useEffect(() => {
     fetchEmployees();
@@ -297,7 +299,12 @@ const EmployeesTab = ({
           ) : (
             employees.map(item => (
               <TouchableOpacity
-                key={String(item?.id || item?.['@id'])}
+                key={String(
+                  item?.peopleLink?.id ||
+                    item?.peopleLink?.['@id'] ||
+                    item?.id ||
+                    item?.['@id'],
+                )}
                 style={customStyles.listItem}
                 activeOpacity={0.8}
                 onPress={() => {
@@ -469,4 +476,3 @@ const EmployeesTab = ({
 };
 
 export default EmployeesTab;
-// TODO(store-first): quando este arquivo for mexido, mover a leitura para stores, remover api.fetch e evitar repassar dados em objetos quando o store ja resolver isso.

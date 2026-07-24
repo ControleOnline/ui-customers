@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   ActivityIndicator,
@@ -11,6 +11,10 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
 import { colors } from '@controleonline/../../src/styles/colors';
+import {
+  buildPeopleLinkReadParams,
+  buildSalesmanLinksFromPeopleLinks,
+} from './employeeContacts';
 import { inlineStyle_46_16 } from './SalesmanTab.styles';
 const extractId = value => String(value || '').replace(/\D/g, '');
 
@@ -26,20 +30,59 @@ const SalesmanTab = ({
   const peopleStore = useStore('people');
   const peopleLinkStore = useStore('people_link');
   const peopleActions = peopleStore?.actions || {};
+  const getPeopleLinks = peopleLinkStore?.actions?.getItems;
 
-  const clients = peopleLinkStore.getters.items;
-  const isLoading = peopleLinkStore.getters.isLoading;
-  const error = peopleLinkStore.getters.error;
-
-
+  const [clients, setClients] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const clientId = extractId(client?.id || client?.['@id']);
 
   useEffect(() => {
-    peopleLinkStore.actions.getItems({
-      people: client?.['@id'],
-      linkType: linkType,
-    });
-  }, []);
+    let cancelled = false;
 
+    if (!clientId || !getPeopleLinks) {
+      setClients([]);
+      setError('');
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    getPeopleLinks(
+      buildPeopleLinkReadParams({
+        peopleId: clientId,
+        linkType,
+      }),
+    )
+      .then(items => {
+        if (!cancelled) {
+          setClients(
+            buildSalesmanLinksFromPeopleLinks(items, {
+              clientId,
+              linkType,
+            }),
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setClients([]);
+          setError(errorText);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId, errorText, getPeopleLinks, linkType]);
 
   return (
     <View style={customStyles.tabContent}>
@@ -55,7 +98,7 @@ const SalesmanTab = ({
         ) : (
           clients.map(item => (
             <TouchableOpacity
-              key={String(item?.company?.id || item?.company?.['@id'])}
+              key={String(item?.id || item?.['@id'])}
               style={customStyles.listItem}
               activeOpacity={0.8}
               onPress={() => {

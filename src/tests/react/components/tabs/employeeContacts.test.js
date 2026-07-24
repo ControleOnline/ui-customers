@@ -2,7 +2,10 @@ const {describe, expect, it} = global
 
 const {
   buildEmployeeContactsFromPeopleLinks,
+  buildPeopleLinkReadParams,
+  buildSalesmanLinksFromPeopleLinks,
   extractPeopleLinkItems,
+  filterPeopleLinksByScope,
   normalizeEmployeeLinkType,
 } = require('../../../../react/components/tabs/employeeContacts')
 
@@ -19,6 +22,64 @@ describe('employeeContacts', () => {
     expect(normalizeEmployeeLinkType('OWNER')).toBe('owner')
     expect(normalizeEmployeeLinkType('courier')).toBe('courier')
     expect(normalizeEmployeeLinkType('unknown')).toBe('employee')
+  })
+
+  it('builds numeric relationship filters for collection reads', () => {
+    expect(
+      buildPeopleLinkReadParams({
+        companyId: '/people/29',
+        peopleId: '/people/31',
+        linkType: 'sellers-client',
+      }),
+    ).toEqual({
+      company: '29',
+      people: '31',
+      linkType: 'sellers-client',
+    })
+  })
+
+  it('rejects links returned outside the requested relationship scope', () => {
+    const requestedLink = {
+      id: 11,
+      company: {id: 29},
+      people: {id: 31},
+      linkType: 'employee',
+    }
+    const unrelatedLink = {
+      id: 12,
+      company: {id: 2},
+      people: {id: 31},
+      linkType: 'employee',
+    }
+
+    expect(
+      filterPeopleLinksByScope([requestedLink, unrelatedLink], {
+        companyId: 29,
+        peopleId: 31,
+        linkTypes: ['employee'],
+      }),
+    ).toEqual([requestedLink])
+  })
+
+  it('keeps only salesman links whose client matches the open details page', () => {
+    const requestedLink = {
+      id: 21,
+      company: {id: 6, name: 'Alexandre'},
+      people: {id: 29},
+      linkType: 'sellers-client',
+    }
+    const unrelatedLink = {
+      id: 22,
+      company: {id: 6, name: 'Alexandre'},
+      people: {id: 11},
+      linkType: 'sellers-client',
+    }
+
+    expect(
+      buildSalesmanLinksFromPeopleLinks([requestedLink, unrelatedLink], {
+        clientId: 29,
+      }),
+    ).toEqual([requestedLink])
   })
 
   it('maps people links to physical contacts for the customer details tab', () => {
@@ -59,6 +120,18 @@ describe('employeeContacts', () => {
               '@id': '/people/35',
               name: 'Rafael',
               alias: 'Rafa',
+              peopleType: 'F',
+            },
+          },
+          {
+            id: 36,
+            linkType: 'employee',
+            company: {'@id': '/people/99'},
+            people: {
+              id: 37,
+              '@id': '/people/37',
+              name: 'Contato de outra empresa',
+              alias: 'Outra',
               peopleType: 'F',
             },
           },

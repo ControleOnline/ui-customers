@@ -48,6 +48,7 @@ import {
 import { inlineStyle_237_6 } from './GeneralTab.styles';
 const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
 const normalizeIdentityValue = value => formatDisplayUppercase(normalizeText(value));
+const extractId = value => String(value || '').replace(/\D/g, '');
 
 const normalizeEnable = value => {
   if (typeof value === 'boolean') {
@@ -226,8 +227,8 @@ const GeneralTab = ({
 
     peopleLinkActions
       .getItems({
-        people: contactPeopleIri,
-        company: parentCompanyIri,
+        people: extractId(contactPeopleIri),
+        company: extractId(parentCompanyIri),
       })
       .then(items => {
         if (cancelled || !Array.isArray(items) || items.length === 0) {

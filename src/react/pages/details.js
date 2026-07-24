@@ -21,7 +21,6 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { api } from '@controleonline/ui-common/src/api';
 import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { useStore, useStores } from '@store';
 import { createDetailsStyles } from '../styles/details';
@@ -31,7 +30,10 @@ import SalesmanTab from '../components/tabs/SalesmanTab';
 import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 import ProductsTab from '../components/tabs/ProductsTab';
-import { buildEmployeeContactsFromPeopleLinks } from '../components/tabs/employeeContacts';
+import {
+  buildEmployeeContactsFromPeopleLinks,
+  buildPeopleLinkReadParams,
+} from '../components/tabs/employeeContacts';
 import styles from './details.page.styles';
 
 import {
@@ -63,11 +65,13 @@ const ClientDetails = ({ route, navigation }) => {
   const requestedInitialTab = String(route.params?.initialTab || '').trim();
   const scrollRef = React.useRef(null);
   const peopleStore = useStores(state => state.people) || {};
+  const peopleLinkStore = useStore('people_link');
   const themeStore = useStore('theme');
   const themeColors = themeStore?.getters?.colors || {};
   const peopleActions = peopleStore?.actions || {};
   const peopleGetters = peopleStore?.getters || {};
   const getPeople = peopleActions?.get;
+  const getPeopleLinks = peopleLinkStore?.actions?.getItems;
   const savePeople = peopleActions?.save;
   const detailsStyles = useMemo(() => createDetailsStyles(themeColors), [themeColors]);
 
@@ -154,14 +158,14 @@ const ClientDetails = ({ route, navigation }) => {
 
       const [fullClient, peopleLinkResponse] = await Promise.all([
         getPeople(clientId),
-        api
-          .fetch('/people_links', {
-            params: {
-              company: parentCompanyIri,
-              people: `/people/${clientId}`,
-            },
-          })
-          .catch(() => null),
+        getPeopleLinks
+          ? getPeopleLinks(
+              buildPeopleLinkReadParams({
+                companyId: parentCompanyId,
+                peopleId: clientId,
+              }),
+            ).catch(() => null)
+          : Promise.resolve(null),
       ]);
 
       const linkedContact = buildEmployeeContactsFromPeopleLinks(
@@ -215,6 +219,7 @@ const ClientDetails = ({ route, navigation }) => {
     clientId,
     detailContext,
     getPeople,
+    getPeopleLinks,
     initialContactLinkType,
     parentCompanyId,
     parentCompanyIri,
@@ -479,4 +484,3 @@ const ClientDetails = ({ route, navigation }) => {
 };
 
 export default ClientDetails;
-// TODO(store-first): quando este arquivo for mexido, mover a leitura para stores, remover api.fetch e evitar repassar dados em objetos quando o store ja resolver isso.
