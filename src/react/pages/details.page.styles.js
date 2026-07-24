@@ -12,18 +12,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   avatarContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 12,
-  },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
   },
   profileName: {
     fontSize: 20,

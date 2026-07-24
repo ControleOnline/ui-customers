@@ -16,7 +16,6 @@ import {
   buildNavigationMapQuery,
   buildWazeNavigationUrl,
 } from '@controleonline/ui-common/src/react/utils/mapNavigation';
-import {colors} from '@controleonline/../../src/styles/colors';
 
 const extractId = value => String(value || '').replace(/\D/g, '');
 const normalizeId = value => extractId(value) || value || Date.now();
@@ -473,8 +472,14 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           <View style={customStyles.sectionHeader}>
             <Text style={customStyles.sectionTitle}>{global.t?.t('address', 'title', 'addresses')}</Text>
             {isEditing && (
-              <TouchableOpacity onPress={() => openModal(null)}>
-                <Icon name="add" size={24} color={colors.primary} />
+              <TouchableOpacity
+                onPress={() => openModal(null)}
+                style={customStyles.iconButtonPrimary}>
+                <Icon
+                  name="add"
+                  size={20}
+                  color={customStyles.iconButtonPrimaryIcon.color}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -486,8 +491,15 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
                 <View style={customStyles.itemContent}>
                   <TouchableOpacity
                     onPress={() => openNavigationModal(address)}
-                    style={customStyles.locationButton}>
-                    <Icon name="location-on" size={20} color={colors.primary} />
+                    style={[
+                      customStyles.iconButtonLocation,
+                      customStyles.locationButton,
+                    ]}>
+                    <Icon
+                      name="location-on"
+                      size={20}
+                      color={customStyles.iconButtonPrimaryIcon.color}
+                    />
                   </TouchableOpacity>
                   <View>
                     <Text style={customStyles.itemText}>
@@ -508,8 +520,14 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
                 </View>
                 {isEditing && (
                   <View style={customStyles.itemActions}>
-                    <TouchableOpacity onPress={() => openModal(address)}>
-                      <Icon name="edit" size={20} color={colors.primary} />
+                    <TouchableOpacity
+                      onPress={() => openModal(address)}
+                      style={customStyles.iconButtonGhost}>
+                      <Icon
+                        name="edit"
+                        size={18}
+                        color={customStyles.iconButtonGhostIcon.color}
+                      />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDelete(address.id)}>
                       <Icon name="delete" size={20} color="#c10015" />

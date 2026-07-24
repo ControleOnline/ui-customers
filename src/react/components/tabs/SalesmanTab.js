@@ -10,7 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
-import { colors } from '@controleonline/../../src/styles/colors';
+import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
 import {
   buildPeopleLinkReadParams,
   buildSalesmanLinksFromPeopleLinks,
@@ -89,7 +89,10 @@ const SalesmanTab = ({
       <View style={customStyles.section}>
         {isLoading ? (
           <View style={inlineStyle_46_16}>
-            <ActivityIndicator size="small" color={colors.primary} />
+            <ActivityIndicator
+              size="small"
+              color={customStyles.loadingIndicator.color}
+            />
           </View>
         ) : error ? (
           <Text style={customStyles.emptyText}>{errorText}</Text>
@@ -111,7 +114,15 @@ const SalesmanTab = ({
                 navigation.push('ClientDetails', { clientId });
               }}>
               <View style={customStyles.itemContent}>
-                <Icon name="people" size={20} color={colors.primary} />
+                <UserAvatar
+                  name={String(item?.company?.name || '')}
+                  size={40}
+                  backgroundColor={customStyles.listAvatarBrand.backgroundColor}
+                  borderColor={customStyles.listAvatarBrand.borderColor}
+                  borderWidth={2}
+                  textColor={customStyles.listAvatarText.color}
+                  style={customStyles.listAvatar}
+                />
                 <View>
                   <Text style={customStyles.itemText}>
                     {String(item?.company?.name || '-')}
@@ -122,7 +133,11 @@ const SalesmanTab = ({
                   </Text>
                 </View>
               </View>
-              <Icon name="chevron-right" size={20} color="#94A3B8" />
+              <Icon
+                name="chevron-right"
+                size={20}
+                color={customStyles.itemChevronIcon.color}
+              />
             </TouchableOpacity>
           ))
         )}

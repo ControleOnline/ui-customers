@@ -11,7 +11,6 @@ import AnimatedModal from '@controleonline/ui-common/src/react/components/Animat
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
-import { colors } from '@controleonline/../../src/styles/colors';
 import {resolveContactMutationMessage} from './contactMutationMessage';
 
 import {
@@ -482,8 +481,14 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           <View style={customStyles.sectionHeader}>
             <Text style={customStyles.sectionTitle}>Telefones</Text>
             {isEditing && (
-              <TouchableOpacity onPress={() => openModal('phone')}>
-                <Icon name="add" size={24} color={colors.primary} />
+              <TouchableOpacity
+                onPress={() => openModal('phone')}
+                style={customStyles.iconButtonPrimary}>
+                <Icon
+                  name="add"
+                  size={20}
+                  color={customStyles.iconButtonPrimaryIcon.color}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -495,15 +500,25 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             phones.map(phone => (
               <View key={phone.id} style={customStyles.listItem}>
                 <View style={customStyles.itemContent}>
-                  <Icon name="phone" size={20} color={colors.primary} />
+                  <Icon
+                    name="phone"
+                    size={20}
+                    color={customStyles.cardItemIcon.color}
+                  />
                   <Text style={customStyles.itemText}>
                     {String(phone.value || '')}
                   </Text>
                 </View>
                 {isEditing && (
                   <View style={customStyles.itemActions}>
-                    <TouchableOpacity onPress={() => openModal('phone', phone)}>
-                      <Icon name="edit" size={20} color={colors.primary} />
+                    <TouchableOpacity
+                      onPress={() => openModal('phone', phone)}
+                      style={customStyles.iconButtonGhost}>
+                      <Icon
+                        name="edit"
+                        size={18}
+                        color={customStyles.iconButtonGhostIcon.color}
+                      />
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDelete('phone', phone.id)}>
@@ -521,8 +536,14 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           <View style={customStyles.sectionHeader}>
             <Text style={customStyles.sectionTitle}>Emails</Text>
             {isEditing && (
-              <TouchableOpacity onPress={() => openModal('email')}>
-                <Icon name="add" size={24} color={colors.primary} />
+              <TouchableOpacity
+                onPress={() => openModal('email')}
+                style={customStyles.iconButtonPrimary}>
+                <Icon
+                  name="add"
+                  size={20}
+                  color={customStyles.iconButtonPrimaryIcon.color}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -532,15 +553,25 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             emails.map(email => (
               <View key={email.id} style={customStyles.listItem}>
                 <View style={customStyles.itemContent}>
-                  <Icon name="email" size={20} color={colors.primary} />
+                  <Icon
+                    name="email"
+                    size={20}
+                    color={customStyles.cardItemIcon.color}
+                  />
                   <Text style={customStyles.itemText}>
                     {String(email.value || '')}
                   </Text>
                 </View>
                 {isEditing && (
                   <View style={customStyles.itemActions}>
-                    <TouchableOpacity onPress={() => openModal('email', email)}>
-                      <Icon name="edit" size={20} color={colors.primary} />
+                    <TouchableOpacity
+                      onPress={() => openModal('email', email)}
+                      style={customStyles.iconButtonGhost}>
+                      <Icon
+                        name="edit"
+                        size={18}
+                        color={customStyles.iconButtonGhostIcon.color}
+                      />
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDelete('email', email.id)}>

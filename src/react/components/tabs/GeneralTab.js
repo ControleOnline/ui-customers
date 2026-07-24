@@ -19,33 +19,10 @@ import {
   formatDisplayUppercase,
   uppercaseText,
 } from '@controleonline/ui-common/src/react/utils/entityDisplay';
-import { colors } from '@controleonline/../../src/styles/colors';
 import ContactTab from './ContactTab';
 import DocumentsTab from './DocumentsTab';
 import AddressesTab from './AddressesTab';
-
-import {
-  inlineStyle_213_6,
-  inlineStyle_222_14,
-  inlineStyle_223_16,
-  inlineStyle_230_12,
-  inlineStyle_244_14,
-  inlineStyle_245_16,
-  inlineStyle_252_12,
-  inlineStyle_266_14,
-  inlineStyle_267_16,
-  inlineStyle_271_12,
-  inlineStyle_279_64,
-  inlineStyle_291_14,
-  inlineStyle_303_14,
-  inlineStyle_304_16,
-  inlineStyle_308_12,
-  inlineStyle_319_18,
-  inlineStyle_341_12,
-  inlineStyle_354_20,
-} from './GeneralTab.styles';
-
-import { inlineStyle_237_6 } from './GeneralTab.styles';
+import { createGeneralTabStyles } from './GeneralTab.styles';
 const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
 const normalizeIdentityValue = value => formatDisplayUppercase(normalizeText(value));
 const extractId = value => String(value || '').replace(/\D/g, '');
@@ -160,6 +137,9 @@ const GeneralTab = ({
 }) => {
   const {showError, showSuccess} = useMessage();
   const peopleLinkStore = useStore('people_link');
+  const themeStore = useStore('theme');
+  const themeColors = themeStore.getters.colors;
+  const styles = useMemo(() => createGeneralTabStyles(themeColors), [themeColors]);
   const peopleLinkActions = peopleLinkStore?.actions || {};
   const [isSavingRegistration, setIsSavingRegistration] = useState(false);
   const [isSavingLinkType, setIsSavingLinkType] = useState(false);
@@ -355,8 +335,8 @@ const GeneralTab = ({
 
   return (
     <ScrollView
-      style={inlineStyle_213_6}
-      contentContainerStyle={inlineStyle_237_6}
+      style={styles.container}
+      contentContainerStyle={styles.content}
       nestedScrollEnabled
       showsVerticalScrollIndicator={false}>
       <View style={customStyles.section}>
@@ -364,39 +344,43 @@ const GeneralTab = ({
           <Text style={customStyles.sectionTitle}>Dados Cadastrais</Text>
         </View>
 
-        <View style={inlineStyle_222_14}>
-          <Text style={inlineStyle_223_16}>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>
             {nameLabel}
           </Text>
           <TextInput
             value={registrationForm.name}
             onChangeText={text => setRegistrationForm(prev => ({ ...prev, name: uppercaseText(text) }))}
             placeholder={nameLabel}
-            style={inlineStyle_230_12}
-            placeholderTextColor="#94A3B8"
+            style={styles.input}
+            placeholderTextColor={themeColors.inputPlaceholderText}
           />
         </View>
 
-        <View style={inlineStyle_244_14}>
-          <Text style={inlineStyle_245_16}>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>
             {aliasLabel}
           </Text>
           <TextInput
             value={registrationForm.alias}
             onChangeText={text => setRegistrationForm(prev => ({ ...prev, alias: uppercaseText(text) }))}
             placeholder={aliasLabel}
-            style={inlineStyle_252_12}
-            placeholderTextColor="#94A3B8"
+            style={styles.input}
+            placeholderTextColor={themeColors.inputPlaceholderText}
           />
         </View>
 
-        <View style={inlineStyle_266_14}>
-          <Text style={inlineStyle_267_16}>
+        <View style={styles.fieldGroupLarge}>
+          <Text style={styles.fieldLabel}>
             {dateLabel}
           </Text>
-          <View
-            style={inlineStyle_271_12}>
-            <Icon name="event" size={18} color={colors.primary} style={inlineStyle_279_64} />
+          <View style={styles.inputRow}>
+            <Icon
+              name="event"
+              size={18}
+              color={themeColors.inputIcon}
+              style={styles.inputIcon}
+            />
             <TextInput
               value={registrationForm.dateBr}
               onChangeText={text =>
@@ -408,19 +392,18 @@ const GeneralTab = ({
               placeholder="DD/MM/AAAA" // @todo // mostrar também no padrão americano, MM/DD/AAAA
               keyboardType="numeric"
               maxLength={10}
-              style={inlineStyle_291_14}
-              placeholderTextColor="#94A3B8"
+              style={styles.inputRowField}
+              placeholderTextColor={themeColors.inputPlaceholderText}
             />
           </View>
         </View>
 
-        <View style={inlineStyle_303_14}>
-          <Text style={inlineStyle_304_16}>
+        <View style={styles.fieldGroupLarge}>
+          <Text style={styles.fieldLabel}>
             Acesso do usuário
           </Text>
-          <View
-            style={inlineStyle_308_12}>
-            <Text style={inlineStyle_319_18}>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>
               {registrationForm.enable ? 'Liberado' : 'Bloqueado'}
             </Text>
             <Switch
@@ -431,16 +414,23 @@ const GeneralTab = ({
                   enable: value,
                 }))
               }
-              trackColor={{ false: '#CBD5E1', true: '#93C5FD' }}
-              thumbColor={registrationForm.enable ? colors.primary : '#f4f3f4'}
+              trackColor={{
+                false: themeColors.switchOffTrack,
+                true: themeColors.switchOnTrack,
+              }}
+              thumbColor={
+                registrationForm.enable
+                  ? themeColors.switchOnThumb
+                  : themeColors.switchOffThumb
+              }
             />
           </View>
         </View>
 
         {canEditLinkType && (
-          <View style={inlineStyle_244_14}>
-            <Text style={inlineStyle_245_16}>Tipo de Vinculo</Text>
-            <View style={inlineStyle_271_12}>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Tipo de Vinculo</Text>
+            <View style={styles.inputRow}>
               <Picker
                 selectedValue={registrationForm.linkType}
                 onValueChange={value =>
@@ -450,7 +440,7 @@ const GeneralTab = ({
                   }))
                 }
                 mode={pickerMode}
-                style={inlineStyle_291_14}>
+                style={styles.inputRowField}>
                 {linkTypeOptions.map(option => (
                   <Picker.Item
                     key={option.value}
@@ -468,15 +458,22 @@ const GeneralTab = ({
             onPress={saveRegistration}
             disabled={!hasRegistrationChanges || isSavingRegistration || isSavingLinkType}
             activeOpacity={0.85}
-            style={inlineStyle_341_12({
-              colors: colors,
-              hasRegistrationChanges: hasRegistrationChanges,
-              isSavingRegistration: isSavingRegistration || isSavingLinkType,
-            })}>
+            style={[
+              styles.saveButton,
+              !hasRegistrationChanges || isSavingRegistration || isSavingLinkType
+                ? styles.saveButtonDisabled
+                : null,
+            ]}>
             {isSavingRegistration || isSavingLinkType ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={themeColors.buttonText} />
             ) : (
-              <Text style={inlineStyle_354_20}>
+              <Text
+                style={[
+                  styles.saveButtonText,
+                  !hasRegistrationChanges || isSavingRegistration || isSavingLinkType
+                    ? styles.saveButtonTextDisabled
+                    : null,
+                ]}>
                 {global.t?.t('users','button','saveChanges')}
               </Text>
             )}

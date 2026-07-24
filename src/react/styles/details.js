@@ -3,34 +3,38 @@ import {StyleSheet, Dimensions} from 'react-native';
 const {width} = Dimensions.get('window');
 
 const resolvePalette = themeColors => ({
-  headerBackground: themeColors?.headerBackground,
-  headerBorder: themeColors?.headerBorder,
-  headerText: themeColors?.headerText,
-  cardBackground: themeColors?.cardBackground,
-  cardBorder: themeColors?.cardBorder,
-  cardText: themeColors?.cardText,
-  cardShadow: themeColors?.cardShadow,
-  listItemBackground: themeColors?.listItemBackground,
-  listItemText: themeColors?.listItemText,
-  listItemSubtitleText: themeColors?.listItemSubtitleText,
-  buttonBackground: themeColors?.buttonBackground,
-  buttonText: themeColors?.buttonText,
-  buttonShadow: themeColors?.buttonShadow,
-  buttonBackgroundSecondary: themeColors?.buttonBackgroundSecondary,
-  buttonBorderSecondary: themeColors?.buttonBorderSecondary,
-  buttonTextSecondary: themeColors?.buttonTextSecondary,
-  buttonDisabledBackground: themeColors?.buttonDisabledBackground,
-  tabBarBackground: themeColors?.tabBarBackground,
-  tabBarBorder: themeColors?.tabBarBorder,
-  menuSelectedBorder: themeColors?.menuSelectedBorder,
-  menuSelectedText: themeColors?.menuSelectedText,
-  pageBackground: themeColors?.pageBackground,
-  modalOverlay: themeColors?.modalOverlay,
-  modalBackground: themeColors?.modalBackground,
-  modalText: themeColors?.modalText,
-  modalShadow: themeColors?.modalShadow,
-  inputBackground: themeColors?.inputBackground,
-  inputBorder: themeColors?.inputBorder,
+  headerBackground: themeColors.headerBackground,
+  headerBorder: themeColors.headerBorder,
+  headerText: themeColors.headerText,
+  cardBackground: themeColors.cardBackground,
+  cardBorder: themeColors.cardBorder,
+  cardText: themeColors.cardText,
+  cardIcon: themeColors.cardIcon,
+  cardShadow: themeColors.cardShadow,
+  listItemBackground: themeColors.listItemBackground,
+  listItemText: themeColors.listItemText,
+  listItemSubtitleText: themeColors.listItemSubtitleText,
+  loadingSpinner: themeColors.loadingSpinner,
+  buttonBackground: themeColors.buttonBackground,
+  buttonBorder: themeColors.buttonBorder,
+  buttonText: themeColors.buttonText,
+  buttonShadow: themeColors.buttonShadow,
+  buttonBackgroundSecondary: themeColors.buttonBackgroundSecondary,
+  buttonBorderSecondary: themeColors.buttonBorderSecondary,
+  buttonIconSecondary: themeColors.buttonIconSecondary,
+  buttonTextSecondary: themeColors.buttonTextSecondary,
+  buttonDisabledBackground: themeColors.buttonDisabledBackground,
+  tabBarBackground: themeColors.tabBarBackground,
+  tabBarBorder: themeColors.tabBarBorder,
+  menuSelectedBorder: themeColors.menuSelectedBorder,
+  menuSelectedText: themeColors.menuSelectedText,
+  pageBackground: themeColors.pageBackground,
+  modalOverlay: themeColors.modalOverlay,
+  modalBackground: themeColors.modalBackground,
+  modalText: themeColors.modalText,
+  modalShadow: themeColors.modalShadow,
+  inputBackground: themeColors.inputBackground,
+  inputBorder: themeColors.inputBorder,
 });
 
 export const createDetailsStyles = themeColors => {
@@ -111,6 +115,46 @@ export const createDetailsStyles = themeColors => {
     editActions: {
       flexDirection: 'row',
       gap: 12,
+    },
+
+    iconButtonPrimary: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: palette.buttonBackground,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    iconButtonPrimaryIcon: {
+      color: palette.buttonText,
+    },
+
+    iconButtonLocation: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: palette.buttonBackground,
+      borderWidth: 2,
+      borderColor: palette.buttonBorder,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    iconButtonGhost: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    iconButtonGhostIcon: {
+      color: palette.cardIcon,
+    },
+
+    cardItemIcon: {
+      color: palette.cardIcon,
     },
 
     cancelButton: {
@@ -260,9 +304,20 @@ export const createDetailsStyles = themeColors => {
       minWidth: 0,
     },
 
+    listAvatar: {
+      marginRight: 4,
+    },
+
+    listAvatarBrand: {
+      backgroundColor: palette.buttonBackground,
+      borderColor: palette.buttonText,
+    },
+
+    listAvatarText: {
+      color: palette.buttonText,
+    },
+
     locationButton: {
-      paddingVertical: 4,
-      paddingRight: 4,
       alignSelf: 'flex-start',
     },
 
@@ -284,12 +339,20 @@ export const createDetailsStyles = themeColors => {
       gap: 12,
     },
 
+    itemChevronIcon: {
+      color: palette.listItemSubtitleText,
+    },
+
     emptyText: {
       color: palette.listItemSubtitleText,
       fontStyle: 'italic',
       textAlign: 'center',
       paddingVertical: 24,
       fontSize: 16,
+    },
+
+    loadingIndicator: {
+      color: palette.loadingSpinner,
     },
 
     // Modal

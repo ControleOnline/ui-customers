@@ -16,12 +16,12 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
+import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import {
   formatDisplayUppercase,
   uppercaseText,
 } from '@controleonline/ui-common/src/react/utils/entityDisplay';
-import { colors } from '@controleonline/../../src/styles/colors';
 import {
   buildEmployeeContactsFromPeopleLinks,
   buildPeopleLinkReadParams,
@@ -283,14 +283,23 @@ const EmployeesTab = ({
         <View style={customStyles.section}>
           <View style={customStyles.sectionHeader}>
             <Text style={customStyles.sectionTitle}>{txt_title}</Text>
-            <TouchableOpacity onPress={handleOpenModal}>
-              <Icon name="add" size={24} color={colors.primary} />
+            <TouchableOpacity
+              onPress={handleOpenModal}
+              style={customStyles.iconButtonPrimary}>
+              <Icon
+                name="add"
+                size={20}
+                color={customStyles.iconButtonPrimaryIcon.color}
+              />
             </TouchableOpacity>
           </View>
 
           {isLoading ? (
             <View style={inlineStyle_243_18}>
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator
+                size="small"
+                color={customStyles.loadingIndicator.color}
+              />
             </View>
           ) : error ? (
             <Text style={customStyles.txt_title_emptyText}>{error}</Text>
@@ -323,7 +332,15 @@ const EmployeesTab = ({
                   });
                 }}>
                 <View style={customStyles.itemContent}>
-                  <Icon name="person" size={20} color={colors.primary} />
+                  <UserAvatar
+                    name={formatDisplayUppercase(item?.name) || ''}
+                    size={40}
+                    backgroundColor={customStyles.listAvatarBrand.backgroundColor}
+                    borderColor={customStyles.listAvatarBrand.borderColor}
+                    borderWidth={2}
+                    textColor={customStyles.listAvatarText.color}
+                    style={customStyles.listAvatar}
+                  />
                   <View>
                     <Text style={customStyles.itemText}>
                       {formatDisplayUppercase(item?.name) || '-'}
@@ -334,7 +351,11 @@ const EmployeesTab = ({
                     </Text>
                   </View>
                 </View>
-                <Icon name="chevron-right" size={20} color="#94A3B8" />
+                <Icon
+                  name="chevron-right"
+                  size={20}
+                  color={customStyles.itemChevronIcon.color}
+                />
               </TouchableOpacity>
             ))
           )}
@@ -461,7 +482,10 @@ const EmployeesTab = ({
               }}
               disabled={isSaving}
               style={inlineStyle_491_14({
-                colors: colors,
+                colors: {
+                  primary: customStyles.saveButton.backgroundColor,
+                  disabled: customStyles.saveButtonDisabled.backgroundColor,
+                },
                 isSaving: isSaving,
               })}>
               <Text style={inlineStyle_498_20}>

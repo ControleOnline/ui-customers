@@ -22,6 +22,7 @@ import {
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
+import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
 import { useStore, useStores } from '@store';
 import { createDetailsStyles } from '../styles/details';
 import GeneralTab from '../components/tabs/GeneralTab';
@@ -67,7 +68,7 @@ const ClientDetails = ({ route, navigation }) => {
   const peopleStore = useStores(state => state.people) || {};
   const peopleLinkStore = useStore('people_link');
   const themeStore = useStore('theme');
-  const themeColors = themeStore?.getters?.colors || {};
+  const themeColors = themeStore.getters.colors;
   const peopleActions = peopleStore?.actions || {};
   const peopleGetters = peopleStore?.getters || {};
   const getPeople = peopleActions?.get;
@@ -378,7 +379,14 @@ const ClientDetails = ({ route, navigation }) => {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.headerProfile}>
         <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>{client.name?.charAt(0)?.toUpperCase()}</Text>
+          <UserAvatar
+            name={formatDisplayUppercase(client.name)}
+            size={64}
+            backgroundColor={themeColors.buttonBackground}
+            borderColor={themeColors.buttonText}
+            borderWidth={3}
+            textColor={themeColors.buttonText}
+          />
         </View>
         <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">
           {formatDisplayUppercase(client.name)}
