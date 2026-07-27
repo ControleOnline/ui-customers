@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
+import FeatherIcon from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
@@ -514,15 +515,20 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                     <TouchableOpacity
                       onPress={() => openModal('phone', phone)}
                       style={customStyles.iconButtonGhost}>
-                      <Icon
-                        name="edit"
-                        size={18}
+                      <FeatherIcon
+                        name="edit-2"
+                        size={16}
                         color={customStyles.iconButtonGhostIcon.color}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => handleDelete('phone', phone.id)}>
-                      <Icon name="delete" size={20} color="#c10015" />
+                      onPress={() => handleDelete('phone', phone.id)}
+                      style={customStyles.iconButtonGhost}>
+                      <FeatherIcon
+                        name="trash-2"
+                        size={16}
+                        color={customStyles.iconButtonGhostIcon.color}
+                      />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -567,15 +573,20 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                     <TouchableOpacity
                       onPress={() => openModal('email', email)}
                       style={customStyles.iconButtonGhost}>
-                      <Icon
-                        name="edit"
-                        size={18}
+                      <FeatherIcon
+                        name="edit-2"
+                        size={16}
                         color={customStyles.iconButtonGhostIcon.color}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => handleDelete('email', email.id)}>
-                      <Icon name="delete" size={20} color="#c10015" />
+                      onPress={() => handleDelete('email', email.id)}
+                      style={customStyles.iconButtonGhost}>
+                      <FeatherIcon
+                        name="trash-2"
+                        size={16}
+                        color={customStyles.iconButtonGhostIcon.color}
+                      />
                     </TouchableOpacity>
                   </View>
                 )}

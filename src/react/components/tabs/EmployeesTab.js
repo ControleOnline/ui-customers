@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { Picker } from '@react-native-picker/picker';
+import FeatherIcon from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useStore, useStores } from '@store';
@@ -286,9 +287,9 @@ const EmployeesTab = ({
             <TouchableOpacity
               onPress={handleOpenModal}
               style={customStyles.iconButtonPrimary}>
-              <Icon
-                name="add"
-                size={20}
+              <FeatherIcon
+                name="plus"
+                size={16}
                 color={customStyles.iconButtonPrimaryIcon.color}
               />
             </TouchableOpacity>
@@ -351,11 +352,13 @@ const EmployeesTab = ({
                     </Text>
                   </View>
                 </View>
-                <Icon
-                  name="chevron-right"
-                  size={20}
-                  color={customStyles.itemChevronIcon.color}
-                />
+                <View style={customStyles.iconButtonGhost}>
+                  <FeatherIcon
+                    name="eye"
+                    size={16}
+                    color={customStyles.iconButtonGhostIcon.color}
+                  />
+                </View>
               </TouchableOpacity>
             ))
           )}

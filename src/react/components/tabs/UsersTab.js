@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
+import FeatherIcon from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
@@ -646,8 +647,14 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           <View style={customStyles.sectionHeader}>
             <Text style={customStyles.sectionTitle}>Usuários</Text>
             {isEditing && (
-              <TouchableOpacity onPress={() => openModal()}>
-                <Icon name="add" size={24} color={colors.primary} />
+              <TouchableOpacity
+                onPress={() => openModal()}
+                style={customStyles.iconButtonPrimary}>
+                <FeatherIcon
+                  name="plus"
+                  size={16}
+                  color={customStyles.iconButtonPrimaryIcon.color}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -659,7 +666,11 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             users.map(user => (
               <View key={user.id} style={customStyles.listItem}>
                 <View style={customStyles.itemContent}>
-                  <Icon name="person" size={20} color={colors.primary} />
+                  <Icon
+                    name="person"
+                    size={20}
+                    color={customStyles.cardItemIcon.color}
+                  />
                   <View>
                     <Text style={customStyles.itemText}>
                       {String(user.username || user.name || '')}
@@ -671,14 +682,32 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                 </View>
                 {isEditing && (
                   <View style={customStyles.itemActions}>
-                    <TouchableOpacity onPress={() => openModal(user)}>
-                      <Icon name="edit" size={20} color={colors.primary} />
+                    <TouchableOpacity
+                      onPress={() => openModal(user)}
+                      style={customStyles.iconButtonGhost}>
+                      <FeatherIcon
+                        name="edit-2"
+                        size={16}
+                        color={customStyles.iconButtonGhostIcon.color}
+                      />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => openApiKeyModal(user)}>
-                      <Icon name="visibility" size={20} color={colors.primary} />
+                    <TouchableOpacity
+                      onPress={() => openApiKeyModal(user)}
+                      style={customStyles.iconButtonGhost}>
+                      <FeatherIcon
+                        name="eye"
+                        size={16}
+                        color={customStyles.iconButtonGhostIcon.color}
+                      />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDelete(user.id)}>
-                      <Icon name="delete" size={20} color="#c10015" />
+                    <TouchableOpacity
+                      onPress={() => handleDelete(user.id)}
+                      style={customStyles.iconButtonGhost}>
+                      <FeatherIcon
+                        name="trash-2"
+                        size={16}
+                        color={customStyles.iconButtonGhostIcon.color}
+                      />
                     </TouchableOpacity>
                   </View>
                 )}

@@ -17,6 +17,7 @@ const resolvePalette = themeColors => ({
   loadingSpinner: themeColors.loadingSpinner,
   buttonBackground: themeColors.buttonBackground,
   buttonBorder: themeColors.buttonBorder,
+  buttonIcon: themeColors.buttonIcon,
   buttonText: themeColors.buttonText,
   buttonShadow: themeColors.buttonShadow,
   buttonBackgroundSecondary: themeColors.buttonBackgroundSecondary,
@@ -114,20 +115,22 @@ export const createDetailsStyles = themeColors => {
 
     editActions: {
       flexDirection: 'row',
-      gap: 12,
+      gap: 6,
     },
 
     iconButtonPrimary: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
+      width: 34,
+      height: 34,
+      borderRadius: 8,
+      borderWidth: 1,
       backgroundColor: palette.buttonBackground,
+      borderColor: palette.buttonBackground,
       alignItems: 'center',
       justifyContent: 'center',
     },
 
     iconButtonPrimaryIcon: {
-      color: palette.buttonText,
+      color: palette.buttonIcon,
     },
 
     iconButtonLocation: {
@@ -142,15 +145,18 @@ export const createDetailsStyles = themeColors => {
     },
 
     iconButtonGhost: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
+      width: 34,
+      height: 34,
+      borderRadius: 8,
+      borderWidth: 1,
+      backgroundColor: palette.buttonBackground,
+      borderColor: palette.buttonBackground,
       alignItems: 'center',
       justifyContent: 'center',
     },
 
     iconButtonGhostIcon: {
-      color: palette.cardIcon,
+      color: palette.buttonIcon,
     },
 
     cardItemIcon: {
@@ -336,7 +342,7 @@ export const createDetailsStyles = themeColors => {
 
     itemActions: {
       flexDirection: 'row',
-      gap: 12,
+      gap: 6,
     },
 
     itemChevronIcon: {

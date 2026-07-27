@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import FeatherIcon from 'react-native-vector-icons/Feather';
 import {useStores} from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 import {
@@ -523,14 +524,20 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
                     <TouchableOpacity
                       onPress={() => openModal(address)}
                       style={customStyles.iconButtonGhost}>
-                      <Icon
-                        name="edit"
-                        size={18}
+                      <FeatherIcon
+                        name="edit-2"
+                        size={16}
                         color={customStyles.iconButtonGhostIcon.color}
                       />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDelete(address.id)}>
-                      <Icon name="delete" size={20} color="#c10015" />
+                    <TouchableOpacity
+                      onPress={() => handleDelete(address.id)}
+                      style={customStyles.iconButtonGhost}>
+                      <FeatherIcon
+                        name="trash-2"
+                        size={16}
+                        color={customStyles.iconButtonGhostIcon.color}
+                      />
                     </TouchableOpacity>
                   </View>
                 )}
