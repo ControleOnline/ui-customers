@@ -664,7 +664,12 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             </Text>
           ) : (
             users.map(user => (
-              <View key={user.id} style={customStyles.listItem}>
+              <View
+                key={user.id}
+                style={[
+                  customStyles.listItem,
+                  customStyles.listItemWithActions,
+                ]}>
                 <View style={customStyles.itemContent}>
                   <Icon
                     name="person"
@@ -681,7 +686,11 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   </View>
                 </View>
                 {isEditing && (
-                  <View style={customStyles.itemActions}>
+                  <View
+                    style={[
+                      customStyles.itemActions,
+                      customStyles.itemActionsPinned,
+                    ]}>
                     <TouchableOpacity
                       onPress={() => openModal(user)}
                       style={customStyles.iconButtonGhost}>

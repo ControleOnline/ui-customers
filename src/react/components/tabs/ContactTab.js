@@ -499,7 +499,12 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             </Text>
           ) : (
             phones.map(phone => (
-              <View key={phone.id} style={customStyles.listItem}>
+              <View
+                key={phone.id}
+                style={[
+                  customStyles.listItem,
+                  customStyles.listItemWithActions,
+                ]}>
                 <View style={customStyles.itemContent}>
                   <Icon
                     name="phone"
@@ -511,7 +516,11 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   </Text>
                 </View>
                 {isEditing && (
-                  <View style={customStyles.itemActions}>
+                  <View
+                    style={[
+                      customStyles.itemActions,
+                      customStyles.itemActionsPinned,
+                    ]}>
                     <TouchableOpacity
                       onPress={() => openModal('phone', phone)}
                       style={customStyles.iconButtonGhost}>
@@ -557,7 +566,12 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             <Text style={customStyles.emptyText}>Nenhum email cadastrado</Text>
           ) : (
             emails.map(email => (
-              <View key={email.id} style={customStyles.listItem}>
+              <View
+                key={email.id}
+                style={[
+                  customStyles.listItem,
+                  customStyles.listItemWithActions,
+                ]}>
                 <View style={customStyles.itemContent}>
                   <Icon
                     name="email"
@@ -569,7 +583,11 @@ const ContactTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   </Text>
                 </View>
                 {isEditing && (
-                  <View style={customStyles.itemActions}>
+                  <View
+                    style={[
+                      customStyles.itemActions,
+                      customStyles.itemActionsPinned,
+                    ]}>
                     <TouchableOpacity
                       onPress={() => openModal('email', email)}
                       style={customStyles.iconButtonGhost}>

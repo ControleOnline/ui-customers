@@ -302,6 +302,11 @@ export const createDetailsStyles = themeColors => {
       marginBottom: 8,
     },
 
+    listItemWithActions: {
+      alignItems: 'flex-start',
+      paddingRight: 0,
+    },
+
     itemContent: {
       flex: 1,
       flexDirection: 'row',
@@ -343,6 +348,12 @@ export const createDetailsStyles = themeColors => {
     itemActions: {
       flexDirection: 'row',
       gap: 6,
+    },
+
+    itemActionsPinned: {
+      alignSelf: 'flex-start',
+      flexShrink: 0,
+      marginLeft: 12,
     },
 
     itemChevronIcon: {

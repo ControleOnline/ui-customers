@@ -488,7 +488,12 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
             <Text style={customStyles.emptyText}>{global.t?.t('address', 'label', 'noAddressesFound')}</Text>
           ) : (
             addresses.map(address => (
-              <View key={address.id} style={customStyles.listItem}>
+              <View
+                key={address.id}
+                style={[
+                  customStyles.listItem,
+                  customStyles.listItemWithActions,
+                ]}>
                 <View style={customStyles.itemContent}>
                   <TouchableOpacity
                     onPress={() => openNavigationModal(address)}
@@ -520,7 +525,11 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
                   </View>
                 </View>
                 {isEditing && (
-                  <View style={customStyles.itemActions}>
+                  <View
+                    style={[
+                      customStyles.itemActions,
+                      customStyles.itemActionsPinned,
+                    ]}>
                     <TouchableOpacity
                       onPress={() => openModal(address)}
                       style={customStyles.iconButtonGhost}>

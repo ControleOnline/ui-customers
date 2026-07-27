@@ -386,7 +386,12 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             </Text>
           ) : (
             getFilteredDocuments().map(doc => (
-              <View key={doc.id} style={customStyles.listItem}>
+              <View
+                key={doc.id}
+                style={[
+                  customStyles.listItem,
+                  customStyles.listItemWithActions,
+                ]}>
                 <View style={customStyles.itemContent}>
                   <Icon
                     name="description"
@@ -404,7 +409,11 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                   </View>
                 </View>
                 {isEditing && (
-                  <View style={customStyles.itemActions}>
+                  <View
+                    style={[
+                      customStyles.itemActions,
+                      customStyles.itemActionsPinned,
+                    ]}>
                     <TouchableOpacity
                       onPress={() => openModal(doc)}
                       style={customStyles.iconButtonGhost}>
