@@ -138,7 +138,7 @@ const SalesmanTab = ({
               </View>
               <View style={customStyles.iconButtonGhost}>
                 <FeatherIcon
-                  name="eye"
+                  name="edit-2"
                   size={16}
                   color={customStyles.iconButtonGhostIcon.color}
                 />
