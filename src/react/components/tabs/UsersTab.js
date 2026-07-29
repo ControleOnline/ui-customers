@@ -15,7 +15,6 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
-import { colors } from '@controleonline/../../src/styles/colors';
 
 import {
   inlineStyle_174_6,
@@ -53,8 +52,6 @@ import {
   inlineStyle_339_16,
   inlineStyle_341_14,
   inlineStyle_348_20,
-  inlineStyle_351_14,
-  inlineStyle_358_20,
 } from './UsersTab.styles';
 
 const extractId = value => String(value || '').replace(/\D/g, '');
@@ -147,26 +144,6 @@ const inlineStyle_apiKeySecondaryText = {
   fontSize: 16,
   fontWeight: '600',
   color: '#64748B',
-};
-
-const inlineStyle_apiKeyPrimaryButton = {
-  flex: 1,
-  minWidth: 132,
-  paddingVertical: 14,
-  borderRadius: 12,
-  backgroundColor: colors.primary,
-  alignItems: 'center',
-  justifyContent: 'center',
-};
-
-const inlineStyle_apiKeyPrimaryButtonDisabled = {
-  opacity: 0.65,
-};
-
-const inlineStyle_apiKeyPrimaryText = {
-  fontSize: 16,
-  fontWeight: '600',
-  color: '#fff',
 };
 
 const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
@@ -559,12 +536,17 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
               <Text style={inlineStyle_348_20}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={inlineStyle_351_14}
+              style={customStyles.saveButton}
               onPress={() => {
                 Keyboard.dismiss();
                 handleSave();
               }}>
-              <Text style={inlineStyle_358_20}>Salvar</Text>
+              <FeatherIcon
+                name="save"
+                size={16}
+                color={customStyles.iconButtonPrimaryIcon.color}
+              />
+              <Text style={customStyles.saveButtonText}>Salvar</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -623,15 +605,25 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
 
             <TouchableOpacity
               style={[
-                inlineStyle_apiKeyPrimaryButton,
-                isRefreshingApiKey && inlineStyle_apiKeyPrimaryButtonDisabled,
+                customStyles.saveButton,
+                isRefreshingApiKey && customStyles.saveButtonDisabled,
               ]}
               onPress={() => handleRefreshApiKey(apiKeyItem)}
               disabled={isRefreshingApiKey}>
               {isRefreshingApiKey ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator
+                  size="small"
+                  color={customStyles.saveButtonText.color}
+                />
               ) : (
-                <Text style={inlineStyle_apiKeyPrimaryText}>Nova chave</Text>
+                <>
+                  <FeatherIcon
+                    name="plus"
+                    size={16}
+                    color={customStyles.iconButtonPrimaryIcon.color}
+                  />
+                  <Text style={customStyles.saveButtonText}>Nova chave</Text>
+                </>
               )}
             </TouchableOpacity>
           </View>

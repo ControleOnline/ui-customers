@@ -54,8 +54,6 @@ import {
   inlineStyle_460_12,
   inlineStyle_472_14,
   inlineStyle_480_20,
-  inlineStyle_491_14,
-  inlineStyle_498_20,
 } from './EmployeesTab.styles';
 
 const extractId = value => String(value || '').replace(/\D/g, '');
@@ -315,7 +313,10 @@ const EmployeesTab = ({
                     item?.id ||
                     item?.['@id'],
                 )}
-                style={customStyles.listItem}
+                style={[
+                  customStyles.listItem,
+                  customStyles.listItemWithEndAction,
+                ]}
                 activeOpacity={0.8}
                 onPress={() => {
                   const clientId = extractId(item?.id || item?.['@id']);
@@ -484,16 +485,25 @@ const EmployeesTab = ({
                 handleSaveEmployee();
               }}
               disabled={isSaving}
-              style={inlineStyle_491_14({
-                colors: {
-                  primary: customStyles.saveButton.backgroundColor,
-                  disabled: customStyles.saveButtonDisabled.backgroundColor,
-                },
-                isSaving: isSaving,
-              })}>
-              <Text style={inlineStyle_498_20}>
-                {isSaving ? 'Salvando...' : 'Salvar'}
-              </Text>
+              style={[
+                customStyles.saveButton,
+                isSaving && customStyles.saveButtonDisabled,
+              ]}>
+              {isSaving ? (
+                <ActivityIndicator
+                  size="small"
+                  color={customStyles.saveButtonText.color}
+                />
+              ) : (
+                <>
+                  <FeatherIcon
+                    name="save"
+                    size={16}
+                    color={customStyles.iconButtonPrimaryIcon.color}
+                  />
+                  <Text style={customStyles.saveButtonText}>Salvar</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </View>

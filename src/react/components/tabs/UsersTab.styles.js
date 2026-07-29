@@ -247,17 +247,3 @@ export const inlineStyle_348_20 = {
   fontWeight: '600',
   color: '#64748B',
 };
-
-export const inlineStyle_351_14 = {
-  flex: 1,
-  paddingVertical: 14,
-  borderRadius: 12,
-  backgroundColor: '#007bff',
-  alignItems: 'center',
-};
-
-export const inlineStyle_358_20 = {
-  fontSize: 16,
-  fontWeight: '600',
-  color: '#fff',
-};

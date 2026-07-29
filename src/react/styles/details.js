@@ -307,6 +307,10 @@ export const createDetailsStyles = themeColors => {
       paddingRight: 0,
     },
 
+    listItemWithEndAction: {
+      paddingRight: 0,
+    },
+
     itemContent: {
       flex: 1,
       flexDirection: 'row',

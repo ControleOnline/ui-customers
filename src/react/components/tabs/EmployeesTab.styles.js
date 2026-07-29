@@ -170,22 +170,3 @@ export const inlineStyle_480_20 = {
   fontWeight: '600',
   color: '#6c757d',
 };
-
-export const inlineStyle_491_14 = (
-  {
-    colors: colors,
-    isSaving: isSaving,
-  },
-) => ({
-  flex: 1,
-  paddingVertical: 14,
-  borderRadius: 12,
-  backgroundColor: isSaving ? '#6c757d' : colors.primary,
-  alignItems: 'center',
-});
-
-export const inlineStyle_498_20 = {
-  fontSize: 16,
-  fontWeight: '600',
-  color: '#fff',
-};
