@@ -18,6 +18,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Platform,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,6 +26,7 @@ import { api } from '@controleonline/ui-common/src/api';
 import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
+import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { useStore, useStores } from '@store';
 import { createDetailsStyles } from '../styles/details';
 import GeneralTab from '../components/tabs/GeneralTab';
@@ -69,7 +71,82 @@ const normalizeCollection = payload => {
   return [];
 };
 
+const unwrapUploadFile = payload => {
+  const data = payload?.response?.data ?? payload?.data ?? payload;
+
+  if (!data) {
+    return null;
+  }
+
+  if (data?.file) {
+    return data.file;
+  }
+
+  if (Array.isArray(data)) {
+    return data[0]?.file || data[0] || null;
+  }
+
+  if (Array.isArray(data?.member)) {
+    return data.member[0]?.file || data.member[0] || null;
+  }
+
+  if (Array.isArray(data?.['hydra:member'])) {
+    return data['hydra:member'][0]?.file || data['hydra:member'][0] || null;
+  }
+
+  return data;
+};
+
+const PERSON_PHOTO_MEDIA_TYPES = ['avatar'];
+const COMPANY_ICON_MEDIA_TYPES = ['icon'];
+
+const fetchPeopleMedia = async ({peopleId, mediaType}) => {
+  const response = await api.fetch('/people_media', {
+    params: {
+      people: `/people/${peopleId}`,
+      'mediaType.type': mediaType,
+      itemsPerPage: 1,
+    },
+  });
+
+  return normalizeCollection(response)[0] || null;
+};
+
+const resolvePeopleMediaImageUrl = async ({peopleId, mediaTypes}) => {
+  for (const mediaType of mediaTypes) {
+    const media = await fetchPeopleMedia({peopleId, mediaType}).catch(() => null);
+    const imageUrl = resolveFileImageUrl(media?.file);
+
+    if (imageUrl) {
+      return imageUrl;
+    }
+  }
+
+  return '';
+};
+
+const resolveMediaTypeId = async ({mediaTypes, peopleType}) => {
+  for (const mediaType of mediaTypes) {
+    const response = await api.fetch('/media_types', {
+      params: {
+        type: mediaType,
+        peopleType,
+        itemsPerPage: 1,
+      },
+    }).catch(() => null);
+    const item = normalizeCollection(response)[0];
+    const id = String(item?.id || item?.['@id'] || '').replace(/\D/g, '');
+
+    if (id) {
+      return id;
+    }
+  }
+
+  return '';
+};
+
 const ClientDetails = ({ route, navigation }) => {
+  const { showError, showSuccess } = useMessage();
   const { width } = Dimensions.get('window');
   const routeParams = route.params || {};
   const clientId = String(routeParams?.clientId || routeParams?.id || '').replace(/\D/g, '');
@@ -114,6 +191,7 @@ const ClientDetails = ({ route, navigation }) => {
   );
   const [activeTab, setActiveTab] = useState(0);
   const [clientAvatarImageUrl, setClientAvatarImageUrl] = useState('');
+  const [isSavingClientAvatar, setIsSavingClientAvatar] = useState(false);
 
   const resolveInitialTabIndex = nextClient => {
     if (!requestedInitialTab) return 0;
@@ -243,8 +321,11 @@ const ClientDetails = ({ route, navigation }) => {
   useEffect(() => {
     let mounted = true;
     const currentClientId = extractId(client?.id || client?.['@id']);
-    const mediaType =
-      String(client?.peopleType || '').toUpperCase() === 'J' ? 'logo' : 'avatar';
+    const isCurrentClientCompany =
+      String(client?.peopleType || '').toUpperCase() === 'J';
+    const mediaTypes = isCurrentClientCompany
+      ? COMPANY_ICON_MEDIA_TYPES
+      : PERSON_PHOTO_MEDIA_TYPES;
 
     setClientAvatarImageUrl('');
 
@@ -254,20 +335,16 @@ const ClientDetails = ({ route, navigation }) => {
       };
     }
 
-    api.fetch('/people_media', {
-      params: {
-        people: `/people/${currentClientId}`,
-        'mediaType.type': mediaType,
-        itemsPerPage: 1,
-      },
+    resolvePeopleMediaImageUrl({
+      peopleId: currentClientId,
+      mediaTypes,
     })
-      .then(response => {
+      .then(imageUrl => {
         if (!mounted) {
           return;
         }
 
-        const media = normalizeCollection(response)[0];
-        setClientAvatarImageUrl(resolveFileImageUrl(media?.file));
+        setClientAvatarImageUrl(imageUrl);
       })
       .catch(() => {
         if (mounted) {
@@ -336,6 +413,83 @@ const ClientDetails = ({ route, navigation }) => {
   const handleTabPress = index => {
     setActiveTab(index);
     scrollRef.current?.scrollTo({ x: index * width, animated: true });
+  };
+
+  const uploadClientAvatarFile = async file => {
+    const mimeType = String(file?.type || '').trim().toLowerCase();
+    const fileName = String(file?.name || '').trim().toLowerCase();
+    if (mimeType !== 'image/png' && !fileName.endsWith('.png')) {
+      throw new Error('Selecione uma imagem PNG.');
+    }
+
+    const currentClientId = extractId(client?.id || client?.['@id']);
+    if (!currentClientId) {
+      throw new Error('Nao foi possivel identificar o cadastro para atualizar a foto.');
+    }
+    const isCurrentClientCompany =
+      String(client?.peopleType || '').toUpperCase() === 'J';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('people', `/people/${currentClientId}`);
+
+    if (isCurrentClientCompany) {
+      const mediaTypeId = await resolveMediaTypeId({
+        mediaTypes: COMPANY_ICON_MEDIA_TYPES,
+        peopleType: 'J',
+      });
+
+      if (!mediaTypeId) {
+        throw new Error('Tipo de midia de icon nao configurado para pessoa juridica.');
+      }
+
+      formData.append('media_type_id', mediaTypeId);
+    }
+
+    const response = await api.upload('/people_media/upload', formData);
+    const uploadedFile = unwrapUploadFile(response);
+    const imageUrl = resolveFileImageUrl(uploadedFile);
+
+    if (!imageUrl) {
+      throw new Error('Upload concluido, mas a foto nao foi retornada.');
+    }
+
+    return imageUrl;
+  };
+
+  const handleChangeClientAvatar = () => {
+    if (isSavingClientAvatar) {
+      return;
+    }
+
+    if (Platform.OS !== 'web' || typeof document === 'undefined') {
+      showError?.('A troca de foto esta disponivel apenas no navegador nesta versao.');
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,.png';
+
+    input.onchange = async event => {
+      const file = event?.target?.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      setIsSavingClientAvatar(true);
+      try {
+        const imageUrl = await uploadClientAvatarFile(file);
+        setClientAvatarImageUrl(imageUrl);
+        showSuccess?.('Foto atualizada com sucesso.');
+      } catch (error) {
+        showError?.(error?.message || 'Nao foi possivel atualizar a foto.');
+      } finally {
+        setIsSavingClientAvatar(false);
+      }
+    };
+
+    input.click();
   };
 
   const renderSkeleton = () => (
@@ -425,6 +579,8 @@ const ClientDetails = ({ route, navigation }) => {
     onSaveClientData: persistClientData,
     parentCompanyIri,
     initialContactLinkType,
+    onChangeClientAvatar: handleChangeClientAvatar,
+    isSavingClientAvatar,
   };
 
   return (

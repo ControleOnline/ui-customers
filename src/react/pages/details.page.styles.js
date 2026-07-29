@@ -12,6 +12,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   avatarContainer: {
+    position: 'relative',
     marginBottom: 12,
   },
   profileName: {

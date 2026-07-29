@@ -71,6 +71,22 @@ export const createGeneralTabStyles = themeColors =>
       justifyContent: 'center',
       backgroundColor: themeColors.buttonBackground,
     },
+    uploadImageButton: {
+      height: 42,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: 8,
+      backgroundColor: themeColors.buttonBackground,
+      borderWidth: 1,
+      borderColor: themeColors.buttonBorder,
+    },
+    uploadImageButtonText: {
+      color: themeColors.buttonText,
+      fontSize: 15,
+      fontWeight: '700',
+    },
     saveButtonDisabled: {
       backgroundColor: themeColors.buttonDisabledBackground,
     },

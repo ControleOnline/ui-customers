@@ -29,25 +29,34 @@ const normalizeCollection = payload => {
   return [];
 };
 
-const fetchPeopleMediaUrls = async ({mediaType, peopleIds}) => {
+const COMPANY_ICON_MEDIA_TYPES = ['icon'];
+
+const fetchPeopleMediaUrl = async ({peopleId, mediaType}) => {
+  const response = await api.fetch('/people_media', {
+    params: {
+      people: `/people/${peopleId}`,
+      'mediaType.type': mediaType,
+      itemsPerPage: 1,
+    },
+  });
+  const media = normalizeCollection(response)[0];
+
+  return resolveFileImageUrl(media?.file);
+};
+
+const fetchPeopleMediaUrls = async ({mediaTypes, peopleIds}) => {
   const uniqueIds = [...new Set((peopleIds || []).map(extractId).filter(Boolean))];
   const entries = await Promise.all(
     uniqueIds.map(async peopleId => {
-      try {
-        const response = await api.fetch('/people_media', {
-          params: {
-            people: `/people/${peopleId}`,
-            'mediaType.type': mediaType,
-            itemsPerPage: 1,
-          },
-        });
-        const media = normalizeCollection(response)[0];
-        const imageUrl = resolveFileImageUrl(media?.file);
+      for (const mediaType of mediaTypes) {
+        const imageUrl = await fetchPeopleMediaUrl({peopleId, mediaType}).catch(() => '');
 
-        return imageUrl ? [peopleId, imageUrl] : null;
-      } catch {
-        return null;
+        if (imageUrl) {
+          return [peopleId, imageUrl];
+        }
       }
+
+      return null;
     }),
   );
 
@@ -105,7 +114,7 @@ const SalesmanTab = ({
             linkType,
           });
           const mediaByPeopleId = await fetchPeopleMediaUrls({
-            mediaType: 'logo',
+            mediaTypes: COMPANY_ICON_MEDIA_TYPES,
             peopleIds: nextClients.map(item => item?.company?.id || item?.company?.['@id']),
           });
 
@@ -113,7 +122,7 @@ const SalesmanTab = ({
             setClients(
               nextClients.map(item => ({
                 ...item,
-                companyLogoUrl:
+                companyImageUrl:
                   mediaByPeopleId[
                     extractId(item?.company?.id || item?.company?.['@id'])
                   ] || '',
@@ -173,7 +182,7 @@ const SalesmanTab = ({
               }}>
               <View style={customStyles.itemContent}>
                 <UserAvatar
-                  imageUrl={item?.companyLogoUrl}
+                  imageUrl={item?.companyImageUrl}
                   name={String(item?.company?.name || '')}
                   size={40}
                   backgroundColor={customStyles.listAvatarBrand.backgroundColor}

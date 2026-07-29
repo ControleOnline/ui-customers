@@ -134,6 +134,8 @@ const GeneralTab = ({
   onSaveClientData,
   parentCompanyIri,
   initialContactLinkType,
+  onChangeClientAvatar,
+  isSavingClientAvatar = false,
 }) => {
   const {showError, showSuccess} = useMessage();
   const peopleLinkStore = useStore('people_link');
@@ -231,6 +233,8 @@ const GeneralTab = ({
   }, [canEditLinkType, contactPeopleIri, parentCompanyIri, peopleLinkActions]);
 
   const isPessoaFisica = registrationForm.peopleType === 'F';
+  const isAvatarUploadDisabled = !isPessoaFisica || isSavingClientAvatar;
+  const avatarUploadLabel = isPessoaFisica ? 'subir avatar' : 'subir ícone';
   const nameLabel = isPessoaFisica ? global.t?.t('users','label','name') : global.t?.t('users','label','companyName');
   const aliasLabel = isPessoaFisica ? global.t?.t('users','label','nickname') : global.t?.t('users','label','fantasyName');
   const dateLabel = isPessoaFisica ? global.t?.t('users','label','birthDate') : global.t?.t('users','label','foundationDate');
@@ -343,6 +347,35 @@ const GeneralTab = ({
         <View style={customStyles.sectionHeader}>
           <Text style={customStyles.sectionTitle}>Dados Cadastrais</Text>
         </View>
+
+        {isEditing && onChangeClientAvatar && (
+          <View style={styles.fieldGroupLarge}>
+            <Text style={styles.fieldLabel}>Imagem</Text>
+            <TouchableOpacity
+              onPress={onChangeClientAvatar}
+              disabled={isAvatarUploadDisabled}
+              activeOpacity={0.85}
+              style={[
+                styles.uploadImageButton,
+                isAvatarUploadDisabled ? styles.saveButtonDisabled : null,
+              ]}>
+              {isSavingClientAvatar ? (
+                <ActivityIndicator size="small" color={themeColors.buttonText} />
+              ) : (
+                <>
+                  <Icon
+                    name="photo-camera"
+                    size={18}
+                    color={themeColors.buttonIcon}
+                  />
+                  <Text style={styles.uploadImageButtonText}>
+                    {avatarUploadLabel}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.fieldGroup}>
           <Text style={styles.fieldLabel}>
