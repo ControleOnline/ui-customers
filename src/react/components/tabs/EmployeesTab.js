@@ -19,6 +19,8 @@ import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
+import { api } from '@controleonline/ui-common/src/api';
+import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import {
   formatDisplayUppercase,
   uppercaseText,
@@ -58,6 +60,45 @@ import {
 
 const extractId = value => String(value || '').replace(/\D/g, '');
 const normalizeIdentityValue = value => formatDisplayUppercase(value);
+
+const normalizeCollection = payload => {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+  if (Array.isArray(payload.member)) return payload.member;
+  if (Array.isArray(payload['hydra:member'])) return payload['hydra:member'];
+  if (Array.isArray(payload.items)) return payload.items;
+  return [];
+};
+
+const fetchPeopleMediaUrls = async ({mediaType, peopleIds}) => {
+  const uniqueIds = [...new Set((peopleIds || []).map(extractId).filter(Boolean))];
+  const entries = await Promise.all(
+    uniqueIds.map(async peopleId => {
+      try {
+        const response = await api.fetch('/people_media', {
+          params: {
+            people: `/people/${peopleId}`,
+            'mediaType.type': mediaType,
+            itemsPerPage: 1,
+          },
+        });
+        const media = normalizeCollection(response)[0];
+        const imageUrl = resolveFileImageUrl(media?.file);
+
+        return imageUrl ? [peopleId, imageUrl] : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  return entries
+    .filter(Boolean)
+    .reduce((accumulator, [peopleId, imageUrl]) => {
+      accumulator[peopleId] = imageUrl;
+      return accumulator;
+    }, {});
+};
 
 const formatDateInput = text => {
   const numbers = String(text || '').replace(/\D/g, '').slice(0, 8);
@@ -185,8 +226,17 @@ const EmployeesTab = ({
         parentPeopleId,
         allowedLinkTypes: LINK_TYPE_OPTIONS.map(option => option.value),
       });
+      const mediaByPeopleId = await fetchPeopleMediaUrls({
+        mediaType: 'avatar',
+        peopleIds: normalized.map(item => item?.id || item?.['@id']),
+      });
 
-      setEmployees(normalized);
+      setEmployees(
+        normalized.map(item => ({
+          ...item,
+          avatarImageUrl: mediaByPeopleId[extractId(item?.id || item?.['@id'])] || '',
+        })),
+      );
     } catch {
       setEmployees([]);
       setError(txt_message_loadError);
@@ -335,6 +385,7 @@ const EmployeesTab = ({
                 }}>
                 <View style={customStyles.itemContent}>
                   <UserAvatar
+                    imageUrl={item?.avatarImageUrl}
                     name={formatDisplayUppercase(item?.name) || ''}
                     size={40}
                     backgroundColor={customStyles.listAvatarBrand.backgroundColor}

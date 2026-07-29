@@ -10,13 +10,54 @@ import {
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
+import { api } from '@controleonline/ui-common/src/api';
 import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
+import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import {
   buildPeopleLinkReadParams,
   buildSalesmanLinksFromPeopleLinks,
 } from './employeeContacts';
 import { inlineStyle_46_16 } from './SalesmanTab.styles';
 const extractId = value => String(value || '').replace(/\D/g, '');
+
+const normalizeCollection = payload => {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+  if (Array.isArray(payload.member)) return payload.member;
+  if (Array.isArray(payload['hydra:member'])) return payload['hydra:member'];
+  if (Array.isArray(payload.items)) return payload.items;
+  return [];
+};
+
+const fetchPeopleMediaUrls = async ({mediaType, peopleIds}) => {
+  const uniqueIds = [...new Set((peopleIds || []).map(extractId).filter(Boolean))];
+  const entries = await Promise.all(
+    uniqueIds.map(async peopleId => {
+      try {
+        const response = await api.fetch('/people_media', {
+          params: {
+            people: `/people/${peopleId}`,
+            'mediaType.type': mediaType,
+            itemsPerPage: 1,
+          },
+        });
+        const media = normalizeCollection(response)[0];
+        const imageUrl = resolveFileImageUrl(media?.file);
+
+        return imageUrl ? [peopleId, imageUrl] : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  return entries
+    .filter(Boolean)
+    .reduce((accumulator, [peopleId, imageUrl]) => {
+      accumulator[peopleId] = imageUrl;
+      return accumulator;
+    }, {});
+};
 
 const SalesmanTab = ({
   client,
@@ -57,14 +98,28 @@ const SalesmanTab = ({
         linkType,
       }),
     )
-      .then(items => {
+      .then(async items => {
         if (!cancelled) {
-          setClients(
-            buildSalesmanLinksFromPeopleLinks(items, {
-              clientId,
-              linkType,
-            }),
-          );
+          const nextClients = buildSalesmanLinksFromPeopleLinks(items, {
+            clientId,
+            linkType,
+          });
+          const mediaByPeopleId = await fetchPeopleMediaUrls({
+            mediaType: 'logo',
+            peopleIds: nextClients.map(item => item?.company?.id || item?.company?.['@id']),
+          });
+
+          if (!cancelled) {
+            setClients(
+              nextClients.map(item => ({
+                ...item,
+                companyLogoUrl:
+                  mediaByPeopleId[
+                    extractId(item?.company?.id || item?.company?.['@id'])
+                  ] || '',
+              })),
+            );
+          }
         }
       })
       .catch(() => {
@@ -118,6 +173,7 @@ const SalesmanTab = ({
               }}>
               <View style={customStyles.itemContent}>
                 <UserAvatar
+                  imageUrl={item?.companyLogoUrl}
                   name={String(item?.company?.name || '')}
                   size={40}
                   backgroundColor={customStyles.listAvatarBrand.backgroundColor}
