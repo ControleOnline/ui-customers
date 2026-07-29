@@ -21,7 +21,9 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { api } from '@controleonline/ui-common/src/api';
 import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
+import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
 import { useStore, useStores } from '@store';
 import { createDetailsStyles } from '../styles/details';
@@ -56,6 +58,15 @@ const resolveContextKey = rawContext => {
   return String(rawContext?.context || '')
     .trim()
     .toLowerCase();
+};
+
+const normalizeCollection = payload => {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+  if (Array.isArray(payload.member)) return payload.member;
+  if (Array.isArray(payload['hydra:member'])) return payload['hydra:member'];
+  if (Array.isArray(payload.items)) return payload.items;
+  return [];
 };
 
 const ClientDetails = ({ route, navigation }) => {
@@ -102,6 +113,7 @@ const ClientDetails = ({ route, navigation }) => {
     Boolean(clientId) && !cachedClient,
   );
   const [activeTab, setActiveTab] = useState(0);
+  const [clientAvatarImageUrl, setClientAvatarImageUrl] = useState('');
 
   const resolveInitialTabIndex = nextClient => {
     if (!requestedInitialTab) return 0;
@@ -227,6 +239,46 @@ const ClientDetails = ({ route, navigation }) => {
     requestedInitialTab,
     width,
   ]);
+
+  useEffect(() => {
+    let mounted = true;
+    const currentClientId = extractId(client?.id || client?.['@id']);
+    const mediaType =
+      String(client?.peopleType || '').toUpperCase() === 'J' ? 'logo' : 'avatar';
+
+    setClientAvatarImageUrl('');
+
+    if (!currentClientId) {
+      return () => {
+        mounted = false;
+      };
+    }
+
+    api.fetch('/people_media', {
+      params: {
+        people: `/people/${currentClientId}`,
+        'mediaType.type': mediaType,
+        itemsPerPage: 1,
+      },
+    })
+      .then(response => {
+        if (!mounted) {
+          return;
+        }
+
+        const media = normalizeCollection(response)[0];
+        setClientAvatarImageUrl(resolveFileImageUrl(media?.file));
+      })
+      .catch(() => {
+        if (mounted) {
+          setClientAvatarImageUrl('');
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [client?.id, client?.['@id'], client?.peopleType]);
 
   const updateClientData = (field, data) => {
     setClient(prevClient => ({ ...prevClient, [field]: data }));
@@ -380,6 +432,7 @@ const ClientDetails = ({ route, navigation }) => {
       <View style={styles.headerProfile}>
         <View style={styles.avatarContainer}>
           <UserAvatar
+            imageUrl={clientAvatarImageUrl}
             name={formatDisplayUppercase(client.name)}
             size={64}
             backgroundColor={themeColors.buttonBackground}
