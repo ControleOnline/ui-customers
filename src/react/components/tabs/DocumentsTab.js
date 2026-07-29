@@ -34,8 +34,6 @@ import {
   inlineStyle_341_16,
   inlineStyle_343_14,
   inlineStyle_350_20,
-  inlineStyle_353_14,
-  inlineStyle_360_20,
 } from './DocumentsTab.styles';
 
 const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
@@ -348,12 +346,17 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
               <Text style={inlineStyle_350_20}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={inlineStyle_353_14}
+              style={customStyles.saveButton}
               onPress={() => {
                 Keyboard.dismiss();
                 handleSave();
               }}>
-              <Text style={inlineStyle_360_20}>Salvar</Text>
+              <FeatherIcon
+                name="save"
+                size={16}
+                color={customStyles.iconButtonPrimaryIcon.color}
+              />
+              <Text style={customStyles.saveButtonText}>Salvar</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

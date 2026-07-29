@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import FeatherIcon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
 import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
@@ -102,7 +102,10 @@ const SalesmanTab = ({
           clients.map(item => (
             <TouchableOpacity
               key={String(item?.id || item?.['@id'])}
-              style={customStyles.listItem}
+              style={[
+                customStyles.listItem,
+                customStyles.listItemWithEndAction,
+              ]}
               activeOpacity={0.8}
               onPress={() => {
                 const clientId = extractId(item?.company?.id || item?.company?.['@id']);
@@ -133,11 +136,13 @@ const SalesmanTab = ({
                   </Text>
                 </View>
               </View>
-              <Icon
-                name="chevron-right"
-                size={20}
-                color={customStyles.itemChevronIcon.color}
-              />
+              <View style={customStyles.iconButtonGhost}>
+                <FeatherIcon
+                  name="eye"
+                  size={16}
+                  color={customStyles.iconButtonGhostIcon.color}
+                />
+              </View>
             </TouchableOpacity>
           ))
         )}
