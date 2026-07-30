@@ -26,6 +26,52 @@ const collection = member => ({
   'hydra:totalItems': member.length,
 });
 
+const themeColors = {
+  primary: '#1C8FBD',
+  secondary: '#0169D9',
+  background: '#F3F7FB',
+  text: '#0F172A',
+  textSecondary: '#6C7787',
+  border: '#D7E1EC',
+  headerBackground: '#F3F7FB',
+  headerBorder: '#D7E1EC',
+  headerText: '#0F172A',
+  cardBackground: '#FFFFFF',
+  cardBorder: '#D7E1EC',
+  cardText: '#0F172A',
+  cardIcon: '#1C8FBD',
+  cardShadow: '#1C8FBD',
+  listItemBackground: '#F1F8FB',
+  listItemText: '#0F172A',
+  listItemSubtitleText: '#6C7787',
+  loadingSpinner: '#1C8FBD',
+  buttonBackground: '#1C8FBD',
+  buttonBorder: '#1C8FBD',
+  buttonIcon: '#FFFFFF',
+  buttonText: '#FFFFFF',
+  buttonShadow: '#1C8FBD',
+  buttonBackgroundSecondary: '#FFFFFF',
+  buttonBorderSecondary: '#D7E1EC',
+  buttonIconSecondary: '#0169D9',
+  buttonTextSecondary: '#0169D9',
+  buttonDisabledBackground: '#CBD5E1',
+  tabBarBackground: '#FFFFFF',
+  tabBarBorder: '#D7E1EC',
+  menuSelectedBorder: '#1C8FBD',
+  menuSelectedText: '#1C8FBD',
+  pageBackground: '#F3F7FB',
+  modalOverlay: 'rgba(15,23,42,0.45)',
+  modalBackground: '#FFFFFF',
+  modalText: '#0F172A',
+  modalShadow: '#1C8FBD',
+  inputBackground: '#FFFFFF',
+  inputBorder: '#D7E1EC',
+};
+
+const themeCss = `:root { ${Object.entries(themeColors)
+  .map(([key, value]) => `--${key}: ${value};`)
+  .join(' ')} }`;
+
 const company = {
   '@id': '/people/2',
   id: 2,
@@ -34,7 +80,7 @@ const company = {
   panel_enabled: true,
   enabled: true,
   commercial_enabled: true,
-  theme: {colors: {primary: '#0EA5E9'}},
+  theme: {colors: themeColors},
   configs: {},
 };
 
@@ -79,7 +125,7 @@ const mockManagerApi = async page => {
       return route.fulfill({
         status: 200,
         headers: textHeaders(),
-        body: ':root { --primary: #0ea5e9; }',
+        body: themeCss,
       });
     }
 
