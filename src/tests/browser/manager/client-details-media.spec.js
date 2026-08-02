@@ -159,6 +159,30 @@ const mockClientDetailsApi = async page => {
     }
 
     if (pathname === 'people_media') {
+      if (method === 'POST') {
+        const body = await request.postDataJSON().catch(() => ({}));
+        const peopleId = String(body?.people || '').replace(/\D/g, '') || '30';
+        const mediaTypeId = String(body?.mediaType || '').replace(/\D/g, '') || '11';
+        const mediaType = buildMediaType({
+          id: Number(mediaTypeId),
+          type: mediaTypeId === '12' ? 'icon' : 'avatar',
+          peopleType: mediaTypeId === '12' ? 'J' : 'F',
+        });
+
+        return route.fulfill({
+          status: 201,
+          headers: jsonHeaders(),
+          body: JSON.stringify(
+            buildPeopleMedia({
+              id: 130,
+              peopleId: Number(peopleId),
+              mediaType,
+              fileName: 'selected-library-image.png',
+            }),
+          ),
+        });
+      }
+
       const people = String(url.searchParams.get('people') || '');
       const mediaType = String(url.searchParams.get('mediaType.type') || '');
       const media =
@@ -252,21 +276,41 @@ const mockClientDetailsApi = async page => {
 };
 
 test.describe('client details media browser smoke', () => {
-  test('shows company media in the media tab for pessoa juridica', async ({page}) => {
+  test('shows company icon upload controls for pessoa juridica', async ({page}) => {
     await mockClientDetailsApi(page);
 
-    await page.goto('/client-details?clientId=29&contextKey=client&initialTab=media');
+    await page.goto('/client-details?clientId=29&contextKey=client');
 
-    await expect(page.getByText('Midias', {exact: true})).toBeVisible({timeout: 15000});
-    await expect(page.getByText('icon', {exact: true})).toBeVisible();
+    await expect(page.getByText('Documentos', {exact: true})).toBeVisible({timeout: 15000});
+    await page.getByText('Media', {exact: true}).click();
+    const managerButton = page.getByText('Gerenciar icon', {exact: true});
+    await expect(managerButton).toBeVisible();
+    await managerButton.click();
+
+    const uploadButton = page.getByText('Enviar nova', {exact: true});
+    await expect(uploadButton).toBeVisible();
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await uploadButton.click();
+    await expect(fileChooserPromise).resolves.toBeTruthy();
   });
 
-  test('shows personal media in the media tab for pessoa fisica', async ({page}) => {
+  test('shows personal avatar upload controls for pessoa fisica', async ({page}) => {
     await mockClientDetailsApi(page);
 
-    await page.goto('/client-details?clientId=30&contextKey=client&initialTab=media');
+    await page.goto('/client-details?clientId=30&contextKey=client');
 
-    await expect(page.getByText('Midias', {exact: true})).toBeVisible({timeout: 15000});
-    await expect(page.getByText('avatar', {exact: true})).toBeVisible();
+    await expect(page.getByText('Documentos', {exact: true})).toBeVisible({timeout: 15000});
+    await page.getByText('Media', {exact: true}).click();
+    const managerButton = page.getByText('Gerenciar avatar', {exact: true});
+    await expect(managerButton).toBeVisible();
+    await managerButton.click();
+
+    const uploadButton = page.getByText('Enviar nova', {exact: true});
+    await expect(uploadButton).toBeVisible();
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await uploadButton.click();
+    await expect(fileChooserPromise).resolves.toBeTruthy();
   });
 });

@@ -17,9 +17,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
-import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
+import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
-import { api } from '@controleonline/ui-common/src/api';
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import {
   formatDisplayUppercase,
@@ -70,17 +69,15 @@ const normalizeCollection = payload => {
   return [];
 };
 
-const fetchPeopleMediaUrls = async ({mediaType, peopleIds}) => {
+const fetchPeopleMediaUrls = async ({peopleActions, mediaType, peopleIds}) => {
   const uniqueIds = [...new Set((peopleIds || []).map(extractId).filter(Boolean))];
   const entries = await Promise.all(
     uniqueIds.map(async peopleId => {
       try {
-        const response = await api.fetch('/people_media', {
-          params: {
-            people: `/people/${peopleId}`,
-            'mediaType.type': mediaType,
-            itemsPerPage: 1,
-          },
+        const response = await peopleActions.getPeopleMedia({
+          people: `/people/${peopleId}`,
+          'mediaType.type': mediaType,
+          itemsPerPage: 1,
         });
         const media = normalizeCollection(response)[0];
         const imageUrl = resolveFileImageUrl(media?.file);
@@ -227,15 +224,21 @@ const EmployeesTab = ({
         allowedLinkTypes: LINK_TYPE_OPTIONS.map(option => option.value),
       });
       const mediaByPeopleId = await fetchPeopleMediaUrls({
+        peopleActions,
         mediaType: 'avatar',
         peopleIds: normalized.map(item => item?.id || item?.['@id']),
       });
 
       setEmployees(
-        normalized.map(item => ({
-          ...item,
-          avatarImageUrl: mediaByPeopleId[extractId(item?.id || item?.['@id'])] || '',
-        })),
+        normalized.map(item => {
+          const avatarImageUrl = mediaByPeopleId[extractId(item?.id || item?.['@id'])] || '';
+
+          return {
+            ...item,
+            avatar: avatarImageUrl || item?.avatar,
+            avatarImageUrl,
+          };
+        }),
       );
     } catch {
       setEmployees([]);
@@ -384,9 +387,8 @@ const EmployeesTab = ({
                   });
                 }}>
                 <View style={customStyles.itemContent}>
-                  <UserAvatar
-                    imageUrl={item?.avatarImageUrl}
-                    name={formatDisplayUppercase(item?.name) || ''}
+                  <PeopleAvatar
+                    people={item}
                     size={40}
                     backgroundColor={customStyles.listAvatarBrand.backgroundColor}
                     borderColor={customStyles.listAvatarBrand.borderColor}

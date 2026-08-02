@@ -10,8 +10,7 @@ import {
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
-import { api } from '@controleonline/ui-common/src/api';
-import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
+import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import {
   buildPeopleLinkReadParams,
@@ -31,25 +30,27 @@ const normalizeCollection = payload => {
 
 const COMPANY_ICON_MEDIA_TYPES = ['icon'];
 
-const fetchPeopleMediaUrl = async ({peopleId, mediaType}) => {
-  const response = await api.fetch('/people_media', {
-    params: {
-      people: `/people/${peopleId}`,
-      'mediaType.type': mediaType,
-      itemsPerPage: 1,
-    },
+const fetchPeopleMediaUrl = async ({peopleActions, peopleId, mediaType}) => {
+  const response = await peopleActions.getPeopleMedia({
+    people: `/people/${peopleId}`,
+    'mediaType.type': mediaType,
+    itemsPerPage: 1,
   });
   const media = normalizeCollection(response)[0];
 
   return resolveFileImageUrl(media?.file);
 };
 
-const fetchPeopleMediaUrls = async ({mediaTypes, peopleIds}) => {
+const fetchPeopleMediaUrls = async ({peopleActions, mediaTypes, peopleIds}) => {
   const uniqueIds = [...new Set((peopleIds || []).map(extractId).filter(Boolean))];
   const entries = await Promise.all(
     uniqueIds.map(async peopleId => {
       for (const mediaType of mediaTypes) {
-        const imageUrl = await fetchPeopleMediaUrl({peopleId, mediaType}).catch(() => '');
+        const imageUrl = await fetchPeopleMediaUrl({
+          peopleActions,
+          peopleId,
+          mediaType,
+        }).catch(() => '');
 
         if (imageUrl) {
           return [peopleId, imageUrl];
@@ -114,19 +115,27 @@ const SalesmanTab = ({
             linkType,
           });
           const mediaByPeopleId = await fetchPeopleMediaUrls({
+            peopleActions,
             mediaTypes: COMPANY_ICON_MEDIA_TYPES,
             peopleIds: nextClients.map(item => item?.company?.id || item?.company?.['@id']),
           });
 
           if (!cancelled) {
             setClients(
-              nextClients.map(item => ({
-                ...item,
-                companyImageUrl:
+              nextClients.map(item => {
+                const companyImageUrl =
                   mediaByPeopleId[
                     extractId(item?.company?.id || item?.company?.['@id'])
-                  ] || '',
-              })),
+                  ] || '';
+
+                return {
+                  ...item,
+                  companyImageUrl,
+                  company: companyImageUrl
+                    ? {...item?.company, icon: companyImageUrl}
+                    : item?.company,
+                };
+              }),
             );
           }
         }
@@ -181,9 +190,8 @@ const SalesmanTab = ({
                 navigation.push('ClientDetails', { clientId });
               }}>
               <View style={customStyles.itemContent}>
-                <UserAvatar
-                  imageUrl={item?.companyImageUrl}
-                  name={String(item?.company?.name || '')}
+                <PeopleAvatar
+                  people={item?.company}
                   size={40}
                   backgroundColor={customStyles.listAvatarBrand.backgroundColor}
                   borderColor={customStyles.listAvatarBrand.borderColor}
