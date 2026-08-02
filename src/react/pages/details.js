@@ -2,15 +2,15 @@
  * Contract imported from AGENTS.md
  * ## Escopo
  * - `ui-customers` e o modulo React de cadastro e edicao de clientes.
- * - Esta pagina concentra detalhes, enderecos e dados de exibicao do cliente.
+ * - Esta pagina concentra detalhes, enderecos e dados de exibicao de pessoas.
  *
  * ## Estado
  *
  * ## Limites
  * - Nao duplicar validacoes de formato fora dos helpers compartilhados.
- * - Manter aqui a orquestracao da tela e a edicao do cadastro do cliente.
+ * - Manter aqui a orquestracao da tela e a edicao do cadastro de pessoas.
  */
-import React, { useState, useLayoutEffect, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useLayoutEffect, useEffect, useMemo } from 'react';
 
 import {
   Text,
@@ -22,7 +22,6 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { api } from '@controleonline/ui-common/src/api';
 import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
@@ -35,6 +34,7 @@ import SalesmanTab from '../components/tabs/SalesmanTab';
 import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 import ProductsTab from '../components/tabs/ProductsTab';
+import MediaTab from '../components/tabs/MediaTab';
 import {
   buildEmployeeContactsFromPeopleLinks,
   buildPeopleLinkReadParams,
@@ -100,51 +100,6 @@ const unwrapUploadFile = payload => {
 const PERSON_PHOTO_MEDIA_TYPES = ['avatar'];
 const COMPANY_ICON_MEDIA_TYPES = ['icon'];
 
-const fetchPeopleMedia = async ({peopleId, mediaType}) => {
-  const response = await api.fetch('/people_media', {
-    params: {
-      people: `/people/${peopleId}`,
-      'mediaType.type': mediaType,
-      itemsPerPage: 1,
-    },
-  });
-
-  return normalizeCollection(response)[0] || null;
-};
-
-const resolvePeopleMediaImageUrl = async ({peopleId, mediaTypes}) => {
-  for (const mediaType of mediaTypes) {
-    const media = await fetchPeopleMedia({peopleId, mediaType}).catch(() => null);
-    const imageUrl = resolveFileImageUrl(media?.file);
-
-    if (imageUrl) {
-      return imageUrl;
-    }
-  }
-
-  return '';
-};
-
-const resolveMediaTypeId = async ({mediaTypes, peopleType}) => {
-  for (const mediaType of mediaTypes) {
-    const response = await api.fetch('/media_types', {
-      params: {
-        type: mediaType,
-        peopleType,
-        itemsPerPage: 1,
-      },
-    }).catch(() => null);
-    const item = normalizeCollection(response)[0];
-    const id = String(item?.id || item?.['@id'] || '').replace(/\D/g, '');
-
-    if (id) {
-      return id;
-    }
-  }
-
-  return '';
-};
-
 const ClientDetails = ({ route, navigation }) => {
   const { showError, showSuccess } = useMessage();
   const { width } = Dimensions.get('window');
@@ -192,6 +147,7 @@ const ClientDetails = ({ route, navigation }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [clientAvatarImageUrl, setClientAvatarImageUrl] = useState('');
   const [isSavingClientAvatar, setIsSavingClientAvatar] = useState(false);
+  const [mediaRefreshKey, setMediaRefreshKey] = useState(0);
 
   const resolveInitialTabIndex = nextClient => {
     if (!requestedInitialTab) return 0;
@@ -201,6 +157,7 @@ const ClientDetails = ({ route, navigation }) => {
     const keys = nextIsPessoaJuridica
       ? [
           'general',
+          'media',
           'sellers',
           'contacts',
           ...(nextIsProviderContext ? ['products'] : []),
@@ -208,6 +165,7 @@ const ClientDetails = ({ route, navigation }) => {
         ]
       : [
           'general',
+          'media',
           'users',
           ...(nextIsProviderContext ? ['products'] : []),
           'contracts',
@@ -355,11 +313,57 @@ const ClientDetails = ({ route, navigation }) => {
     return () => {
       mounted = false;
     };
-  }, [client?.id, client?.['@id'], client?.peopleType]);
+  }, [client?.id, client?.['@id'], client?.peopleType, mediaRefreshKey]);
 
   const updateClientData = (field, data) => {
     setClient(prevClient => ({ ...prevClient, [field]: data }));
   };
+
+  const resolvePeopleMediaImageUrl = useCallback(
+    async ({peopleId, mediaTypes}) => {
+      for (const mediaType of mediaTypes) {
+        const response = await peopleActions.getPeopleMedia({
+          people: `/people/${peopleId}`,
+          'mediaType.type': mediaType,
+          itemsPerPage: 1,
+        }).catch(() => null);
+        const media = Array.isArray(response) ? response[0] : null;
+        const imageUrl = resolveFileImageUrl(media?.file);
+
+        if (imageUrl) {
+          return imageUrl;
+        }
+      }
+
+      return '';
+    },
+    [peopleActions],
+  );
+
+  const resolveMediaTypeId = useCallback(
+    async ({mediaTypes, peopleType}) => {
+      for (const mediaType of mediaTypes) {
+        const response = await peopleActions.getMediaTypes({
+          type: mediaType,
+          peopleType,
+          itemsPerPage: 1,
+        }).catch(() => null);
+        const item = Array.isArray(response) ? response[0] : null;
+        const id = String(item?.id || item?.['@id'] || '').replace(/\D/g, '');
+
+        if (id) {
+          return id;
+        }
+      }
+
+      return '';
+    },
+    [peopleActions],
+  );
+
+  const handleClientMediaChanged = useCallback(() => {
+    setMediaRefreshKey(previousValue => previousValue + 1);
+  }, []);
 
   const persistClientData = async partialData => {
     const clientId = extractId(
@@ -387,6 +391,7 @@ const ClientDetails = ({ route, navigation }) => {
   const tabs = isPessoaJuridica
     ? [
         { key: 'general', label: global.t?.t('people', 'title', 'general') },
+        { key: 'media', label: global.t?.t('people', 'title', 'media') || 'Mídia' },
         { key: 'sellers', label: global.t?.t('people', 'title', 'sellers') },
         { key: 'contacts', label: global.t?.t('people', 'title', 'contacts') },
         ...(isProviderContext
@@ -396,6 +401,7 @@ const ClientDetails = ({ route, navigation }) => {
       ]
     : [
         { key: 'general', label: global.t?.t('people', 'title', 'general') },
+        { key: 'media', label: global.t?.t('people', 'title', 'media') || 'Mídia' },
         { key: 'users', label: global.t?.t('people', 'title', 'users') },
         ...(isProviderContext
           ? [{ key: 'products', label: global.t?.t('people', 'title', 'products') || 'Produtos' }]
@@ -428,25 +434,27 @@ const ClientDetails = ({ route, navigation }) => {
     }
     const isCurrentClientCompany =
       String(client?.peopleType || '').toUpperCase() === 'J';
+    const mediaTypes = isCurrentClientCompany
+      ? COMPANY_ICON_MEDIA_TYPES
+      : PERSON_PHOTO_MEDIA_TYPES;
+    const mediaTypeId = await resolveMediaTypeId({
+      mediaTypes,
+      peopleType: isCurrentClientCompany ? 'J' : 'F',
+    });
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('people', `/people/${currentClientId}`);
-
-    if (isCurrentClientCompany) {
-      const mediaTypeId = await resolveMediaTypeId({
-        mediaTypes: COMPANY_ICON_MEDIA_TYPES,
-        peopleType: 'J',
-      });
-
-      if (!mediaTypeId) {
-        throw new Error('Tipo de midia de icon nao configurado para pessoa juridica.');
-      }
-
-      formData.append('media_type_id', mediaTypeId);
+    if (!mediaTypeId) {
+      throw new Error(
+        isCurrentClientCompany
+          ? 'Tipo de midia de icon nao configurado para pessoa juridica.'
+          : 'Tipo de midia de avatar nao configurado para pessoa fisica.',
+      );
     }
 
-    const response = await api.upload('/people_media/upload', formData);
+    const response = await peopleActions.uploadPeopleMedia({
+      people: `/people/${currentClientId}`,
+      mediaTypeId,
+      file,
+    });
     const uploadedFile = unwrapUploadFile(response);
     const imageUrl = resolveFileImageUrl(uploadedFile);
 
@@ -641,6 +649,14 @@ const ClientDetails = ({ route, navigation }) => {
           <View key={tab.key} style={[styles.tabPane, { width }]}>
             {tab.key === 'general' ? (
               <GeneralTab {...tabProps} />
+            ) : tab.key === 'media' ? (
+              <ScrollView
+                style={styles.tabScroll}
+                contentContainerStyle={inlineStyle_342_16}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator={false}>
+                <MediaTab client={client} onChanged={handleClientMediaChanged} />
+              </ScrollView>
             ) : tab.key === 'sellers' || tab.key === 'users' ? (
               <ScrollView
                 style={styles.tabScroll}
