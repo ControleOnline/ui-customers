@@ -1,17 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  Platform,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
-import DefaultFile from '@controleonline/ui-default/src/react/components/files/DefaultFile';
+import DefaultUpload from '@controleonline/ui-default/src/react/components/upload/DefaultUpload';
+import { extractFileId } from '@controleonline/ui-default/src/react/components/upload/fileUpload';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
 import { colors } from '@controleonline/../../src/styles/colors';
@@ -65,54 +61,13 @@ const isImageFile = file => {
   return ACCEPTED_COMPANY_MEDIA_EXTENSIONS.includes(getMediaExtension(file));
 };
 
-const getFile = () => {
-  if (typeof document !== 'undefined') {
-    return new Promise(resolve => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = COMPANY_MEDIA_ACCEPT_ATTRIBUTE;
-      input.onchange = event => resolve(event?.target?.files?.[0] || null);
-      input.click();
-    });
-  }
-
-  return DocumentPicker.getDocumentAsync({
-    type: ['image/png', 'image/jpeg'],
-    copyToCacheDirectory: true,
-    multiple: false,
-  }).then(result => {
-    if (result?.canceled) return null;
-    return result?.assets?.[0] || null;
-  });
-};
-
-const confirmDeletion = mediaTypeLabel => {
-  const normalizedLabel = String(mediaTypeLabel || 'esta mídia').trim();
-  const message = `Deseja apagar a vinculação da mídia "${normalizedLabel}"?`;
-
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof window.confirm === 'function') {
-    return Promise.resolve(window.confirm(message));
-  }
-
-  return new Promise(resolve => {
-    Alert.alert(
-      'Confirmação',
-      message,
-      [
-        { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
-        { text: 'Apagar', style: 'destructive', onPress: () => resolve(true) },
-      ],
-    );
-  });
-};
-
 const MediaTab = ({ client, onChanged = null }) => {
   const peopleStore = useStore('people');
   const themeStore = useStore('theme');
   const { currentCompany } = peopleStore.getters;
   const peopleActions = peopleStore.actions || {};
   const { colors: themeColors } = themeStore.getters;
-  const { showError, showSuccess } = useMessage();
+  const { showError } = useMessage();
 
   const clientId = extractId(client?.id || client?.['@id']);
   const peopleType = String(client?.peopleType || 'J').trim().toUpperCase() || 'J';
@@ -121,9 +76,6 @@ const MediaTab = ({ client, onChanged = null }) => {
   const [peopleMedia, setPeopleMedia] = useState([]);
   const [mediaTypesLoading, setMediaTypesLoading] = useState(false);
   const [peopleMediaLoading, setPeopleMediaLoading] = useState(false);
-  const [uploadingByTypeId, setUploadingByTypeId] = useState({});
-  const [deletingByTypeId, setDeletingByTypeId] = useState({});
-  const [dragOverByTypeId, setDragOverByTypeId] = useState({});
 
   const palette = useMemo(
     () =>
@@ -197,238 +149,43 @@ const MediaTab = ({ client, onChanged = null }) => {
     loadPeopleMedia();
   }, [loadPeopleMedia]);
 
-  const uploadMediaFile = useCallback(
-    async (mediaType, providedFile = null) => {
-      const mediaTypeId = extractId(mediaType);
-      if (!clientId || !mediaTypeId) {
-        showError('Nao foi possivel identificar a empresa ou o tipo da midia.');
-        return;
-      }
-
-      const selectedFile = providedFile || (await getFile());
-      if (!selectedFile) return;
-
-      if (!isImageFile(selectedFile)) {
-        showError('Envie apenas arquivos PNG ou JPG.');
-        return;
-      }
-
-      setUploadingByTypeId(current => ({
-        ...current,
-        [mediaTypeId]: true,
-      }));
-
-      try {
-        const uploadFile =
-          Platform.OS === 'web'
-            ? selectedFile
-            : {
-                uri: selectedFile.uri,
-                name:
-                  selectedFile.name ||
-                  `${mediaType?.type || 'media'}.${getMediaExtension(selectedFile) || 'png'}`,
-                type: selectedFile.mimeType || getMediaMimeType(selectedFile) || 'image/png',
-              };
-
-        await peopleActions.uploadPeopleMedia({
-          people: `/people/${clientId}`,
-          mediaTypeId,
-          file: uploadFile,
-        });
-        await loadPeopleMedia();
-        onChanged?.();
-        showSuccess(`${mediaType?.type || 'Midia'} atualizada com sucesso.`);
-      } catch (error) {
-        showError(error?.response?.data?.['hydra:description'] || error?.message || 'Nao foi possivel enviar a midia.');
-      } finally {
-        setUploadingByTypeId(current => ({
-          ...current,
-          [mediaTypeId]: false,
-        }));
-      }
-    },
-    [clientId, loadPeopleMedia, onChanged, peopleActions, showError, showSuccess],
-  );
-
-  const deleteMediaLink = useCallback(
-    async mediaType => {
+  const buildMediaUploadHandlers = useCallback(
+    mediaType => {
       const mediaTypeId = extractId(mediaType);
       const currentMedia = mediaByTypeId[String(mediaTypeId)] || null;
-      const peopleMediaId = extractId(currentMedia);
 
-      if (!mediaTypeId || !peopleMediaId) {
-        showError('Nao foi possivel identificar a midia para apagar.');
-        return;
-      }
+      return {
+        onAttachFile: async file => {
+          const fileId = extractFileId(file);
 
-      const shouldDelete = await confirmDeletion(mediaType?.type || 'Midia');
-      if (!shouldDelete) {
-        return;
-      }
+          if (!fileId) {
+            throw new Error('Arquivo sem identificador.');
+          }
 
-      setDeletingByTypeId(current => ({
-        ...current,
-        [mediaTypeId]: true,
-      }));
-
-      try {
-        await peopleActions.deletePeopleMedia({mediaId: peopleMediaId});
-        await loadPeopleMedia();
-        onChanged?.();
-        showSuccess(`${mediaType?.type || 'Midia'} removida com sucesso.`);
-      } catch (error) {
-        showError(error?.response?.data?.['hydra:description'] || error?.message || 'Nao foi possivel apagar a midia.');
-      } finally {
-        setDeletingByTypeId(current => ({
-          ...current,
-          [mediaTypeId]: false,
-        }));
-      }
-    },
-    [loadPeopleMedia, mediaByTypeId, onChanged, peopleActions, showError, showSuccess],
-  );
-
-  const handleDrop = useCallback(
-    async (mediaType, event) => {
-      if (Platform.OS !== 'web') return;
-
-      event?.preventDefault?.();
-      event?.stopPropagation?.();
-
-      const mediaTypeId = extractId(mediaType);
-      if (mediaTypeId) {
-        setDragOverByTypeId(current => ({
-          ...current,
-          [mediaTypeId]: false,
-        }));
-      }
-
-      const droppedFile =
-        event?.nativeEvent?.dataTransfer?.files?.[0]
-        || event?.dataTransfer?.files?.[0]
-        || null;
-      if (!droppedFile) return;
-
-      await uploadMediaFile(mediaType, droppedFile);
-    },
-    [uploadMediaFile],
-  );
-
-  const renderDropZone = useCallback(
-    ({ currentMedia, isDragOver, isUploading, mediaType, mediaTypeId }) => {
-      const previewBackgroundStyle = Platform.OS === 'web'
-        ? styles.mediaPreviewTransparencyGrid
-        : { backgroundColor: palette.panelBackground || colors.white };
-      const sharedContent = (
-        <>
-          <View
-            style={[
-              styles.mediaPreviewFrame,
-              previewBackgroundStyle,
-              {
-                borderColor: withOpacity(palette.text || colors.text, 0.08),
-              },
-            ]}
-          >
-            {currentMedia?.file ? (
-              <DefaultFile
-                source={currentMedia.file}
-                company={currentCompany}
-                resizeMode="contain"
-                style={styles.mediaPreviewImage}
-              />
-            ) : (
-              <View style={styles.mediaEmptyState}>
-                <Icon
-                  name="image"
-                  size={24}
-                  color={withOpacity(palette.textSecondary || '#64748B', 0.9)}
-                />
-                <Text
-                  style={[
-                    styles.mediaEmptyText,
-                    { color: palette.textSecondary || '#64748B' },
-                  ]}
-                >
-                  Sem imagem salva
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <Text style={[styles.mediaHelpText, { color: palette.textSecondary || '#64748B' }]}>
-            {isUploading
-              ? 'Enviando arquivo...'
-              : Platform.OS === 'web'
-                ? 'Clique para enviar ou arraste um PNG ou JPG até aqui.'
-                : 'Toque para enviar um arquivo PNG ou JPG.'}
-          </Text>
-        </>
-      );
-
-      if (Platform.OS !== 'web') {
-        return (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => uploadMediaFile(mediaType)}
-            disabled={isUploading}
-          >
-            {sharedContent}
-          </TouchableOpacity>
-        );
-      }
-
-      return React.createElement(
-        'div',
-        {
-          onClick: () => {
-            if (!isUploading) {
-              uploadMediaFile(mediaType);
-            }
-          },
-          onDragOver: event => {
-            event.preventDefault();
-            if (event.dataTransfer) {
-              event.dataTransfer.dropEffect = 'copy';
-            }
-          },
-          onDragEnter: event => {
-            event.preventDefault();
-            setDragOverByTypeId(current => ({
-              ...current,
-              [mediaTypeId]: true,
-            }));
-          },
-          onDragLeave: event => {
-            event.preventDefault();
-            const relatedTarget = event.relatedTarget;
-            if (relatedTarget && event.currentTarget?.contains?.(relatedTarget)) {
-              return;
-            }
-            setDragOverByTypeId(current => ({
-              ...current,
-              [mediaTypeId]: false,
-            }));
-          },
-          onDrop: async event => {
-            event.preventDefault();
-            setDragOverByTypeId(current => ({
-              ...current,
-              [mediaTypeId]: false,
-            }));
-            const droppedFile = event.dataTransfer?.files?.[0] || null;
-            if (!droppedFile) return;
-            await uploadMediaFile(mediaType, droppedFile);
-          },
-          style: {
-            cursor: isUploading ? 'progress' : 'pointer',
-            display: 'block',
-          },
+          return peopleActions.savePeopleMedia({
+            id: currentMedia?.id || currentMedia?.['@id'],
+            people: `/people/${clientId}`,
+            mediaType: mediaType?.['@id'] || `/media_types/${mediaTypeId}`,
+            file: `/files/${fileId}`,
+          });
         },
-        sharedContent,
-      );
+        onRemoveAttachment: async relation => {
+          await peopleActions.deletePeopleMedia({mediaId: relation?.id || relation?.['@id']});
+        },
+        onUploadFile: async ({file}) => {
+          if (!isImageFile(file)) {
+            throw new Error('Envie apenas arquivos PNG ou JPG.');
+          }
+
+          return peopleActions.uploadPeopleMedia({
+            people: `/people/${clientId}`,
+            mediaTypeId,
+            file,
+          });
+        },
+      };
     },
-    [currentCompany, palette.panelBackground, palette.secondary, palette.text, palette.textSecondary, uploadMediaFile],
+    [clientId, mediaByTypeId, peopleActions],
   );
 
   if (!clientId) {
@@ -470,12 +227,8 @@ const MediaTab = ({ client, onChanged = null }) => {
             {mediaTypes.map(mediaType => {
               const mediaTypeId = extractId(mediaType);
               const currentMedia = mediaByTypeId[String(mediaTypeId)] || null;
-              const isUploading = Boolean(uploadingByTypeId[mediaTypeId]);
-              const isDeleting = Boolean(deletingByTypeId[mediaTypeId]);
-              const isDragOver = Boolean(dragOverByTypeId[mediaTypeId]);
-              const mediaFormatLabel = currentMedia?.file
-                ? String(currentMedia.file?.extension || '').trim().toUpperCase()
-                : '';
+              const mediaTypeLabel = String(mediaType?.type || '').trim() || 'Midia';
+              const handlers = buildMediaUploadHandlers(mediaType);
 
               return (
                 <View
@@ -483,69 +236,40 @@ const MediaTab = ({ client, onChanged = null }) => {
                   style={[
                     styles.mediaCard,
                     {
-                      backgroundColor: withOpacity(palette.primary || '#2563EB', isDragOver ? 0.12 : 0.04),
-                      borderColor: withOpacity(
-                        palette.primary || '#2563EB',
-                        isDragOver ? 0.4 : 0.14,
-                      ),
+                      backgroundColor: withOpacity(palette.primary || '#2563EB', 0.04),
+                      borderColor: withOpacity(palette.primary || '#2563EB', 0.14),
                     },
                   ]}
                 >
-                  <View style={styles.mediaCardHeader}>
-                    <Text style={[styles.mediaCardTitle, { color: palette.text || colors.text }]}>
-                      {String(mediaType?.type || '').trim() || 'Midia'}
-                    </Text>
-
-                    <View style={styles.mediaHeaderActions}>
-                      {currentMedia ? (
-                        <TouchableOpacity
-                          activeOpacity={0.8}
-                          onPress={() => deleteMediaLink(mediaType)}
-                          disabled={isDeleting}
-                          style={[
-                            styles.mediaDeleteButton,
-                            {
-                              borderColor: withOpacity(palette.textDanger || '#EF4444', 0.25),
-                              opacity: isDeleting ? 0.65 : 1,
-                            },
-                          ]}
-                        >
-                          <Text style={{ color: palette.textDanger || '#EF4444', fontSize: 12, fontWeight: '600' }}>
-                            Apagar
-                          </Text>
-                        </TouchableOpacity>
-                      ) : null}
-
-                      {mediaFormatLabel ? (
-                        <View
-                          style={[
-                            styles.mediaBadge,
-                            {
-                              backgroundColor: withOpacity(palette.primary || '#2563EB', 0.08),
-                            },
-                          ]}
-                        >
-                          <Text style={[styles.mediaBadgeText, { color: palette.primary || '#2563EB' }]}>
-                            {mediaFormatLabel}
-                          </Text>
-                        </View>
-                      ) : null}
-                    </View>
-                  </View>
-
-                  {renderDropZone({
-                    currentMedia,
-                    isDragOver,
-                    isUploading,
-                    mediaType,
-                    mediaTypeId,
-                  })}
-
-                  {isDeleting ? (
-                    <Text style={[styles.mediaHelpText, { color: palette.textSecondary || '#64748B' }]}>
-                      Apagando...
-                    </Text>
-                  ) : null}
+                  <DefaultUpload
+                    relationStoreName="people"
+                    relationField="people"
+                    relationResource="people"
+                    entityId={clientId}
+                    companyId={clientId}
+                    context="people_media"
+                    libraryContexts={['people_media']}
+                    attachments={currentMedia ? [currentMedia] : []}
+                    acceptedTypes={COMPANY_MEDIA_ACCEPT_ATTRIBUTE}
+                    fileType="image"
+                    fileTypeLabel="imagem"
+                    title={mediaTypeLabel}
+                    triggerLabel={`Gerenciar ${mediaTypeLabel}`}
+                    managerTitle={`Gerenciador de ${mediaTypeLabel}`}
+                    searchPlaceholder="Buscar imagem"
+                    uploadButtonLabel="Enviar nova"
+                    emptyAttachmentLabel="Nenhuma imagem vinculada."
+                    emptyLibraryLabel="Nenhuma imagem encontrada."
+                    uploadSuccessMessage={`${mediaTypeLabel} atualizada com sucesso.`}
+                    attachSuccessMessage={`${mediaTypeLabel} vinculada com sucesso.`}
+                    removeSuccessMessage={`${mediaTypeLabel} removida.`}
+                    uploadResultAlreadyAttached
+                    onChanged={async () => {
+                      await loadPeopleMedia();
+                      onChanged?.();
+                    }}
+                    {...handlers}
+                  />
                 </View>
               );
             })}
