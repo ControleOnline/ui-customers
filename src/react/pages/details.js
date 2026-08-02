@@ -2,31 +2,29 @@
  * Contract imported from AGENTS.md
  * ## Escopo
  * - `ui-customers` e o modulo React de cadastro e edicao de clientes.
- * - Esta pagina concentra detalhes, enderecos e dados de exibicao do cliente.
+ * - Esta pagina concentra detalhes, enderecos e dados de exibicao de pessoas.
  *
  * ## Estado
  *
  * ## Limites
  * - Nao duplicar validacoes de formato fora dos helpers compartilhados.
- * - Manter aqui a orquestracao da tela e a edicao do cadastro do cliente.
+ * - Manter aqui a orquestracao da tela e a edicao do cadastro de pessoas.
  */
-import React, { useState, useLayoutEffect, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useLayoutEffect, useEffect, useMemo } from 'react';
 
 import {
   Text,
   View,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Platform,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { api } from '@controleonline/ui-common/src/api';
 import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
-import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
-import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
+import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
+import { resolvePeopleImageUrl } from '@controleonline/ui-people/src/react/utils/peopleImage';
 import { useStore, useStores } from '@store';
 import { createDetailsStyles } from '../styles/details';
 import GeneralTab from '../components/tabs/GeneralTab';
@@ -35,6 +33,7 @@ import SalesmanTab from '../components/tabs/SalesmanTab';
 import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 import ProductsTab from '../components/tabs/ProductsTab';
+import MediaTab from '../components/tabs/MediaTab';
 import {
   buildEmployeeContactsFromPeopleLinks,
   buildPeopleLinkReadParams,
@@ -71,88 +70,14 @@ const normalizeCollection = payload => {
   return [];
 };
 
-const unwrapUploadFile = payload => {
-  const data = payload?.response?.data ?? payload?.data ?? payload;
-
-  if (!data) {
-    return null;
-  }
-
-  if (data?.file) {
-    return data.file;
-  }
-
-  if (Array.isArray(data)) {
-    return data[0]?.file || data[0] || null;
-  }
-
-  if (Array.isArray(data?.member)) {
-    return data.member[0]?.file || data.member[0] || null;
-  }
-
-  if (Array.isArray(data?.['hydra:member'])) {
-    return data['hydra:member'][0]?.file || data['hydra:member'][0] || null;
-  }
-
-  return data;
-};
-
 const PERSON_PHOTO_MEDIA_TYPES = ['avatar'];
 const COMPANY_ICON_MEDIA_TYPES = ['icon'];
 
-const fetchPeopleMedia = async ({peopleId, mediaType}) => {
-  const response = await api.fetch('/people_media', {
-    params: {
-      people: `/people/${peopleId}`,
-      'mediaType.type': mediaType,
-      itemsPerPage: 1,
-    },
-  });
-
-  return normalizeCollection(response)[0] || null;
-};
-
-const resolvePeopleMediaImageUrl = async ({peopleId, mediaTypes}) => {
-  for (const mediaType of mediaTypes) {
-    const media = await fetchPeopleMedia({peopleId, mediaType}).catch(() => null);
-    const imageUrl = resolveFileImageUrl(media?.file);
-
-    if (imageUrl) {
-      return imageUrl;
-    }
-  }
-
-  return '';
-};
-
-const resolveMediaTypeId = async ({mediaTypes, peopleType}) => {
-  for (const mediaType of mediaTypes) {
-    const response = await api.fetch('/media_types', {
-      params: {
-        type: mediaType,
-        peopleType,
-        itemsPerPage: 1,
-      },
-    }).catch(() => null);
-    const item = normalizeCollection(response)[0];
-    const id = String(item?.id || item?.['@id'] || '').replace(/\D/g, '');
-
-    if (id) {
-      return id;
-    }
-  }
-
-  return '';
-};
-
 const ClientDetails = ({ route, navigation }) => {
-  const { showError, showSuccess } = useMessage();
-  const { width } = Dimensions.get('window');
   const routeParams = route.params || {};
   const clientId = String(routeParams?.clientId || routeParams?.id || '').replace(/\D/g, '');
   const detailContext = resolveContextKey(routeParams?.contextKey);
   const requestedInitialTab = String(route.params?.initialTab || '').trim();
-  const scrollRef = React.useRef(null);
   const peopleStore = useStores(state => state.people) || {};
   const peopleLinkStore = useStore('people_link');
   const themeStore = useStore('theme');
@@ -191,7 +116,7 @@ const ClientDetails = ({ route, navigation }) => {
   );
   const [activeTab, setActiveTab] = useState(0);
   const [clientAvatarImageUrl, setClientAvatarImageUrl] = useState('');
-  const [isSavingClientAvatar, setIsSavingClientAvatar] = useState(false);
+  const [mediaRefreshKey, setMediaRefreshKey] = useState(0);
 
   const resolveInitialTabIndex = nextClient => {
     if (!requestedInitialTab) return 0;
@@ -201,6 +126,7 @@ const ClientDetails = ({ route, navigation }) => {
     const keys = nextIsPessoaJuridica
       ? [
           'general',
+          'media',
           'sellers',
           'contacts',
           ...(nextIsProviderContext ? ['products'] : []),
@@ -208,6 +134,7 @@ const ClientDetails = ({ route, navigation }) => {
         ]
       : [
           'general',
+          'media',
           'users',
           ...(nextIsProviderContext ? ['products'] : []),
           'contracts',
@@ -229,7 +156,6 @@ const ClientDetails = ({ route, navigation }) => {
     let mounted = true;
     const initialTabIndex = resolveInitialTabIndex(cachedClient);
     setActiveTab(initialTabIndex);
-    scrollRef.current?.scrollTo({ x: initialTabIndex * width, animated: false });
 
     if (!clientId || !getPeople) {
       setIsLoadingClient(false);
@@ -287,7 +213,6 @@ const ClientDetails = ({ route, navigation }) => {
           const nextClient = { ...(previousClient || cachedClient || {}), ...fullClient };
           const nextTabIndex = resolveInitialTabIndex(nextClient);
           setActiveTab(nextTabIndex);
-          scrollRef.current?.scrollTo({ x: nextTabIndex * width, animated: false });
           return nextClient;
         });
       })
@@ -315,7 +240,6 @@ const ClientDetails = ({ route, navigation }) => {
     parentCompanyId,
     parentCompanyIri,
     requestedInitialTab,
-    width,
   ]);
 
   useEffect(() => {
@@ -355,11 +279,36 @@ const ClientDetails = ({ route, navigation }) => {
     return () => {
       mounted = false;
     };
-  }, [client?.id, client?.['@id'], client?.peopleType]);
+  }, [client?.id, client?.['@id'], client?.peopleType, mediaRefreshKey]);
 
   const updateClientData = (field, data) => {
     setClient(prevClient => ({ ...prevClient, [field]: data }));
   };
+
+  const resolvePeopleMediaImageUrl = useCallback(
+    async ({peopleId, mediaTypes}) => {
+      for (const mediaType of mediaTypes) {
+        const response = await peopleActions.getPeopleMedia({
+          people: `/people/${peopleId}`,
+          'mediaType.type': mediaType,
+          itemsPerPage: 1,
+        }).catch(() => null);
+        const media = Array.isArray(response) ? response[0] : null;
+        const imageUrl = resolveFileImageUrl(media?.file);
+
+        if (imageUrl) {
+          return imageUrl;
+        }
+      }
+
+      return '';
+    },
+    [peopleActions],
+  );
+
+  const handleClientMediaChanged = useCallback(() => {
+    setMediaRefreshKey(previousValue => previousValue + 1);
+  }, []);
 
   const persistClientData = async partialData => {
     const clientId = extractId(
@@ -387,6 +336,7 @@ const ClientDetails = ({ route, navigation }) => {
   const tabs = isPessoaJuridica
     ? [
         { key: 'general', label: global.t?.t('people', 'title', 'general') },
+        { key: 'media', label: global.t?.t('people', 'title', 'media') || 'Mídia' },
         { key: 'sellers', label: global.t?.t('people', 'title', 'sellers') },
         { key: 'contacts', label: global.t?.t('people', 'title', 'contacts') },
         ...(isProviderContext
@@ -396,6 +346,7 @@ const ClientDetails = ({ route, navigation }) => {
       ]
     : [
         { key: 'general', label: global.t?.t('people', 'title', 'general') },
+        { key: 'media', label: global.t?.t('people', 'title', 'media') || 'Mídia' },
         { key: 'users', label: global.t?.t('people', 'title', 'users') },
         ...(isProviderContext
           ? [{ key: 'products', label: global.t?.t('people', 'title', 'products') || 'Produtos' }]
@@ -406,90 +357,11 @@ const ClientDetails = ({ route, navigation }) => {
   useEffect(() => {
     if (activeTab > tabs.length - 1) {
       setActiveTab(0);
-      scrollRef.current?.scrollTo({ x: 0, animated: false });
     }
   }, [activeTab, tabs.length]);
 
   const handleTabPress = index => {
     setActiveTab(index);
-    scrollRef.current?.scrollTo({ x: index * width, animated: true });
-  };
-
-  const uploadClientAvatarFile = async file => {
-    const mimeType = String(file?.type || '').trim().toLowerCase();
-    const fileName = String(file?.name || '').trim().toLowerCase();
-    if (mimeType !== 'image/png' && !fileName.endsWith('.png')) {
-      throw new Error('Selecione uma imagem PNG.');
-    }
-
-    const currentClientId = extractId(client?.id || client?.['@id']);
-    if (!currentClientId) {
-      throw new Error('Nao foi possivel identificar o cadastro para atualizar a foto.');
-    }
-    const isCurrentClientCompany =
-      String(client?.peopleType || '').toUpperCase() === 'J';
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('people', `/people/${currentClientId}`);
-
-    if (isCurrentClientCompany) {
-      const mediaTypeId = await resolveMediaTypeId({
-        mediaTypes: COMPANY_ICON_MEDIA_TYPES,
-        peopleType: 'J',
-      });
-
-      if (!mediaTypeId) {
-        throw new Error('Tipo de midia de icon nao configurado para pessoa juridica.');
-      }
-
-      formData.append('media_type_id', mediaTypeId);
-    }
-
-    const response = await api.upload('/people_media/upload', formData);
-    const uploadedFile = unwrapUploadFile(response);
-    const imageUrl = resolveFileImageUrl(uploadedFile);
-
-    if (!imageUrl) {
-      throw new Error('Upload concluido, mas a foto nao foi retornada.');
-    }
-
-    return imageUrl;
-  };
-
-  const handleChangeClientAvatar = () => {
-    if (isSavingClientAvatar) {
-      return;
-    }
-
-    if (Platform.OS !== 'web' || typeof document === 'undefined') {
-      showError?.('A troca de foto esta disponivel apenas no navegador nesta versao.');
-      return;
-    }
-
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/png,.png';
-
-    input.onchange = async event => {
-      const file = event?.target?.files?.[0];
-      if (!file) {
-        return;
-      }
-
-      setIsSavingClientAvatar(true);
-      try {
-        const imageUrl = await uploadClientAvatarFile(file);
-        setClientAvatarImageUrl(imageUrl);
-        showSuccess?.('Foto atualizada com sucesso.');
-      } catch (error) {
-        showError?.(error?.message || 'Nao foi possivel atualizar a foto.');
-      } finally {
-        setIsSavingClientAvatar(false);
-      }
-    };
-
-    input.click();
   };
 
   const renderSkeleton = () => (
@@ -571,6 +443,9 @@ const ClientDetails = ({ route, navigation }) => {
     return renderSkeleton();
   }
 
+  const resolvedClientAvatarImageUrl =
+    clientAvatarImageUrl || resolvePeopleImageUrl(client, resolveFileImageUrl);
+
   const tabProps = {
     client,
     customStyles: detailsStyles,
@@ -579,16 +454,100 @@ const ClientDetails = ({ route, navigation }) => {
     onSaveClientData: persistClientData,
     parentCompanyIri,
     initialContactLinkType,
-    onChangeClientAvatar: handleChangeClientAvatar,
-    isSavingClientAvatar,
+    onChangeClientAvatar: null,
+    isSavingClientAvatar: false,
   };
+  const activeTabKey = tabs[activeTab]?.key || 'general';
+  const activeTabContent = (() => {
+    if (activeTabKey === 'general') {
+      return <GeneralTab {...tabProps} />;
+    }
+
+    if (activeTabKey === 'media') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_342_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          <MediaTab client={client} onChanged={handleClientMediaChanged} />
+        </ScrollView>
+      );
+    }
+
+    if (activeTabKey === 'sellers' || activeTabKey === 'users') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_299_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          {isPessoaJuridica ? (
+            <SalesmanTab
+              {...tabProps}
+              title="Vendedores"
+              linkType="sellers-client"
+              emptyText="Nenhum vendedor vinculado"
+              errorText="Nao foi possivel carregar os vendedores vinculados."
+            />
+          ) : (
+            <UsersTab {...tabProps} />
+          )}
+        </ScrollView>
+      );
+    }
+
+    if (activeTabKey === 'contacts') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_317_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          <EmployeesTab
+            {...tabProps}
+            title="Contatos"
+            emptyText="Nenhum contato vinculado"
+            errorText="Nao foi possivel carregar os contatos vinculados."
+            createTitle="Adicionar Contato"
+            requiredErrorText="Nome e apelido do contato sao obrigatorios."
+            createSuccessText="Contato cadastrado com sucesso."
+            createErrorText="Nao foi possivel cadastrar o contato."
+          />
+        </ScrollView>
+      );
+    }
+
+    if (activeTabKey === 'products') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_334_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          <ProductsTab {...tabProps} />
+        </ScrollView>
+      );
+    }
+
+    return (
+      <ScrollView
+        style={styles.tabScroll}
+        contentContainerStyle={inlineStyle_342_16}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}>
+        <ContractsTab {...tabProps} />
+      </ScrollView>
+    );
+  })();
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.headerProfile}>
         <View style={styles.avatarContainer}>
-          <UserAvatar
-            imageUrl={clientAvatarImageUrl}
+          <PeopleAvatar
+            people={client}
+            imageUrl={resolvedClientAvatarImageUrl}
             name={formatDisplayUppercase(client.name)}
             size={64}
             backgroundColor={themeColors.buttonBackground}
@@ -620,82 +579,9 @@ const ClientDetails = ({ route, navigation }) => {
           </TouchableOpacity>
         ))}
       </View>
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        nestedScrollEnabled
-        directionalLockEnabled
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        onScroll={event => {
-          const contentOffsetX = event.nativeEvent.contentOffset.x;
-          const currentIndex = Math.round(contentOffsetX / width);
-          if (currentIndex !== activeTab) {
-            setActiveTab(currentIndex);
-          }
-        }}
-        scrollEventThrottle={16}
-        style={styles.contentContainer}>
-        {tabs.map(tab => (
-          <View key={tab.key} style={[styles.tabPane, { width }]}>
-            {tab.key === 'general' ? (
-              <GeneralTab {...tabProps} />
-            ) : tab.key === 'sellers' || tab.key === 'users' ? (
-              <ScrollView
-                style={styles.tabScroll}
-                contentContainerStyle={inlineStyle_299_16}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}>
-                {isPessoaJuridica ? (
-                  <SalesmanTab
-                    {...tabProps}
-                    title="Vendedores"
-                    linkType="sellers-client"
-                    emptyText="Nenhum vendedor vinculado"
-                    errorText="Nao foi possivel carregar os vendedores vinculados."
-                  />
-                ) : (
-                  <UsersTab {...tabProps} />
-                )}
-              </ScrollView>
-            ) : tab.key === 'contacts' ? (
-              <ScrollView
-                style={styles.tabScroll}
-                contentContainerStyle={inlineStyle_317_16}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}>
-                <EmployeesTab
-                  {...tabProps}
-                  title="Contatos"
-                  emptyText="Nenhum contato vinculado"
-                  errorText="Nao foi possivel carregar os contatos vinculados."
-                  createTitle="Adicionar Contato"
-                  requiredErrorText="Nome e apelido do contato sao obrigatorios."
-                  createSuccessText="Contato cadastrado com sucesso."
-                  createErrorText="Nao foi possivel cadastrar o contato."
-                />
-              </ScrollView>
-            ) : tab.key === 'products' ? (
-              <ScrollView
-                style={styles.tabScroll}
-                contentContainerStyle={inlineStyle_334_16}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}>
-                <ProductsTab {...tabProps} />
-              </ScrollView>
-            ) : (
-              <ScrollView
-                style={styles.tabScroll}
-                contentContainerStyle={inlineStyle_342_16}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}>
-                <ContractsTab {...tabProps} />
-              </ScrollView>
-            )}
-          </View>
-        ))}
-      </ScrollView>
+      <View style={styles.contentContainer}>
+        {activeTabContent}
+      </View>
     </SafeAreaView>
   );
 };

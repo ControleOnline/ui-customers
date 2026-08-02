@@ -233,7 +233,7 @@ const GeneralTab = ({
   }, [canEditLinkType, contactPeopleIri, parentCompanyIri, peopleLinkActions]);
 
   const isPessoaFisica = registrationForm.peopleType === 'F';
-  const isAvatarUploadDisabled = !isPessoaFisica || isSavingClientAvatar;
+  const isAvatarUploadDisabled = isSavingClientAvatar;
   const avatarUploadLabel = isPessoaFisica ? 'subir avatar' : 'subir ícone';
   const nameLabel = isPessoaFisica ? global.t?.t('users','label','name') : global.t?.t('users','label','companyName');
   const aliasLabel = isPessoaFisica ? global.t?.t('users','label','nickname') : global.t?.t('users','label','fantasyName');
@@ -355,6 +355,7 @@ const GeneralTab = ({
               onPress={onChangeClientAvatar}
               disabled={isAvatarUploadDisabled}
               activeOpacity={0.85}
+              accessibilityLabel={avatarUploadLabel}
               style={[
                 styles.uploadImageButton,
                 isAvatarUploadDisabled ? styles.saveButtonDisabled : null,
