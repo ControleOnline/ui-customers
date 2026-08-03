@@ -114,8 +114,13 @@ jest.mock('@controleonline/ui-common/src/react/utils/fileUrl', () => ({
 
 const SalesmanTab =
   require('@controleonline/ui-customers/src/react/components/tabs/SalesmanTab').default;
-const EmployeesTab =
-  require('@controleonline/ui-customers/src/react/components/tabs/EmployeesTab').default;
+const employeesTabModule =
+  require('@controleonline/ui-customers/src/react/components/tabs/EmployeesTab');
+const EmployeesTab = employeesTabModule.default;
+const {
+  formatEmployeeContactMeta,
+  formatEmployeeContactTitle,
+} = employeesTabModule;
 
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
@@ -229,5 +234,20 @@ describe('people media tabs', () => {
       'mediaType.type': 'avatar',
       itemsPerPage: 1,
     });
+  });
+
+  it('formats contact rows as name alias and id link type', () => {
+    const contact = {
+      id: '/people/77',
+      name: 'Maria Silva',
+      alias: 'Mari',
+      linkType: 'employee',
+      peopleLink: {
+        linkType: 'owner',
+      },
+    };
+
+    expect(formatEmployeeContactTitle(contact)).toBe('MARIA SILVA / MARI');
+    expect(formatEmployeeContactMeta(contact)).toBe('ID: 77 / owner');
   });
 });

@@ -14,3 +14,10 @@ Na raiz do `app-community`:
 npm test -- --runInBand modules/controleonline/ui-customers/src/tests/react
 npm run test:browser:manager -- --grep "scopes sellers and contacts"
 ```
+
+## Links obrigatorios
+
+- [Documentacao para clientes](http://ajuda.controleonline.com/)
+- [Site institucional](http://controleonline.com/)
+- [Wiki tecnica](https://github.com/ControleOnline/ui-customers/wiki)
+
