@@ -156,6 +156,29 @@ const resolveEmployeeLinkType = employee =>
       (Array.isArray(employee?.link) ? employee.link[0]?.linkType : ''),
   );
 
+export const resolveEmployeeContactLinkType = employee =>
+  String(
+    employee?.peopleLink?.linkType ||
+      employee?.linkType ||
+      employee?.link?.linkType ||
+      (Array.isArray(employee?.link) ? employee.link[0]?.linkType : '') ||
+      '',
+  ).trim();
+
+export const formatEmployeeContactTitle = employee => {
+  const name = formatDisplayUppercase(employee?.name) || '-';
+  const alias = formatDisplayUppercase(employee?.alias);
+
+  return alias ? `${name} / ${alias}` : name;
+};
+
+export const formatEmployeeContactMeta = employee => {
+  const id = extractId(employee?.id || employee?.['@id']) || '-';
+  const linkType = resolveEmployeeContactLinkType(employee);
+
+  return linkType ? `ID: ${id} / ${linkType}` : `ID: ${id}`;
+};
+
 const EmployeesTab = ({
   client,
   customStyles,
@@ -398,11 +421,10 @@ const EmployeesTab = ({
                   />
                   <View>
                     <Text style={customStyles.itemText}>
-                      {formatDisplayUppercase(item?.name) || '-'}
+                      {formatEmployeeContactTitle(item)}
                     </Text>
                     <Text style={customStyles.itemSubtext}>
-                      {`ID: ${extractId(item?.id || item?.['@id']) || '-'}`}
-                      {item?.alias ? ` - ${formatDisplayUppercase(item.alias)}` : ''}
+                      {formatEmployeeContactMeta(item)}
                     </Text>
                   </View>
                 </View>
