@@ -5,7 +5,10 @@
   "description": "ControleOnline customers Quasar UI Component",
   "license": "MIT",
   "main": "src/react/index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "npm run test:supplier-product-flow",
+    "test:supplier-product-flow": "node --test src/tests/react/domain/productSupplierFlow.test.mjs"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/controleonline/conline-quasar-ui"
