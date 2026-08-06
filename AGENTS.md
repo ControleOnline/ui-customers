@@ -1,3 +1,4 @@
+
 ## Ponto de entrada
 
 - A documentação funcional e de regras deste modulo vive na **wiki do proprio repositório** e na wiki principal do app.
@@ -33,6 +34,10 @@ Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.
 - No fluxo comercial, recebe handoff do `ui-crm`.
 - Gestão administrativa de vendedores e comissões: apenas quando `APP_TYPE=MANAGER`.
 - Fora de `MANAGER` (ex.: CRM): pode identificar o vendedor, sem expor comissão nem CRUD administrativo.
+
+## Regras específicas
+
+- No contexto `provider`, a aba de produtos do detalhe da pessoa juridica deve permitir criar um novo produto sem sair do fluxo do fornecedor.
 
 ### Módulos relacionados (mesmo fluxo)
 
