@@ -189,7 +189,7 @@ const GeneralTab = ({
 
     setRegistrationForm(initial);
     setOriginalRegistrationForm(initial);
-  }, [client?.id, client?.name, client?.alias, client?.foundationDate, client?.peopleType, initialContactLinkType]);
+  }, [client?.id, client?.name, client?.alias, client?.foundationDate, client?.enable, client?.enabled, client?.peopleType, initialContactLinkType]);
 
   useEffect(() => {
     setLinkTypeOptions(
@@ -280,7 +280,15 @@ const GeneralTab = ({
 
     setIsSavingRegistration(true);
     try {
-      if (canEditLinkType && peopleLinkActions?.save) {
+      // people_link currently only exposes GetCollection on the API.
+      // Persist linkType only when it actually changed to avoid Method Not Allowed
+      // on unrelated cadastral saves (e.g. enable/active toggle).
+      const linkTypeChanged =
+        canEditLinkType &&
+        normalizeLinkType(registrationForm.linkType) !==
+          normalizeLinkType(originalRegistrationForm.linkType);
+
+      if (linkTypeChanged && peopleLinkActions?.save) {
         setIsSavingLinkType(true);
         const savedLink = await peopleLinkActions.save({
           ...(peopleLinkId ? { id: peopleLinkId } : {}),
