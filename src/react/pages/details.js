@@ -47,31 +47,17 @@ import {
   inlineStyle_342_16,
 } from './details.styles';
 
-const resolveContextKey = rawContext => {
-  if (!rawContext) {
-    return '';
-  }
-
-  if (typeof rawContext === 'string') {
-    return rawContext.trim().toLowerCase();
-  }
-
-  return String(rawContext?.context || '')
-    .trim()
-    .toLowerCase();
-};
-
-const normalizeCollection = payload => {
-  if (Array.isArray(payload)) return payload;
-  if (!payload || typeof payload !== 'object') return [];
-  if (Array.isArray(payload.member)) return payload.member;
-  if (Array.isArray(payload['hydra:member'])) return payload['hydra:member'];
-  if (Array.isArray(payload.items)) return payload.items;
-  return [];
-};
-
-const PERSON_PHOTO_MEDIA_TYPES = ['avatar'];
-const COMPANY_ICON_MEDIA_TYPES = ['icon'];
+import ClientDetailsSkeleton from './ClientDetailsSkeleton';
+import {
+  resolveContextKey,
+  normalizeCollection,
+  PERSON_PHOTO_MEDIA_TYPES,
+  COMPANY_ICON_MEDIA_TYPES,
+  extractId,
+  buildClientTabDefs,
+  resolveInitialTabIndex,
+  mergeLinkedContactIntoClient,
+} from './clientDetailsHelpers';
 
 const ClientDetails = ({ route, navigation }) => {
   const routeParams = route.params || {};
@@ -89,7 +75,6 @@ const ClientDetails = ({ route, navigation }) => {
   const savePeople = peopleActions?.save;
   const detailsStyles = useMemo(() => createDetailsStyles(themeColors), [themeColors]);
 
-  const extractId = value => String(value || '').replace(/\D/g, '');
   const parentCompanyId = extractId(routeParams?.parentCompanyId);
   const parentCompanyIri = parentCompanyId ? `/people/${parentCompanyId}` : '';
   const initialContactLinkType = String(routeParams?.linkType || '')
@@ -118,31 +103,6 @@ const ClientDetails = ({ route, navigation }) => {
   const [clientAvatarImageUrl, setClientAvatarImageUrl] = useState('');
   const [mediaRefreshKey, setMediaRefreshKey] = useState(0);
 
-  const resolveInitialTabIndex = nextClient => {
-    if (!requestedInitialTab) return 0;
-
-    const nextIsPessoaJuridica = String(nextClient?.peopleType || '').toUpperCase() === 'J';
-    const nextIsProviderContext = ['provider', 'providers'].includes(detailContext);
-    const keys = nextIsPessoaJuridica
-      ? [
-          'general',
-          'media',
-          'sellers',
-          'contacts',
-          ...(nextIsProviderContext ? ['products'] : []),
-          'contracts',
-        ]
-      : [
-          'general',
-          'media',
-          'users',
-          ...(nextIsProviderContext ? ['products'] : []),
-          'contracts',
-        ];
-    const index = keys.indexOf(requestedInitialTab);
-    return index >= 0 ? index : 0;
-  };
-
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: '',
@@ -154,7 +114,7 @@ const ClientDetails = ({ route, navigation }) => {
 
   useEffect(() => {
     let mounted = true;
-    const initialTabIndex = resolveInitialTabIndex(cachedClient);
+    const initialTabIndex = resolveInitialTabIndex({ requestedInitialTab, nextClient: cachedClient, detailContext });
     setActiveTab(initialTabIndex);
 
     if (!clientId || !getPeople) {
@@ -211,7 +171,7 @@ const ClientDetails = ({ route, navigation }) => {
 
         setClient(previousClient => {
           const nextClient = { ...(previousClient || cachedClient || {}), ...fullClient };
-          const nextTabIndex = resolveInitialTabIndex(nextClient);
+          const nextTabIndex = resolveInitialTabIndex({ requestedInitialTab, nextClient, detailContext });
           setActiveTab(nextTabIndex);
           return nextClient;
         });
@@ -333,26 +293,11 @@ const ClientDetails = ({ route, navigation }) => {
   const isPessoaJuridica = String(client?.peopleType || '').toUpperCase() === 'J';
   const isProviderContext = ['provider', 'providers'].includes(detailContext);
 
-  const tabs = isPessoaJuridica
-    ? [
-        { key: 'general', label: global.t?.t('people', 'title', 'general') },
-        { key: 'media', label: global.t?.t('people', 'title', 'media') || 'Mídia' },
-        { key: 'sellers', label: global.t?.t('people', 'title', 'sellers') },
-        { key: 'contacts', label: global.t?.t('people', 'title', 'contacts') },
-        ...(isProviderContext
-          ? [{ key: 'products', label: global.t?.t('people', 'title', 'products') || 'Produtos' }]
-          : []),
-        { key: 'contracts', label: global.t?.t('people', 'title', 'contracts') },
-      ]
-    : [
-        { key: 'general', label: global.t?.t('people', 'title', 'general') },
-        { key: 'media', label: global.t?.t('people', 'title', 'media') || 'Mídia' },
-        { key: 'users', label: global.t?.t('people', 'title', 'users') },
-        ...(isProviderContext
-          ? [{ key: 'products', label: global.t?.t('people', 'title', 'products') || 'Produtos' }]
-          : []),
-        { key: 'contracts', label: global.t?.t('people', 'title', 'contracts') },
-      ];
+  const tabs = buildClientTabDefs({
+    isPessoaJuridica,
+    isProviderContext,
+    t: global.t,
+  });
 
   useEffect(() => {
     if (activeTab > tabs.length - 1) {
@@ -364,80 +309,7 @@ const ClientDetails = ({ route, navigation }) => {
     setActiveTab(index);
   };
 
-  const renderSkeleton = () => (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <View style={styles.headerProfile}>
-        <View
-          style={[
-            styles.skeletonCircle,
-            { width: 64, height: 64, borderRadius: 32, marginBottom: 12 },
-          ]}
-        />
-        <View
-          style={[
-            styles.skeletonLine,
-            { width: 180, height: 22, marginBottom: 8 },
-          ]}
-        />
-        <View style={[styles.skeletonLine, { width: 90, height: 12 }]} />
-      </View>
-
-      <View style={styles.tabsHeader}>
-        {tabs.map(tab => (
-          <View key={`skeleton-${tab.key}`} style={styles.skeletonTab} />
-        ))}
-      </View>
-
-      <View style={styles.skeletonContent}>
-        <View style={styles.skeletonCard}>
-          <View
-            style={[
-              styles.skeletonLine,
-              { width: '48%', height: 18, marginBottom: 14 },
-            ]}
-          />
-          <View
-            style={[
-              styles.skeletonLine,
-              { width: '100%', height: 14, marginBottom: 10 },
-            ]}
-          />
-          <View
-            style={[
-              styles.skeletonLine,
-              { width: '90%', height: 14, marginBottom: 10 },
-            ]}
-          />
-          <View style={[styles.skeletonLine, { width: '82%', height: 14 }]} />
-        </View>
-        <View style={styles.skeletonCard}>
-          <View
-            style={[
-              styles.skeletonLine,
-              { width: '52%', height: 18, marginBottom: 14 },
-            ]}
-          />
-          <View
-            style={[
-              styles.skeletonLine,
-              {
-                width: '100%',
-                height: 46,
-                borderRadius: 10,
-                marginBottom: 10,
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.skeletonLine,
-              { width: '100%', height: 46, borderRadius: 10 },
-            ]}
-          />
-        </View>
-      </View>
-    </SafeAreaView>
-  );
+  const renderSkeleton = () => <ClientDetailsSkeleton tabs={tabs} />;
 
   if (isLoadingClient || !client) {
     return renderSkeleton();
