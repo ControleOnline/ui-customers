@@ -354,11 +354,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   mediaPreviewTransparencyGrid: {
+    // RN StyleSheet (web) rejects multi-value backgroundPosition / CSS backgroundImage gradients.
+    // Keep solid preview background; checkerboard was cosmetic only.
     backgroundColor: '#F8FAFC',
-    backgroundImage:
-      'linear-gradient(45deg, rgba(148,163,184,0.08) 25%, transparent 25%, transparent 75%, rgba(148,163,184,0.08) 75%, rgba(148,163,184,0.08)), linear-gradient(45deg, rgba(148,163,184,0.08) 25%, transparent 25%, transparent 75%, rgba(148,163,184,0.08) 75%, rgba(148,163,184,0.08))',
-    backgroundPosition: '0 0, 12px 12px',
-    backgroundSize: '24px 24px',
   },
   mediaPreviewImage: {
     width: '100%',
