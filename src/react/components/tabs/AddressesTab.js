@@ -1,10 +1,8 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {
-  Keyboard,
   Linking,
   Modal,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -12,6 +10,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import {useStores} from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
+import DefaultAddress from '@controleonline/ui-default/src/react/components/address/DefaultAddress';
 import {
   buildGoogleMapsNavigationUrl,
   buildNavigationMapQuery,
@@ -140,7 +139,6 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const [addresses, setAddresses] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [formData, setFormData] = useState({});
   const [showNavigationModal, setShowNavigationModal] = useState(false);
   const [navigationAddress, setNavigationAddress] = useState(null);
 
@@ -159,14 +157,12 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const openModal = item => {
     const normalizedItem = item ? normalizeAddress(item) : {};
     setEditingItem(item ? normalizedItem : null);
-    setFormData(normalizedItem);
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingItem(null);
-    setFormData({});
   };
 
   const closeNavigationModal = () => {
@@ -208,94 +204,38 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     }
   };
 
-  const handleSave = async () => {
+  const saveAddress = async payload => {
     if (!actions?.save) {
-      showError('Servico de enderecos indisponivel no momento.');
-      return;
-    }
-
-    const street = normalizeString(formData.street);
-    const city = normalizeString(formData.city);
-    const district = normalizeString(formData.district);
-    const state = normalizeString(formData.state);
-    const country = normalizeString(formData.country);
-    const number = String(formData.number || '').trim();
-    const zipCode = normalizeZipCode(formData.zipCode);
-
-    if (!zipCode) {
-      showError('CEP e obrigatorio.');
-      return;
-    }
-    if (!street || !number || !district || !city || !state || !country) {
-      const missingFields = [
-        !street ? 'rua' : null,
-        !number ? 'numero' : null,
-        !district ? 'bairro' : null,
-        !city ? 'cidade' : null,
-        !state ? 'estado' : null,
-        !country ? 'pais' : null,
-      ].filter(Boolean);
-      showError(`Preencha: ${missingFields.join(', ')}.`);
-      return;
+      throw new Error('Servico de enderecos indisponivel no momento.');
     }
 
     if (!peopleIri) {
-      showError('Nao foi possivel identificar o cliente para salvar o endereco.');
-      return;
+      throw new Error('Nao foi possivel identificar o cliente para salvar o endereco.');
     }
 
-    const payload = {
-      street,
-      city,
-      district,
-      state,
-      country,
+    return actions.save({
+      ...payload,
       people: peopleIri,
-      number,
-      complement: normalizeString(formData.complement) || '',
-      nickname: normalizeString(formData.nickname) || 'DEFAULT',
-      cep: zipCode,
-    };
+    });
+  };
 
-    try {
-      // Backend de endereco (api-platform-common) usa somente POST discovery.
-      // No modo edicao, criamos o novo endereco e removemos o antigo quando houver troca real.
-      const saved = await actions.save(payload);
+  const handleAddressSaved = saved => {
+    const normalizedSaved = normalizeAddress(saved || {});
+    const updatedAddresses = editingItem
+      ? addresses.map(item =>
+          item.id === editingItem.id ? normalizedSaved : item,
+        )
+      : [...addresses, normalizedSaved];
 
-      const normalizedSaved = normalizeAddress({ ...payload, ...(saved || {}) });
-      const updatedAddresses = editingItem
-        ? addresses.map(item =>
-            item.id === editingItem.id ? normalizedSaved : item,
-          )
-        : [...addresses, normalizedSaved];
+    setAddresses(updatedAddresses);
+    onUpdateClient?.('address', mapAddressesForClient(updatedAddresses));
 
-      const oldId = extractId(editingItem?.id);
-      const newId = extractId(normalizedSaved?.id);
-      if (
-        editingItem &&
-        actions?.remove &&
-        oldId &&
-        newId &&
-        oldId !== newId
-      ) {
-        await actions.remove(oldId);
-      }
-
-      setAddresses(updatedAddresses);
-      onUpdateClient?.('address', mapAddressesForClient(updatedAddresses));
-
-      showSuccess(
-        editingItem
-          ? 'Endereco atualizado com sucesso!'
-          : 'Endereco criado com sucesso!',
-      );
-      closeModal();
-    } catch (error) {
-      const backendMessage = Array.isArray(error?.message)
-        ? error.message.map(item => item?.message || item).join(', ')
-        : error?.message;
-      showError(backendMessage || 'Falha ao salvar endereco. Tente novamente.');
-    }
+    showSuccess(
+      editingItem
+        ? 'Endereco atualizado com sucesso!'
+        : 'Endereco criado com sucesso!',
+    );
+    closeModal();
   };
 
   const handleDelete = id => {
@@ -329,78 +269,22 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
           <Text style={customStyles.modalTitle}>
             {editingItem ? global.t?.t('address', 'title', 'editAddress') : global.t?.t('address', 'title', 'address')}
           </Text>
-          <TextInput
-            style={customStyles.modalInput}
-            placeholder={global.t?.t('address', 'title', 'zipCode')}
-            value={formData.zipCode || ''}
-            onChangeText={text => setFormData({...formData, zipCode: text})}
+          <DefaultAddress
+            mode={editingItem ? 'edit' : 'create'}
+            row={editingItem
+              ? {
+                  ...editingItem,
+                  cep: editingItem.zipCode,
+                  uf: editingItem.state,
+                  country: editingItem.country,
+                }
+              : null}
+            peopleIri={peopleIri}
+            saveAction={saveAddress}
+            onCancel={closeModal}
+            onSaved={handleAddressSaved}
+            submitLabel={global.t?.t('address', 'button', 'save') || 'Salvar'}
           />
-          <TextInput
-            style={customStyles.modalInput}
-            placeholder={global.t?.t('address', 'title', 'street')}
-            value={formData.street || ''}
-            onChangeText={text => setFormData({...formData, street: text})}
-          />
-          <TextInput
-            style={customStyles.modalInput}
-            placeholder={global.t?.t('address', 'title', 'number')}
-            value={formData.number || ''}
-            onChangeText={text => setFormData({...formData, number: text})}
-          />
-          <TextInput
-            style={customStyles.modalInput}
-            placeholder={global.t?.t('address', 'title', 'complement')}
-            value={formData.complement || ''}
-            onChangeText={text => setFormData({...formData, complement: text})}
-          />
-          <TextInput
-            style={customStyles.modalInput}
-            placeholder={global.t?.t('address', 'title', 'district')}
-            value={formData.district || ''}
-            onChangeText={text => setFormData({...formData, district: text})}
-          />
-          <TextInput
-            style={customStyles.modalInput}
-            placeholder={global.t?.t('address', 'title', 'city')}
-            value={formData.city || ''}
-            onChangeText={text => setFormData({...formData, city: text})}
-          />
-          <TextInput
-            style={customStyles.modalInput}
-            placeholder={global.t?.t('address', 'title', 'state')}
-            value={formData.state || ''}
-            onChangeText={text => setFormData({...formData, state: text})}
-          />
-          <TextInput
-            style={customStyles.modalInput}
-            placeholder={global.t?.t('address', 'title', 'country')}
-            value={formData.country || ''}
-            onChangeText={text => setFormData({...formData, country: text})}
-          />
-          <TextInput
-            style={customStyles.modalInput}
-            placeholder={global.t?.t('address', 'title', 'optionsNicknamePlaceholder')}
-            value={formData.nickname || ''}
-            onChangeText={text => setFormData({...formData, nickname: text})}
-          />
-          <View style={customStyles.modalActions}>
-            <TouchableOpacity
-              style={customStyles.modalCancelButton}
-              onPress={() => {
-                Keyboard.dismiss();
-                closeModal();
-              }}>
-              <Text style={customStyles.modalCancelText}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={customStyles.modalSaveButton}
-              onPress={() => {
-                Keyboard.dismiss();
-                handleSave();
-              }}>
-              <Text style={customStyles.modalSaveText}>Salvar</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     </Modal>
