@@ -30,6 +30,25 @@ export const COMPANY_ICON_MEDIA_TYPES = ['icon'];
 
 export const extractId = value => String(value || '').replace(/\D/g, '');
 
+export const resolveRouteClientSeed = routeParams => {
+  const client = routeParams?.client || routeParams?.people || null;
+
+  return client && typeof client === 'object' && !Array.isArray(client)
+    ? client
+    : null;
+};
+
+export const resolveRouteClientId = routeParams => {
+  const clientSeed = resolveRouteClientSeed(routeParams);
+
+  return extractId(
+    routeParams?.clientId ||
+      routeParams?.id ||
+      clientSeed?.id ||
+      clientSeed?.['@id'],
+  );
+};
+
 export const buildClientTabDefs = ({
   isPessoaJuridica,
   isProviderContext,

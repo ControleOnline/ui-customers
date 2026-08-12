@@ -67,6 +67,16 @@ const buildPeopleMedia = ({id, peopleId, mediaType, fileName}) => ({
 const mockClientDetailsApi = async page => {
   const company = createCompany();
   const peopleById = {
+    9: {
+      '@id': '/people/9',
+      id: 9,
+      name: 'CLIENT WITHOUT MEDIA',
+      alias: 'CLIENT WITHOUT MEDIA',
+      peopleType: 'F',
+      enable: true,
+      email: 'client-without-media@example.com',
+      image: 9,
+    },
     29: {
       '@id': '/people/29',
       id: 29,
@@ -131,7 +141,7 @@ const mockClientDetailsApi = async page => {
       });
     }
 
-    if (pathname === 'people/29' || pathname === 'people/30') {
+    if (pathname === 'people/9' || pathname === 'people/29' || pathname === 'people/30') {
       const client = peopleById[Number(pathname.split('/')[1])];
       return route.fulfill({
         status: 200,
@@ -276,6 +286,27 @@ const mockClientDetailsApi = async page => {
 };
 
 test.describe('client details media browser smoke', () => {
+  test('loads valid client details without media as initials only', async ({page}) => {
+    const avatarRequests = [];
+
+    page.on('request', request => {
+      const url = request.url();
+
+      if (/gravatar\.com\/avatar|\/files\/9\/download/i.test(url)) {
+        avatarRequests.push(url);
+      }
+    });
+
+    await mockClientDetailsApi(page);
+
+    await page.goto('/client-details?clientId=9&contextKey=client');
+
+    await expect(page.getByText('CLIENT WITHOUT MEDIA', {exact: true})).toBeVisible({timeout: 15000});
+    await expect(page.getByText('Documentos', {exact: true})).toBeVisible();
+    await expect(page.getByText('Not Found', {exact: true})).toHaveCount(0);
+    expect(avatarRequests).toEqual([]);
+  });
+
   test('shows company icon upload controls for pessoa juridica', async ({page}) => {
     await mockClientDetailsApi(page);
 

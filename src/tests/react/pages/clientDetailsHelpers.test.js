@@ -7,6 +7,8 @@ import {
   buildClientTabDefs,
   resolveInitialTabIndex,
   extractId,
+  resolveRouteClientId,
+  resolveRouteClientSeed,
 } from '../../../react/pages/clientDetailsHelpers';
 
 describe('clientDetailsHelpers', () => {
@@ -25,6 +27,18 @@ describe('clientDetailsHelpers', () => {
   it('extractId strips non-digits', () => {
     expect(extractId('/people/42')).toBe('42');
     expect(extractId(7)).toBe('7');
+  });
+
+  it('resolves client id and seed from CRM navigation params', () => {
+    const client = {
+      '@id': '/people/9',
+      id: 9,
+      name: 'Cliente Teste',
+    };
+
+    expect(resolveRouteClientSeed({ client })).toBe(client);
+    expect(resolveRouteClientId({ client })).toBe('9');
+    expect(resolveRouteClientId({ clientId: '11', client })).toBe('11');
   });
 
   it('buildClientTabDefs includes media and contacts for PJ', () => {
