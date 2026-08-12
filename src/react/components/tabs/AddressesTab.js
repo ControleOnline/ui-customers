@@ -2,6 +2,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {
   Linking,
   Modal,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -264,11 +265,18 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
 
   const renderModal = () => (
     <Modal visible={showModal} transparent animationType="slide">
-      <View style={customStyles.modalOverlay}>
-        <View style={customStyles.modalContainer}>
-          <Text style={customStyles.modalTitle}>
-            {editingItem ? global.t?.t('address', 'title', 'editAddress') : global.t?.t('address', 'title', 'address')}
-          </Text>
+      <View style={[customStyles.modalOverlay, addressModalStyles.overlay]}>
+        <View style={addressModalStyles.container}>
+          <View style={addressModalStyles.header}>
+            <Text style={[customStyles.modalTitle, addressModalStyles.title]}>
+              {editingItem ? global.t?.t('address', 'title', 'editAddress') : global.t?.t('address', 'title', 'address')}
+            </Text>
+            <TouchableOpacity
+              onPress={closeModal}
+              style={addressModalStyles.closeButton}>
+              <FeatherIcon name="x" size={20} color="#0F172A" />
+            </TouchableOpacity>
+          </View>
           <DefaultAddress
             mode={editingItem ? 'edit' : 'create'}
             row={editingItem
@@ -444,5 +452,43 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     </>
   );
 };
+
+const addressModalStyles = StyleSheet.create({
+  overlay: {
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+    backgroundColor: '#F8FAFC',
+  },
+  container: {
+    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    borderRadius: 0,
+    backgroundColor: '#FFFFFF',
+    padding: 0,
+  },
+  header: {
+    minHeight: 64,
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+  },
+  title: {
+    textAlign: 'left',
+    marginBottom: 0,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F5F9',
+  },
+});
 
 export default AddressesTab;
