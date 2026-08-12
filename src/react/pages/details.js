@@ -17,14 +17,12 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
-import { resolvePeopleImageUrl } from '@controleonline/ui-people/src/react/utils/peopleImage';
 import { useStore, useStores } from '@store';
 import { createDetailsStyles } from '../styles/details';
 import GeneralTab from '../components/tabs/GeneralTab';
@@ -56,12 +54,14 @@ import {
   extractId,
   buildClientTabDefs,
   resolveInitialTabIndex,
-  mergeLinkedContactIntoClient,
+  resolveRouteClientId,
+  resolveRouteClientSeed,
 } from './clientDetailsHelpers';
 
 const ClientDetails = ({ route, navigation }) => {
   const routeParams = route.params || {};
-  const clientId = String(routeParams?.clientId || routeParams?.id || '').replace(/\D/g, '');
+  const routeClientSeed = resolveRouteClientSeed(routeParams);
+  const clientId = resolveRouteClientId(routeParams);
   const detailContext = resolveContextKey(routeParams?.contextKey);
   const requestedInitialTab = String(route.params?.initialTab || '').trim();
   const peopleStore = useStores(state => state.people) || {};
@@ -71,6 +71,7 @@ const ClientDetails = ({ route, navigation }) => {
   const peopleActions = peopleStore?.actions || {};
   const peopleGetters = peopleStore?.getters || {};
   const getPeople = peopleActions?.get;
+  const getPeopleItems = peopleActions?.getItems;
   const getPeopleLinks = peopleLinkStore?.actions?.getItems;
   const savePeople = peopleActions?.save;
   const detailsStyles = useMemo(() => createDetailsStyles(themeColors), [themeColors]);
@@ -82,7 +83,14 @@ const ClientDetails = ({ route, navigation }) => {
     .toLowerCase();
   const cachedClient = useMemo(() => {
     if (!clientId) {
-      return null;
+      return routeClientSeed;
+    }
+
+    if (
+      routeClientSeed &&
+      extractId(routeClientSeed?.id || routeClientSeed?.['@id']) === clientId
+    ) {
+      return routeClientSeed;
     }
 
     const currentItem = peopleGetters?.item;
@@ -94,7 +102,7 @@ const ClientDetails = ({ route, navigation }) => {
     return (
       items.find(item => extractId(item?.id || item?.['@id']) === clientId) || null
     );
-  }, [clientId, peopleGetters?.item, peopleGetters?.items]);
+  }, [clientId, peopleGetters?.item, peopleGetters?.items, routeClientSeed]);
   const [client, setClient] = useState(cachedClient);
   const [isLoadingClient, setIsLoadingClient] = useState(
     Boolean(clientId) && !cachedClient,
@@ -128,13 +136,46 @@ const ClientDetails = ({ route, navigation }) => {
       setIsLoadingClient(true);
     }
 
+    const loadClientById = async () => {
+      const storeMeta = {
+        dedupeKey: `client-details-${clientId}`,
+        preserveItem: true,
+        skipSystemError: true,
+      };
+
+      try {
+        return await getPeople({
+          id: clientId,
+          __storeMeta: storeMeta,
+        });
+      } catch (error) {
+        if (typeof getPeopleItems !== 'function') {
+          throw error;
+        }
+
+        const response = await getPeopleItems({
+          id: clientId,
+          itemsPerPage: 1,
+          __storeMeta: storeMeta,
+        });
+
+        return (
+          normalizeCollection(response).find(
+            item => extractId(item?.id || item?.['@id']) === clientId,
+          ) ||
+          cachedClient ||
+          null
+        );
+      }
+    };
+
     const loadClient = async () => {
       if (detailContext !== 'contacts' || !parentCompanyIri) {
-        return getPeople(clientId);
+        return loadClientById();
       }
 
       const [fullClient, peopleLinkResponse] = await Promise.all([
-        getPeople(clientId),
+        loadClientById(),
         getPeopleLinks
           ? getPeopleLinks(
               buildPeopleLinkReadParams({
@@ -195,6 +236,7 @@ const ClientDetails = ({ route, navigation }) => {
     clientId,
     detailContext,
     getPeople,
+    getPeopleItems,
     getPeopleLinks,
     initialContactLinkType,
     parentCompanyId,
@@ -309,14 +351,9 @@ const ClientDetails = ({ route, navigation }) => {
     setActiveTab(index);
   };
 
-  const renderSkeleton = () => <ClientDetailsSkeleton tabs={tabs} />;
-
   if (isLoadingClient || !client) {
-    return renderSkeleton();
+    return <ClientDetailsSkeleton tabs={tabs} />;
   }
-
-  const resolvedClientAvatarImageUrl =
-    clientAvatarImageUrl || resolvePeopleImageUrl(client, resolveFileImageUrl);
 
   const tabProps = {
     client,
@@ -419,13 +456,15 @@ const ClientDetails = ({ route, navigation }) => {
         <View style={styles.avatarContainer}>
           <PeopleAvatar
             people={client}
-            imageUrl={resolvedClientAvatarImageUrl}
+            imageUrl={clientAvatarImageUrl}
             name={formatDisplayUppercase(client.name)}
             size={64}
             backgroundColor={themeColors.buttonBackground}
             borderColor={themeColors.buttonText}
             borderWidth={3}
             textColor={themeColors.buttonText}
+            useGravatar={false}
+            usePeopleImage={false}
           />
         </View>
         <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">
