@@ -9,11 +9,19 @@ global.IS_REACT_ACT_ENVIRONMENT = true;
 const peopleActions = {
   getMediaTypes: jest.fn(),
   getPeopleMedia: jest.fn(),
+  savePeopleMedia: jest.fn(),
+  uploadPeopleMedia: jest.fn(),
+  deletePeopleMedia: jest.fn(),
   setItem: jest.fn(),
 };
 
 const peopleLinkActions = {
   getItems: jest.fn(),
+};
+
+const messageActions = {
+  showError: jest.fn(),
+  showSuccess: jest.fn(),
 };
 
 jest.mock('@store', () => ({
@@ -68,6 +76,9 @@ jest.mock('react-native', () => ({
   },
   Platform: {OS: 'web'},
   ScrollView: props => React.createElement('scrollview', props, props.children),
+  StyleSheet: {
+    create: styles => styles,
+  },
   Text: props => React.createElement('text', props, props.children),
   TextInput: props => React.createElement('textinput', props, props.children),
   TouchableOpacity: props => React.createElement('touchableopacity', props, props.children),
@@ -98,15 +109,25 @@ jest.mock('@controleonline/ui-common/src/react/components/AnimatedModal', () => 
 );
 
 jest.mock('@controleonline/ui-common/src/react/components/MessageService', () => ({
-  useMessage: () => ({
-    showError: jest.fn(),
-    showSuccess: jest.fn(),
-  }),
+  useMessage: () => messageActions,
 }));
 
 jest.mock('@controleonline/ui-common/src/react/components/UserAvatar', () => props =>
   React.createElement('avatar', props, props.children),
 );
+
+jest.mock('@controleonline/ui-default/src/react/components/upload/DefaultUpload', () => props =>
+  React.createElement('defaultupload', props, props.children),
+);
+
+jest.mock('@controleonline/ui-default/src/react/components/upload/fileUpload', () => ({
+  extractFileId: value => {
+    if (!value && value !== 0) return null;
+    const raw = typeof value === 'string' ? value : value?.id || value?.['@id'];
+    const match = String(raw || '').match(/(\d+)$/);
+    return match ? parseInt(match[1], 10) : null;
+  },
+}));
 
 jest.mock('@controleonline/ui-common/src/react/utils/fileUrl', () => ({
   resolveFileImageUrl: () => 'https://example.test/file.png',
@@ -114,6 +135,8 @@ jest.mock('@controleonline/ui-common/src/react/utils/fileUrl', () => ({
 
 const SalesmanTab =
   require('@controleonline/ui-customers/src/react/components/tabs/SalesmanTab').default;
+const MediaTab =
+  require('@controleonline/ui-customers/src/react/components/tabs/MediaTab').default;
 const employeesTabModule =
   require('@controleonline/ui-customers/src/react/components/tabs/EmployeesTab');
 const EmployeesTab = employeesTabModule.default;
@@ -249,5 +272,51 @@ describe('people media tabs', () => {
 
     expect(formatEmployeeContactTitle(contact)).toBe('MARIA SILVA / MARI');
     expect(formatEmployeeContactMeta(contact)).toBe('ID: 77 / owner');
+  });
+
+  it('uses the generic upload flow before saving client JPG/PNG media', async () => {
+    peopleActions.getMediaTypes.mockResolvedValue([
+      {
+        id: 12,
+        '@id': '/media_types/12',
+        type: 'icon',
+        peopleType: 'J',
+      },
+    ]);
+    peopleActions.getPeopleMedia.mockResolvedValue([]);
+    peopleActions.savePeopleMedia.mockResolvedValue({id: 130});
+
+    let tree;
+
+    await renderer.act(async () => {
+      tree = renderer.create(
+        React.createElement(MediaTab, {
+          client: {
+            id: 11,
+            '@id': '/people/11',
+            peopleType: 'J',
+          },
+        }),
+      );
+      await flush();
+    });
+
+    const upload = tree.root.findByType('defaultupload');
+
+    expect(upload.props.acceptedTypes).toBe('image/png,image/jpeg,.png,.jpg,.jpeg');
+    expect(upload.props.onUploadFile).toBeUndefined();
+    expect(upload.props.uploadResultAlreadyAttached).toBeUndefined();
+
+    await renderer.act(async () => {
+      await upload.props.onAttachFile({id: 77, name: 'cliente.jpg'});
+    });
+
+    expect(peopleActions.savePeopleMedia).toHaveBeenCalledWith({
+      id: undefined,
+      people: '/people/11',
+      mediaType: '/media_types/12',
+      file: '/files/77',
+    });
+    expect(peopleActions.uploadPeopleMedia).not.toHaveBeenCalled();
   });
 });

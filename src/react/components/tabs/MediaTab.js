@@ -12,8 +12,6 @@ import { useMessage } from '@controleonline/ui-common/src/react/components/Messa
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
 import { colors } from '@controleonline/../../src/styles/colors';
 
-const ACCEPTED_COMPANY_MEDIA_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/pjpeg'];
-const ACCEPTED_COMPANY_MEDIA_EXTENSIONS = ['png', 'jpg', 'jpeg'];
 const COMPANY_MEDIA_ACCEPT_ATTRIBUTE = 'image/png,image/jpeg,.png,.jpg,.jpeg';
 
 const normalizeCollection = payload => {
@@ -32,33 +30,6 @@ const extractId = value => {
   if (!raw) return null;
   const match = String(raw).match(/(\d+)$/);
   return match ? parseInt(match[1], 10) : null;
-};
-
-const getMediaExtension = file => {
-  const directExtension = String(file?.extension || '').trim().toLowerCase().replace(/^\./, '');
-  if (directExtension) return directExtension;
-
-  const name = String(file?.name || file?.fileName || file?.url || '').trim().toLowerCase();
-  const match = name.match(/\.([a-z0-9]+)$/);
-  return match ? match[1] : '';
-};
-
-const getMediaMimeType = file => {
-  const mimeType = String(file?.type || file?.mimeType || '').trim().toLowerCase();
-  if (ACCEPTED_COMPANY_MEDIA_MIME_TYPES.includes(mimeType)) return mimeType;
-
-  const extension = getMediaExtension(file);
-  if (extension === 'png') return 'image/png';
-  if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
-
-  return '';
-};
-
-const isImageFile = file => {
-  const mimeType = getMediaMimeType(file);
-  if (mimeType) return true;
-
-  return ACCEPTED_COMPANY_MEDIA_EXTENSIONS.includes(getMediaExtension(file));
 };
 
 const MediaTab = ({ client, onChanged = null }) => {
@@ -172,17 +143,6 @@ const MediaTab = ({ client, onChanged = null }) => {
         onRemoveAttachment: async relation => {
           await peopleActions.deletePeopleMedia({mediaId: relation?.id || relation?.['@id']});
         },
-        onUploadFile: async ({file}) => {
-          if (!isImageFile(file)) {
-            throw new Error('Envie apenas arquivos PNG ou JPG.');
-          }
-
-          return peopleActions.uploadPeopleMedia({
-            people: `/people/${clientId}`,
-            mediaTypeId,
-            file,
-          });
-        },
       };
     },
     [clientId, mediaByTypeId, peopleActions],
@@ -263,7 +223,6 @@ const MediaTab = ({ client, onChanged = null }) => {
                     uploadSuccessMessage={`${mediaTypeLabel} atualizada com sucesso.`}
                     attachSuccessMessage={`${mediaTypeLabel} vinculada com sucesso.`}
                     removeSuccessMessage={`${mediaTypeLabel} removida.`}
-                    uploadResultAlreadyAttached
                     onChanged={async () => {
                       await loadPeopleMedia();
                       onChanged?.();
