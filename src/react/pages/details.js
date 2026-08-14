@@ -34,6 +34,7 @@ import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 import ProductsTab from '../components/tabs/ProductsTab';
 import MediaTab from '../components/tabs/MediaTab';
+import FiscalTab from '../components/tabs/FiscalTab';
 import {
   buildEmployeeContactsFromPeopleLinks,
   buildPeopleLinkReadParams,
@@ -333,6 +334,17 @@ const ClientDetails = ({ route, navigation }) => {
   const activeTabContent = (() => {
     if (activeTabKey === 'general') {
       return <GeneralTab {...tabProps} />;
+    }
+
+    if (activeTabKey === 'fiscal') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={styles.tabScrollContent}
+          showsVerticalScrollIndicator={false}>
+          <FiscalTab {...tabProps} />
+        </ScrollView>
+      );
     }
 
     if (activeTabKey === 'media') {

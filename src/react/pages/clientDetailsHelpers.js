@@ -40,6 +40,7 @@ export const buildClientTabDefs = ({
   if (isPessoaJuridica) {
     return [
       { key: 'general', label: label('general') },
+      { key: 'fiscal', label: label('fiscal', 'Configurações Fiscais') },
       { key: 'media', label: label('media', 'Mídia') },
       { key: 'sellers', label: label('sellers') },
       { key: 'contacts', label: label('contacts') },
@@ -74,6 +75,7 @@ export const resolveInitialTabIndex = ({
   const keys = nextIsPessoaJuridica
     ? [
         'general',
+        'fiscal',
         'media',
         'sellers',
         'contacts',
