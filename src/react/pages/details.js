@@ -379,7 +379,7 @@ const ClientDetails = ({ route, navigation }) => {
           style={styles.tabScroll}
           contentContainerStyle={styles.tabScrollContent}
           showsVerticalScrollIndicator={false}>
-          <FiscalTab {...tabProps} />
+          <FiscalTab {...tabProps} navigation={navigation} />
         </ScrollView>
       );
     }
