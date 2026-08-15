@@ -1,4 +1,7 @@
-import { fetchPeopleMediaUrls } from '../../../../react/components/tabs/employeesTabHelpers';
+import {
+  extractPeopleMediaUrl,
+  fetchPeopleMediaUrls,
+} from '../../../../react/components/tabs/employeesTabHelpers';
 
 jest.mock('@controleonline/ui-common/src/react/utils/fileUrl', () => ({
   resolveFileImageUrl: file => (file?.url ? file.url : file?.['@id'] || ''),
@@ -44,5 +47,20 @@ describe('fetchPeopleMediaUrls batch', () => {
 
     expect(getPeopleMedia).toHaveBeenCalledTimes(3);
     expect(result).toEqual({ '1': 'https://cdn/1.png' });
+  });
+});
+
+describe('extractPeopleMediaUrl from people_links payload', () => {
+  it('reads avatar file from embedded peopleMedia', () => {
+    const url = extractPeopleMediaUrl({
+      id: 10,
+      peopleMedia: [
+        {
+          mediaType: { type: 'avatar' },
+          file: { id: 99, url: 'https://cdn/avatar.png' },
+        },
+      ],
+    });
+    expect(url).toBe('https://cdn/avatar.png');
   });
 });

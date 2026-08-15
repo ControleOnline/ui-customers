@@ -16,6 +16,28 @@ export const normalizeCollection = payload => {
   return [];
 };
 
+export const extractPeopleMediaUrl = (person, mediaType = 'avatar') => {
+  if (!person || typeof person !== 'object') {
+    return '';
+  }
+
+  const collection = normalizeCollection(
+    person.peopleMedia || person.people_media || person.media,
+  );
+  const wanted = String(mediaType || '').trim().toLowerCase();
+  const match =
+    collection.find(item => {
+      const type = String(
+        item?.mediaType?.type || item?.mediaType || item?.type || '',
+      )
+        .trim()
+        .toLowerCase();
+      return wanted ? type === wanted : Boolean(type);
+    }) || collection[0];
+
+  return resolveFileImageUrl(match?.file) || '';
+};
+
 export const fetchPeopleMediaUrls = async ({ peopleActions, mediaType, peopleIds }) => {
   const uniqueIds = [...new Set((peopleIds || []).map(extractId).filter(Boolean))];
   if (uniqueIds.length === 0) {
