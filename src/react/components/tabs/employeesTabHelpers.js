@@ -16,32 +16,85 @@ export const normalizeCollection = payload => {
   return [];
 };
 
+export const extractPeopleMediaUrl = (person, mediaType = 'avatar') => {
+  if (!person || typeof person !== 'object') {
+    return '';
+  }
+
+  const collection = normalizeCollection(
+    person.peopleMedia || person.people_media || person.media,
+  );
+  const wanted = String(mediaType || '').trim().toLowerCase();
+  const match =
+    collection.find(item => {
+      const type = String(
+        item?.mediaType?.type || item?.mediaType || item?.type || '',
+      )
+        .trim()
+        .toLowerCase();
+      return wanted ? type === wanted : Boolean(type);
+    }) || collection[0];
+
+  return resolveFileImageUrl(match?.file) || '';
+};
+
 export const fetchPeopleMediaUrls = async ({ peopleActions, mediaType, peopleIds }) => {
   const uniqueIds = [...new Set((peopleIds || []).map(extractId).filter(Boolean))];
-  const entries = await Promise.all(
-    uniqueIds.map(async peopleId => {
-      try {
-        const response = await peopleActions.getPeopleMedia({
-          people: `/people/${peopleId}`,
-          'mediaType.type': mediaType,
-          itemsPerPage: 1,
-        });
-        const media = normalizeCollection(response)[0];
-        const imageUrl = resolveFileImageUrl(media?.file);
+  if (uniqueIds.length === 0) {
+    return {};
+  }
 
-        return imageUrl ? [peopleId, imageUrl] : null;
-      } catch {
-        return null;
+  const buildMapFromCollection = response => {
+    const byPeopleId = {};
+    for (const media of normalizeCollection(response)) {
+      const peopleId = extractId(
+        media?.people?.['@id'] || media?.people?.id || media?.people,
+      );
+      if (!peopleId || byPeopleId[peopleId]) {
+        continue;
       }
-    }),
-  );
+      const imageUrl = resolveFileImageUrl(media?.file);
+      if (imageUrl) {
+        byPeopleId[peopleId] = imageUrl;
+      }
+    }
+    return byPeopleId;
+  };
 
-  return entries
-    .filter(Boolean)
-    .reduce((accumulator, [peopleId, imageUrl]) => {
-      accumulator[peopleId] = imageUrl;
-      return accumulator;
-    }, {});
+  // Batch: uma chamada people_media com people[] (SearchFilter exact multi-valor).
+  try {
+    const response = await peopleActions.getPeopleMedia({
+      people: uniqueIds.map(id => `/people/${id}`),
+      'mediaType.type': mediaType,
+      itemsPerPage: Math.max(uniqueIds.length, 1),
+    });
+    return buildMapFromCollection(response);
+  } catch {
+    // Fallback: N chamadas só se o filtro batch não for aceito pelo backend.
+    const entries = await Promise.all(
+      uniqueIds.map(async peopleId => {
+        try {
+          const response = await peopleActions.getPeopleMedia({
+            people: `/people/${peopleId}`,
+            'mediaType.type': mediaType,
+            itemsPerPage: 1,
+          });
+          const media = normalizeCollection(response)[0];
+          const imageUrl = resolveFileImageUrl(media?.file);
+          return imageUrl ? [peopleId, imageUrl] : null;
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    return entries
+      .filter(Boolean)
+      .reduce((accumulator, [peopleId, imageUrl]) => {
+        accumulator[peopleId] = imageUrl;
+        return accumulator;
+      }, {});
+  }
 };
 
 export const formatDateInput = text => {
