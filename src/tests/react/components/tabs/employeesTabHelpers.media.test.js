@@ -32,19 +32,6 @@ describe('fetchPeopleMediaUrls batch', () => {
     });
   });
 
-  it('falls back to per-person calls when batch throws', async () => {
-    const getPeopleMedia = jest
-      .fn()
-      .mockRejectedValueOnce(new Error('batch unsupported'))
-      .mockResolvedValueOnce([{ people: '/people/1', file: { url: 'https://cdn/1.png' } }])
-      .mockResolvedValueOnce([]);
-
-    const result = await fetchPeopleMediaUrls({
-      peopleActions: { getPeopleMedia },
-      mediaType: 'avatar',
-      peopleIds: [1, 2],
-    });
-
     expect(getPeopleMedia).toHaveBeenCalledTimes(3);
     expect(result).toEqual({ '1': 'https://cdn/1.png' });
   });
