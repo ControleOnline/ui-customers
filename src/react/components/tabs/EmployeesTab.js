@@ -59,7 +59,6 @@ import {
   normalizeIdentityValue,
   normalizeCollection,
   extractPeopleMediaUrl,
-  fetchPeopleMediaUrls,
   formatDateInput,
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
@@ -144,39 +143,14 @@ const EmployeesTab = ({
         parentPeopleId,
         allowedLinkTypes: LINK_TYPE_OPTIONS.map(option => option.value),
       });
-      // Preferir peopleMedia embutido no payload de people_links (backend #380).
-      // Só chama /people_media para ids sem mídia no payload (fallback).
-      const mediaFromPayload = {};
-      const missingPeopleIds = [];
-      for (const item of normalized) {
-        const peopleId = extractId(item?.id || item?.['@id']);
-        if (!peopleId) {
-          continue;
-        }
-        const embeddedUrl =
-          extractPeopleMediaUrl(item, 'avatar') ||
-          extractPeopleMediaUrl(item?.people, 'avatar');
-        if (embeddedUrl) {
-          mediaFromPayload[peopleId] = embeddedUrl;
-        } else {
-          missingPeopleIds.push(peopleId);
-        }
-      }
-
-      const mediaFetched =
-        missingPeopleIds.length > 0
-          ? await fetchPeopleMediaUrls({
-              peopleActions,
-              mediaType: 'avatar',
-              peopleIds: missingPeopleIds,
-            })
-          : {};
-
-      const mediaByPeopleId = {...mediaFromPayload, ...mediaFetched};
-
+      // Avatares só a partir de peopleMedia no payload de people_links (#380).
+      // Sem chamadas a /people_media nesta lista.
       setEmployees(
         normalized.map(item => {
-          const avatarImageUrl = mediaByPeopleId[extractId(item?.id || item?.['@id'])] || '';
+          const avatarImageUrl =
+            extractPeopleMediaUrl(item, 'avatar') ||
+            extractPeopleMediaUrl(item?.people, 'avatar') ||
+            '';
 
           return {
             ...item,
