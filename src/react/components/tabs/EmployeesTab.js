@@ -296,7 +296,7 @@ const EmployeesTab = ({
                   navigation.push('ClientDetails', {
                     clientId,
                     contextKey: 'contacts',
-                    initialTab: 'contacts',
+                    initialTab: 'general',
                     parentCompanyId: parentPeopleId,
                     linkType: resolveEmployeeLinkType(item),
                   });
