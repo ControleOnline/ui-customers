@@ -64,8 +64,22 @@ const buildPeopleMedia = ({id, peopleId, mediaType, fileName}) => ({
   },
 });
 
+const buildPeopleLink = ({id, company, people, linkType = 'employee'}) => ({
+  '@id': `/people_links/${id}`,
+  id,
+  company,
+  people,
+  linkType,
+});
+
 const mockClientDetailsApi = async page => {
   const company = createCompany();
+  const personAvatar = buildPeopleMedia({
+    id: 102,
+    peopleId: 30,
+    mediaType: buildMediaType({id: 11, type: 'avatar', peopleType: 'F'}),
+    fileName: 'person-avatar.png',
+  });
   const peopleById = {
     9: {
       '@id': '/people/9',
@@ -92,6 +106,7 @@ const mockClientDetailsApi = async page => {
       alias: 'JOAO SILVA',
       peopleType: 'F',
       enable: true,
+      peopleMedia: [personAvatar],
     },
   };
 
@@ -165,6 +180,26 @@ const mockClientDetailsApi = async page => {
         body: JSON.stringify(
           collection(mediaTypes.filter(item => !type || item.type === type)),
         ),
+      });
+    }
+
+    if (pathname === 'people_links') {
+      const companyId = String(url.searchParams.get('company') || '').replace(/\D/g, '');
+      const links =
+        companyId === '9'
+          ? [
+              buildPeopleLink({
+                id: 201,
+                company: peopleById[9],
+                people: peopleById[30],
+              }),
+            ]
+          : [];
+
+      return route.fulfill({
+        status: 200,
+        headers: jsonHeaders(),
+        body: JSON.stringify(collection(links)),
       });
     }
 
@@ -286,6 +321,29 @@ const mockClientDetailsApi = async page => {
 };
 
 test.describe('client details media browser smoke', () => {
+  test('loads contact avatars from people_links without contact people_media requests', async ({page}) => {
+    const contactMediaRequests = [];
+
+    page.on('request', request => {
+      const url = new URL(request.url());
+
+      if (
+        url.pathname.replace(/^\/+/, '') === 'people_media' &&
+        decodeURIComponent(url.search).includes('/people/30')
+      ) {
+        contactMediaRequests.push(request.url());
+      }
+    });
+
+    await mockClientDetailsApi(page);
+
+    await page.goto('/client-details?clientId=9&contextKey=client&initialTab=contacts');
+
+    await expect(page.getByText('Contatos', {exact: true})).toBeVisible({timeout: 15000});
+    await expect(page.getByText('JOAO SILVA', {exact: true})).toBeVisible();
+    expect(contactMediaRequests).toEqual([]);
+  });
+
   test('loads valid client details without media as initials only', async ({page}) => {
     const avatarRequests = [];
 
