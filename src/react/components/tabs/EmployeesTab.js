@@ -58,7 +58,7 @@ import {
   extractId,
   normalizeIdentityValue,
   normalizeCollection,
-  fetchPeopleMediaUrls,
+  extractPeopleMediaUrl,
   formatDateInput,
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
@@ -143,15 +143,14 @@ const EmployeesTab = ({
         parentPeopleId,
         allowedLinkTypes: LINK_TYPE_OPTIONS.map(option => option.value),
       });
-      const mediaByPeopleId = await fetchPeopleMediaUrls({
-        peopleActions,
-        mediaType: 'avatar',
-        peopleIds: normalized.map(item => item?.id || item?.['@id']),
-      });
-
+      // Avatares só a partir de peopleMedia no payload de people_links (#380).
+      // Sem chamadas a /people_media nesta lista.
       setEmployees(
         normalized.map(item => {
-          const avatarImageUrl = mediaByPeopleId[extractId(item?.id || item?.['@id'])] || '';
+          const avatarImageUrl =
+            extractPeopleMediaUrl(item, 'avatar') ||
+            extractPeopleMediaUrl(item?.people, 'avatar') ||
+            '';
 
           return {
             ...item,
