@@ -6,8 +6,9 @@
   "license": "MIT",
   "main": "src/react/index.js",
   "scripts": {
-    "test": "npm run test:supplier-product-flow",
-    "test:supplier-product-flow": "node --test src/tests/react/domain/productSupplierFlow.test.mjs"
+    "test": "npm run test:supplier-product-flow && npm run test:fiscal-shortcut",
+    "test:supplier-product-flow": "node --test src/tests/react/domain/productSupplierFlow.test.mjs",
+    "test:fiscal-shortcut": "node --test src/tests/react/components/tabs/fiscalTabContract.test.mjs"
   },
   "repository": {
     "type": "git",
