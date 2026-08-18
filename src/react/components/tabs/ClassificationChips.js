@@ -93,6 +93,7 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
   const actionsRef = useRef({});
   actionsRef.current = {
     getCategories: categoriesStore?.actions?.getItems,
+    getCategory: categoriesStore?.actions?.get,
     getPeopleCategories: peopleCategoryStore?.actions?.getItems,
     savePeopleCategory: peopleCategoryStore?.actions?.save,
     removePeopleCategory: peopleCategoryStore?.actions?.remove,
@@ -101,6 +102,7 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
   const loadAssociations = useCallback(async () => {
     if (!clientId) return;
     const getPc = actionsRef.current.getPeopleCategories;
+    const getCat = actionsRef.current.getCategories;
     if (!getPc) {
       setAssociations([]);
       return;
@@ -114,12 +116,50 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
           itemsPerPage: 100,
         }),
       );
-      // Keep only contexts relevant to this people type
+
+      // Hydrate category when API returns only IRI (/categories/123)
+      const hydrated = await Promise.all(
+        rows.map(async row => {
+          const cat = row?.category;
+          if (cat && typeof cat === 'object' && cat.name) {
+            return row;
+          }
+          const catId = extractId(cat);
+          if (!catId || !getCat) {
+            return row;
+          }
+          try {
+            const getOne = actionsRef.current.getCategory;
+            if (getOne) {
+              const full = await getOne(catId);
+              if (full && (full.name || full.context)) {
+                return { ...row, category: full };
+              }
+            }
+            const list = normalizeCollection(
+              await getCat({ id: catId, itemsPerPage: 1 }),
+            );
+            const full =
+              list.find(c => extractId(c?.id || c?.['@id']) === catId) ||
+              list[0];
+            if (full) {
+              return { ...row, category: full };
+            }
+          } catch {
+            // keep IRI
+          }
+          return row;
+        }),
+      );
+
       const allowed = new Set(contexts);
       setAssociations(
-        rows.filter(r => {
+        hydrated.filter(r => {
           const ctx = categoryContext(r);
-          return !ctx || allowed.has(ctx);
+          // If still no context, keep item but it will only show after hydration fails
+          // Prefer not dumping into first section: drop if context missing after hydrate
+          if (!ctx) return false;
+          return allowed.has(ctx);
         }),
       );
     } catch (e) {
@@ -140,7 +180,7 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
     for (const row of associations) {
       const ctx = categoryContext(row);
       if (ctx && map[ctx]) map[ctx].push(row);
-      else if (contexts[0]) map[contexts[0]].push(row);
+      // do not put unknown context into first section
     }
     return map;
   }, [associations, contexts]);
