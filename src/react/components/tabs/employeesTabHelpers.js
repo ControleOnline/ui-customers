@@ -103,6 +103,31 @@ export const resolveEmployeeLinkType = employee =>
       (Array.isArray(employee?.link) ? employee.link[0]?.linkType : ''),
   );
 
+
+/**
+ * Builds ClientDetails navigation params when opening an employee from
+ * EmployeesTab (juridical client). Always opens on the "general" tab so the
+ * PF detail does not land on contracts/contacts by mistake.
+ * Refs: ControleOnline/app-community#9
+ */
+export const buildEmployeeDetailNavParams = ({
+  employee,
+  parentPeopleId,
+}) => {
+  const clientId = extractId(employee?.id || employee?.['@id']);
+  if (!clientId) {
+    return null;
+  }
+
+  return {
+    clientId,
+    contextKey: 'contacts',
+    initialTab: 'general',
+    parentCompanyId: parentPeopleId,
+    linkType: resolveEmployeeLinkType(employee),
+  };
+};
+
 export const resolveEmployeeContactLinkType = employee =>
   String(
     employee?.peopleLink?.linkType ||

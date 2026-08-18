@@ -1,5 +1,6 @@
 /**
  * Unit tests for EmployeesTab pure helpers (app-community#297 modularization).
+ * Includes navigation contract for employee detail (app-community#9).
  */
 import {
   formatDateInput,
@@ -7,6 +8,7 @@ import {
   buildEmployeeCreatePayload,
   extractId,
   LINK_TYPE_OPTIONS,
+  buildEmployeeDetailNavParams,
 } from '../../../../react/components/tabs/employeesTabHelpers';
 
 describe('employeesTabHelpers', () => {
@@ -38,5 +40,25 @@ describe('employeesTabHelpers', () => {
   it('extractId and LINK_TYPE_OPTIONS', () => {
     expect(extractId('/people/3')).toBe('3');
     expect(LINK_TYPE_OPTIONS.some(o => o.value === 'employee')).toBe(true);
+  });
+
+  it('buildEmployeeDetailNavParams opens employee detail on general tab', () => {
+    const params = buildEmployeeDetailNavParams({
+      employee: { id: '/people/42', linkType: 'employee' },
+      parentPeopleId: '15',
+    });
+    expect(params).toEqual({
+      clientId: '42',
+      contextKey: 'contacts',
+      initialTab: 'general',
+      parentCompanyId: '15',
+      linkType: 'employee',
+    });
+  });
+
+  it('buildEmployeeDetailNavParams returns null without employee id', () => {
+    expect(
+      buildEmployeeDetailNavParams({ employee: {}, parentPeopleId: '15' }),
+    ).toBeNull();
   });
 });
