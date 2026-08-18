@@ -1,7 +1,9 @@
 /**
  * Classification chips on General tab (#377).
  * PF: profession + position | PJ: sector + activity_branch
- * Seeds default catalog once per company+context; toggles people_categories.
+ *
+ * No auto-seed on mount (that caused request storms). Catalog names are
+ * shown as chips; category rows are created lazily on first select.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -80,17 +82,21 @@ const CONTEXT_LABELS = {
   activity_branch: 'Ramo de atividade',
 };
 
-const contextsForPeopleType = peopleType => {
-  const t = String(peopleType || 'J').toUpperCase();
-  return t === 'F' ? ['profession', 'position'] : ['sector', 'activity_branch'];
-};
+const contextsForPeopleType = peopleType =>
+  String(peopleType || 'J').toUpperCase() === 'F'
+    ? ['profession', 'position']
+    : ['sector', 'activity_branch'];
 
 const todayYmd = () => {
   const d = new Date();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
+
+const normalizeName = name => String(name || '').trim().toLowerCase();
+
+/** Module-level: survive remounts within the same SPA session */
+const loadedKeys = new Set();
+const cacheByKey = new Map(); // key -> { catalogByContext, associations }
 
 const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
   const peopleStore = useStore('people');
@@ -101,71 +107,63 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
   const peopleType = String(client?.peopleType || 'J').toUpperCase() || 'J';
   const contexts = useMemo(() => contextsForPeopleType(peopleType), [peopleType]);
 
-  const companyId = useMemo(() => {
-    if (companyIdProp) return extractId(companyIdProp);
-    const cc = peopleStore?.getters?.currentCompany;
-    return extractId(cc?.id || cc?.['@id'] || cc);
-  }, [companyIdProp, peopleStore?.getters?.currentCompany]);
+  const companyFromStore = extractId(
+    peopleStore?.getters?.currentCompany?.id ||
+      peopleStore?.getters?.currentCompany?.['@id'] ||
+      peopleStore?.getters?.currentCompany,
+  );
+  const companyId = companyIdProp ? extractId(companyIdProp) : companyFromStore;
 
-  const [catalogByContext, setCatalogByContext] = useState({});
-  const [associations, setAssociations] = useState([]);
+  const cacheKey =
+    clientId && companyId ? `${clientId}:${companyId}:${peopleType}` : null;
+
+  const [catalogByContext, setCatalogByContext] = useState(() => {
+    if (cacheKey && cacheByKey.has(cacheKey)) {
+      return cacheByKey.get(cacheKey).catalogByContext || {};
+    }
+    return {};
+  });
+  const [associations, setAssociations] = useState(() => {
+    if (cacheKey && cacheByKey.has(cacheKey)) {
+      return cacheByKey.get(cacheKey).associations || [];
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(false);
   const [busyKey, setBusyKey] = useState(null);
-  const [loadError, setLoadError] = useState('');
 
-  // Prevent re-entry / dependency loops (stores are unstable refs)
-  const loadGenRef = useRef(0);
-  const seededRef = useRef(new Set()); // `${companyId}:${context}`
-  const inFlightRef = useRef(false);
+  // Stable action refs — avoid effect churn
+  const actionsRef = useRef({});
+  actionsRef.current = {
+    getCategories: categoriesStore?.actions?.getItems,
+    saveCategory: categoriesStore?.actions?.save,
+    getPeopleCategories: peopleCategoryStore?.actions?.getItems,
+    savePeopleCategory: peopleCategoryStore?.actions?.save,
+    removePeopleCategory: peopleCategoryStore?.actions?.remove,
+  };
 
-  const loadCatalogAndAssociations = useCallback(async () => {
-    if (!clientId || !companyId) return;
-    if (inFlightRef.current) return;
+  useEffect(() => {
+    if (!clientId || !companyId || !cacheKey) return;
 
-    const gen = ++loadGenRef.current;
-    inFlightRef.current = true;
-    setLoading(true);
-    setLoadError('');
+    // Already loaded this session for this key — use cache, no network
+    if (loadedKeys.has(cacheKey) && cacheByKey.has(cacheKey)) {
+      const cached = cacheByKey.get(cacheKey);
+      setCatalogByContext(cached.catalogByContext || {});
+      setAssociations(cached.associations || []);
+      return;
+    }
 
-    const getCategories = categoriesStore?.actions?.getItems;
-    const saveCategory = categoriesStore?.actions?.save;
-    const getPeopleCategories = peopleCategoryStore?.actions?.getItems;
-    const companyIri = `/people/${companyId}`;
+    let cancelled = false;
 
-    try {
+    const run = async () => {
+      setLoading(true);
+      const companyIri = `/people/${companyId}`;
+      const { getCategories, getPeopleCategories } = actionsRef.current;
       const nextCatalog = {};
 
-      for (const ctx of contexts) {
-        if (gen !== loadGenRef.current) return;
-
-        let list = [];
-        if (getCategories) {
-          try {
-            list = normalizeCollection(
-              await getCategories({
-                context: ctx,
-                company: companyIri,
-                itemsPerPage: 100,
-              }),
-            );
-          } catch (e) {
-            list = [];
-          }
-        }
-
-        const seedKey = `${companyId}:${ctx}`;
-        // Seed at most once per company+context per session
-        if (list.length === 0 && saveCategory && !seededRef.current.has(seedKey)) {
-          seededRef.current.add(seedKey);
-          const names = DEFAULT_CLASSIFICATION_CATALOG[ctx] || [];
-          for (const name of names) {
-            if (gen !== loadGenRef.current) return;
-            try {
-              await saveCategory({ name, context: ctx, company: companyIri });
-            } catch {
-              // ignore duplicates / validation
-            }
-          }
+      try {
+        for (const ctx of contexts) {
+          let list = [];
           if (getCategories) {
             try {
               list = normalizeCollection(
@@ -179,51 +177,42 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
               list = [];
             }
           }
+          nextCatalog[ctx] = list;
         }
 
-        nextCatalog[ctx] = list;
-      }
-
-      if (gen !== loadGenRef.current) return;
-      setCatalogByContext(nextCatalog);
-
-      if (getPeopleCategories) {
-        try {
-          const rows = normalizeCollection(
-            await getPeopleCategories({
-              people: `/people/${clientId}`,
-              active: true,
-              itemsPerPage: 100,
-            }),
-          );
-          if (gen === loadGenRef.current) setAssociations(rows);
-        } catch {
-          if (gen === loadGenRef.current) setAssociations([]);
+        let rows = [];
+        if (getPeopleCategories) {
+          try {
+            rows = normalizeCollection(
+              await getPeopleCategories({
+                people: `/people/${clientId}`,
+                active: true,
+                itemsPerPage: 100,
+              }),
+            );
+          } catch {
+            rows = [];
+          }
         }
-      }
-    } catch (e) {
-      if (gen === loadGenRef.current) {
-        setLoadError(e?.message || 'Falha ao carregar classificação');
-        setCatalogByContext({});
-        setAssociations([]);
-      }
-    } finally {
-      if (gen === loadGenRef.current) {
-        setLoading(false);
-        inFlightRef.current = false;
-      }
-    }
-  }, [clientId, companyId, contexts, categoriesStore, peopleCategoryStore]);
 
-  // Only re-run when primitive ids / peopleType change — not store identity
-  useEffect(() => {
-    loadCatalogAndAssociations();
-    return () => {
-      loadGenRef.current += 1;
-      inFlightRef.current = false;
+        if (cancelled) return;
+        setCatalogByContext(nextCatalog);
+        setAssociations(rows);
+        loadedKeys.add(cacheKey);
+        cacheByKey.set(cacheKey, {
+          catalogByContext: nextCatalog,
+          associations: rows,
+        });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: stores are unstable
-  }, [clientId, companyId, peopleType]);
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId, companyId, cacheKey, peopleType]); // contexts derived from peopleType
 
   const associationByCategoryId = useMemo(() => {
     const map = new Map();
@@ -236,49 +225,134 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
     return map;
   }, [associations]);
 
+  /** Merge API categories with default names (virtual chips without id) */
+  const chipsForContext = useCallback(
+    ctx => {
+      const fromApi = catalogByContext[ctx] || [];
+      const byName = new Map();
+      for (const cat of fromApi) {
+        byName.set(normalizeName(cat?.name), cat);
+      }
+      const defaults = DEFAULT_CLASSIFICATION_CATALOG[ctx] || [];
+      const chips = [];
+      for (const name of defaults) {
+        const existing = byName.get(normalizeName(name));
+        if (existing) {
+          chips.push(existing);
+          byName.delete(normalizeName(name));
+        } else {
+          chips.push({ name, context: ctx, __virtual: true });
+        }
+      }
+      // Keep any extra company categories not in the default list
+      for (const cat of byName.values()) {
+        chips.push(cat);
+      }
+      return chips;
+    },
+    [catalogByContext],
+  );
+
+  const persistCache = (nextCatalog, nextAssoc) => {
+    if (!cacheKey) return;
+    cacheByKey.set(cacheKey, {
+      catalogByContext: nextCatalog,
+      associations: nextAssoc,
+    });
+  };
+
+  const ensureCategory = async (ctx, name) => {
+    const companyIri = `/people/${companyId}`;
+    const { getCategories, saveCategory } = actionsRef.current;
+    // Prefer existing from current catalog
+    const existing = (catalogByContext[ctx] || []).find(
+      c => normalizeName(c?.name) === normalizeName(name),
+    );
+    if (existing && extractId(existing?.id || existing?.['@id'])) {
+      return existing;
+    }
+    if (saveCategory) {
+      try {
+        await saveCategory({ name, context: ctx, company: companyIri });
+      } catch {
+        // may already exist
+      }
+    }
+    if (getCategories) {
+      const list = normalizeCollection(
+        await getCategories({
+          context: ctx,
+          company: companyIri,
+          itemsPerPage: 100,
+        }),
+      );
+      setCatalogByContext(prev => {
+        const next = { ...prev, [ctx]: list };
+        persistCache(next, associations);
+        return next;
+      });
+      return (
+        list.find(c => normalizeName(c?.name) === normalizeName(name)) || null
+      );
+    }
+    return null;
+  };
+
   const toggle = useCallback(
-    async category => {
-      const catId = extractId(category?.id || category?.['@id']);
-      if (!catId || !clientId) return;
-      const key = String(catId);
+    async (chip, ctx) => {
+      if (!clientId || !companyId) return;
+      const label = chip?.name || '';
+      const key = `${ctx}:${normalizeName(label)}`;
       setBusyKey(key);
       try {
+        let category = chip?.__virtual
+          ? await ensureCategory(ctx, label)
+          : chip;
+        const catId = extractId(category?.id || category?.['@id']);
+        if (!catId) return;
+
         const existing = associationByCategoryId.get(catId);
+        const {
+          removePeopleCategory,
+          savePeopleCategory,
+          getPeopleCategories,
+        } = actionsRef.current;
+
         if (existing) {
           const rowId = extractId(existing?.id || existing?.['@id']);
-          if (rowId && peopleCategoryStore?.actions?.remove) {
-            await peopleCategoryStore.actions.remove(rowId);
+          if (rowId && removePeopleCategory) {
+            await removePeopleCategory(rowId);
           }
-        } else {
+        } else if (savePeopleCategory) {
           const payload = {
             people: `/people/${clientId}`,
             category: `/categories/${catId}`,
             startDate: todayYmd(),
             active: true,
           };
-          if (String(category?.context || '') === 'position' && companyId) {
+          if (ctx === 'position') {
             payload.peopleCompany = `/people/${companyId}`;
           }
-          if (peopleCategoryStore?.actions?.save) {
-            await peopleCategoryStore.actions.save(payload);
-          }
+          await savePeopleCategory(payload);
         }
-        const getPc = peopleCategoryStore?.actions?.getItems;
-        if (getPc) {
+
+        if (getPeopleCategories) {
           const rows = normalizeCollection(
-            await getPc({
+            await getPeopleCategories({
               people: `/people/${clientId}`,
               active: true,
               itemsPerPage: 100,
             }),
           );
           setAssociations(rows);
+          persistCache(catalogByContext, rows);
         }
       } finally {
         setBusyKey(null);
       }
     },
-    [associationByCategoryId, clientId, companyId, peopleCategoryStore],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [clientId, companyId, associationByCategoryId, catalogByContext],
   );
 
   if (!clientId) return null;
@@ -292,45 +366,42 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
         </Text>
       ) : loading ? (
         <ActivityIndicator style={{ marginVertical: 8 }} />
-      ) : loadError ? (
-        <Text style={styles.hint}>{loadError}</Text>
       ) : (
         contexts.map(ctx => {
-          const list = catalogByContext[ctx] || [];
+          const chips = chipsForContext(ctx);
           return (
             <View key={ctx} style={styles.block}>
               <Text style={styles.section}>{CONTEXT_LABELS[ctx] || ctx}</Text>
               <View style={styles.row}>
-                {list.length === 0 ? (
-                  <Text style={styles.hint}>Nenhuma categoria cadastrada.</Text>
-                ) : (
-                  list.map(cat => {
-                    const id = extractId(cat?.id || cat?.['@id']);
-                    const selected = associationByCategoryId.has(id);
-                    const busy = busyKey === String(id);
-                    return (
-                      <TouchableOpacity
-                        key={id || cat?.name}
-                        onPress={() => toggle(cat)}
-                        disabled={!!busyKey}
+                {chips.map(chip => {
+                  const id = extractId(chip?.id || chip?.['@id']);
+                  const selected = id
+                    ? associationByCategoryId.has(id)
+                    : false;
+                  const bKey = `${ctx}:${normalizeName(chip?.name)}`;
+                  const busy = busyKey === bKey;
+                  return (
+                    <TouchableOpacity
+                      key={bKey}
+                      onPress={() => toggle(chip, ctx)}
+                      disabled={!!busyKey}
+                      style={[
+                        styles.chip,
+                        selected ? styles.chipOn : styles.chipOff,
+                        busy && styles.chipBusy,
+                      ]}
+                    >
+                      <Text
                         style={[
-                          styles.chip,
-                          selected ? styles.chipOn : styles.chipOff,
-                          busy && styles.chipBusy,
+                          styles.chipText,
+                          selected ? styles.chipTextOn : styles.chipTextOff,
                         ]}
                       >
-                        <Text
-                          style={[
-                            styles.chipText,
-                            selected ? styles.chipTextOn : styles.chipTextOff,
-                          ]}
-                        >
-                          {busy ? '…' : cat?.name || `#${id}`}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })
-                )}
+                        {busy ? '…' : chip?.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           );
