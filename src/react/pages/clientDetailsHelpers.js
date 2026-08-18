@@ -61,7 +61,6 @@ export const buildClientTabDefs = ({
       { key: 'general', label: label('general') },
       { key: 'fiscal', label: label('fiscal', 'Configurações Fiscais') },
       { key: 'media', label: label('media', 'Mídia') },
-      { key: 'categories', label: label('categories', 'Classificação') },
       { key: 'sellers', label: label('sellers') },
       { key: 'contacts', label: label('contacts') },
       ...(isProviderContext
@@ -98,7 +97,6 @@ export const resolveInitialTabIndex = ({
         'general',
         'fiscal',
         'media',
-        'categories',
         'sellers',
         'contacts',
         ...(nextIsProviderContext ? ['products'] : []),
@@ -107,7 +105,6 @@ export const resolveInitialTabIndex = ({
     : [
         'general',
         'media',
-        'categories',
         'users',
         ...(nextIsProviderContext ? ['products'] : []),
         'contracts',
