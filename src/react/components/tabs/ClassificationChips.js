@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useStore } from '@store';
+import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 
 const normalizeCollection = payload => {
   if (Array.isArray(payload)) return payload;
@@ -102,6 +103,7 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
   const peopleStore = useStore('people');
   const categoriesStore = useStore('categories');
   const peopleCategoryStore = useStore('people_category');
+  const { showError, showSuccess } = useMessage?.() || {};
 
   const clientId = extractId(client?.id || client?.['@id']);
   const peopleType = String(client?.peopleType || 'J').toUpperCase() || 'J';
@@ -309,7 +311,14 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
           ? await ensureCategory(ctx, label)
           : chip;
         const catId = extractId(category?.id || category?.['@id']);
-        if (!catId) return;
+        if (!catId) {
+          showError?.('Não foi possível criar/localizar a categoria. Verifique permissões ou cadastro de categorias.');
+          return;
+        }
+        if (!actionsRef.current.savePeopleCategory && !actionsRef.current.removePeopleCategory) {
+          showError?.('Store people_category não registrada no app. Atualize o app.');
+          return;
+        }
 
         const existing = associationByCategoryId.get(catId);
         const {
@@ -347,6 +356,8 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
           setAssociations(rows);
           persistCache(catalogByContext, rows);
         }
+      } catch (e) {
+        showError?.(e?.message || e?.error || 'Falha ao associar classificação');
       } finally {
         setBusyKey(null);
       }
