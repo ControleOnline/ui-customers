@@ -1,9 +1,9 @@
 /**
  * Classification chips on General tab (#377).
  * PF: profession + position | PJ: sector + activity_branch
- * Ensures default catalog categories exist per company, then toggle association via people_categories.
+ * Seeds default catalog once per company+context; toggles people_categories.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -31,12 +31,6 @@ const extractId = value => {
   return match ? parseInt(match[1], 10) : null;
 };
 
-const toIri = (resource, id) => {
-  const n = extractId(id);
-  return n ? `/${resource}/${n}` : null;
-};
-
-/** Default catalog (context → names) — seeded once per company when empty */
 export const DEFAULT_CLASSIFICATION_CATALOG = {
   profession: [
     'Administrador',
@@ -117,78 +111,126 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
   const [associations, setAssociations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busyKey, setBusyKey] = useState(null);
+  const [loadError, setLoadError] = useState('');
 
-  const ensureDefaults = useCallback(
-    async context => {
-      const getItems = categoriesStore?.actions?.getItems;
-      const save = categoriesStore?.actions?.save;
-      if (!getItems || !save || !companyId) return [];
+  // Prevent re-entry / dependency loops (stores are unstable refs)
+  const loadGenRef = useRef(0);
+  const seededRef = useRef(new Set()); // `${companyId}:${context}`
+  const inFlightRef = useRef(false);
 
-      const companyIri = `/people/${companyId}`;
-      let list = normalizeCollection(
-        await getItems({ context, company: companyIri, itemsPerPage: 100 }),
-      );
-
-      if (list.length === 0) {
-        const names = DEFAULT_CLASSIFICATION_CATALOG[context] || [];
-        for (const name of names) {
-          try {
-            await save({
-              name,
-              context,
-              company: companyIri,
-            });
-          } catch {
-            // ignore duplicate / race
-          }
-        }
-        list = normalizeCollection(
-          await getItems({ context, company: companyIri, itemsPerPage: 100 }),
-        );
-      }
-
-      return list;
-    },
-    [categoriesStore, companyId],
-  );
-
-  const load = useCallback(async () => {
+  const loadCatalogAndAssociations = useCallback(async () => {
     if (!clientId || !companyId) return;
+    if (inFlightRef.current) return;
+
+    const gen = ++loadGenRef.current;
+    inFlightRef.current = true;
     setLoading(true);
+    setLoadError('');
+
+    const getCategories = categoriesStore?.actions?.getItems;
+    const saveCategory = categoriesStore?.actions?.save;
+    const getPeopleCategories = peopleCategoryStore?.actions?.getItems;
+    const companyIri = `/people/${companyId}`;
+
     try {
       const nextCatalog = {};
+
       for (const ctx of contexts) {
-        nextCatalog[ctx] = await ensureDefaults(ctx);
+        if (gen !== loadGenRef.current) return;
+
+        let list = [];
+        if (getCategories) {
+          try {
+            list = normalizeCollection(
+              await getCategories({
+                context: ctx,
+                company: companyIri,
+                itemsPerPage: 100,
+              }),
+            );
+          } catch (e) {
+            list = [];
+          }
+        }
+
+        const seedKey = `${companyId}:${ctx}`;
+        // Seed at most once per company+context per session
+        if (list.length === 0 && saveCategory && !seededRef.current.has(seedKey)) {
+          seededRef.current.add(seedKey);
+          const names = DEFAULT_CLASSIFICATION_CATALOG[ctx] || [];
+          for (const name of names) {
+            if (gen !== loadGenRef.current) return;
+            try {
+              await saveCategory({ name, context: ctx, company: companyIri });
+            } catch {
+              // ignore duplicates / validation
+            }
+          }
+          if (getCategories) {
+            try {
+              list = normalizeCollection(
+                await getCategories({
+                  context: ctx,
+                  company: companyIri,
+                  itemsPerPage: 100,
+                }),
+              );
+            } catch {
+              list = [];
+            }
+          }
+        }
+
+        nextCatalog[ctx] = list;
       }
+
+      if (gen !== loadGenRef.current) return;
       setCatalogByContext(nextCatalog);
 
-      const getPc = peopleCategoryStore?.actions?.getItems;
-      if (getPc) {
-        const rows = normalizeCollection(
-          await getPc({
-            people: `/people/${clientId}`,
-            active: true,
-            itemsPerPage: 100,
-          }),
-        );
-        setAssociations(rows);
+      if (getPeopleCategories) {
+        try {
+          const rows = normalizeCollection(
+            await getPeopleCategories({
+              people: `/people/${clientId}`,
+              active: true,
+              itemsPerPage: 100,
+            }),
+          );
+          if (gen === loadGenRef.current) setAssociations(rows);
+        } catch {
+          if (gen === loadGenRef.current) setAssociations([]);
+        }
       }
-    } catch {
-      setCatalogByContext({});
-      setAssociations([]);
+    } catch (e) {
+      if (gen === loadGenRef.current) {
+        setLoadError(e?.message || 'Falha ao carregar classificação');
+        setCatalogByContext({});
+        setAssociations([]);
+      }
     } finally {
-      setLoading(false);
+      if (gen === loadGenRef.current) {
+        setLoading(false);
+        inFlightRef.current = false;
+      }
     }
-  }, [clientId, companyId, contexts, ensureDefaults, peopleCategoryStore]);
+  }, [clientId, companyId, contexts, categoriesStore, peopleCategoryStore]);
 
+  // Only re-run when primitive ids / peopleType change — not store identity
   useEffect(() => {
-    load();
-  }, [load]);
+    loadCatalogAndAssociations();
+    return () => {
+      loadGenRef.current += 1;
+      inFlightRef.current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: stores are unstable
+  }, [clientId, companyId, peopleType]);
 
   const associationByCategoryId = useMemo(() => {
     const map = new Map();
     for (const row of associations) {
-      const catId = extractId(row?.category?.id || row?.category?.['@id'] || row?.category);
+      const catId = extractId(
+        row?.category?.id || row?.category?.['@id'] || row?.category,
+      );
       if (catId) map.set(catId, row);
     }
     return map;
@@ -214,7 +256,6 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
             startDate: todayYmd(),
             active: true,
           };
-          // Cargo (position) vinculado à empresa logada
           if (String(category?.context || '') === 'position' && companyId) {
             payload.peopleCompany = `/people/${companyId}`;
           }
@@ -246,9 +287,13 @@ const ClassificationChips = ({ client, companyId: companyIdProp = null }) => {
     <View style={styles.wrap}>
       <Text style={styles.title}>Classificação</Text>
       {!companyId ? (
-        <Text style={styles.hint}>Selecione uma empresa para carregar as categorias.</Text>
+        <Text style={styles.hint}>
+          Selecione uma empresa para carregar as categorias.
+        </Text>
       ) : loading ? (
         <ActivityIndicator style={{ marginVertical: 8 }} />
+      ) : loadError ? (
+        <Text style={styles.hint}>{loadError}</Text>
       ) : (
         contexts.map(ctx => {
           const list = catalogByContext[ctx] || [];
