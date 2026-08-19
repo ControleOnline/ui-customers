@@ -7,6 +7,8 @@ import {
   buildEmployeeCreatePayload,
   extractId,
   LINK_TYPE_OPTIONS,
+  extractEmployeeSaveErrorMessage,
+  buildEmployeePeopleLinkPayload,
 } from '../../../../react/components/tabs/employeesTabHelpers';
 
 describe('employeesTabHelpers', () => {
@@ -39,4 +41,44 @@ describe('employeesTabHelpers', () => {
     expect(extractId('/people/3')).toBe('3');
     expect(LINK_TYPE_OPTIONS.some(o => o.value === 'employee')).toBe(true);
   });
+
+  it('buildEmployeeCreatePayload omits company when parent id missing', () => {
+    const payload = buildEmployeeCreatePayload({
+      name: 'ANA',
+      alias: 'A',
+      linkType: 'employee',
+      parentPeopleId: '',
+    });
+    expect(payload.company).toBeUndefined();
+    expect(payload.linkType).toBe('employee');
+  });
+
+  it('extractEmployeeSaveErrorMessage prefers detail over Request failed', () => {
+    expect(
+      extractEmployeeSaveErrorMessage(
+        { message: 'Request failed', detail: 'Authentication required' },
+        'fallback',
+      ),
+    ).toBe('Authentication required');
+    expect(extractEmployeeSaveErrorMessage({ message: ['a', 'b'] }, '')).toBe('a, b');
+    expect(extractEmployeeSaveErrorMessage(null, 'fb')).toBe('fb');
+  });
+
+  it('buildEmployeePeopleLinkPayload returns IRIs or null', () => {
+    expect(
+      buildEmployeePeopleLinkPayload({
+        companyId: '10',
+        peopleId: '/people/20',
+        linkType: 'owner',
+      }),
+    ).toEqual({
+      company: '/people/10',
+      people: '/people/20',
+      linkType: 'owner',
+    });
+    expect(
+      buildEmployeePeopleLinkPayload({ companyId: '', peopleId: '1', linkType: 'employee' }),
+    ).toBeNull();
+  });
+
 });
