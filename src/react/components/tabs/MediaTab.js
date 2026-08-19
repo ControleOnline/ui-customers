@@ -141,7 +141,14 @@ const MediaTab = ({ client, onChanged = null }) => {
           });
         },
         onRemoveAttachment: async relation => {
-          await peopleActions.deletePeopleMedia({mediaId: relation?.id || relation?.['@id']});
+          // Prefer explicit people_media id; fall back so extractId in deletePeopleMedia
+          // can resolve numeric id / IRI / nested mediaId (API often returns numeric id).
+          const mediaId =
+            relation?.id ??
+            relation?.['@id'] ??
+            relation?.mediaId ??
+            relation;
+          await peopleActions.deletePeopleMedia({ mediaId });
         },
       };
     },
