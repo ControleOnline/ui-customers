@@ -7,9 +7,15 @@ import {
   buildEmployeeCreatePayload,
   extractId,
   LINK_TYPE_OPTIONS,
+  normalizeIdentityValue,
 } from '../../../../react/components/tabs/employeesTabHelpers';
 
 describe('employeesTabHelpers', () => {
+  it('normalizeIdentityValue preserves user case', () => {
+    expect(normalizeIdentityValue('Cláudia Silva')).toBe('Cláudia Silva');
+    expect(normalizeIdentityValue('  ACME Ltda  ')).toBe('ACME Ltda');
+  });
+
   it('formatDateInput masks BR date', () => {
     expect(formatDateInput('01022020')).toBe('01/02/2020');
     expect(formatDateInput('01')).toBe('01');
