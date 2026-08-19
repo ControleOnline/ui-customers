@@ -131,3 +131,126 @@ export const inlineStyle_350_20 = {
   fontWeight: '600',
   color: '#64748B',
 };
+
+export const attachmentListStyle = {
+  marginTop: 8,
+  gap: 8,
+};
+
+export const attachmentHeaderStyle = {
+  marginBottom: 4,
+};
+
+export const attachmentSubtextStyle = {
+  fontSize: 12,
+  color: '#64748B',
+  fontWeight: '600',
+};
+
+export const emptyAttachmentTextStyle = {
+  fontSize: 13,
+  color: '#94A3B8',
+  marginVertical: 4,
+};
+
+export const attachmentCardStyle = {
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  borderRadius: 10,
+  padding: 10,
+  backgroundColor: '#F8FAFC',
+  marginBottom: 6,
+};
+
+export const attachmentMetaStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+  marginBottom: 6,
+};
+
+export const attachmentNameStyle = {
+  fontSize: 14,
+  color: '#0F172A',
+  fontWeight: '600',
+};
+
+export const attachmentActionsStyle = {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 6,
+};
+
+export const attachmentActionButtonStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 4,
+  paddingHorizontal: 8,
+  paddingVertical: 6,
+  borderRadius: 8,
+  backgroundColor: '#EEF2FF',
+};
+
+export const attachmentActionLabelStyle = {
+  fontSize: 12,
+  color: '#334155',
+  fontWeight: '500',
+};
+
+export const previewBackdropStyle = {
+  flex: 1,
+  backgroundColor: 'rgba(15, 23, 42, 0.55)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: 16,
+};
+
+export const previewCardStyle = {
+  backgroundColor: '#fff',
+  borderRadius: 16,
+  width: '100%',
+  maxWidth: 640,
+  maxHeight: '90%',
+  overflow: 'hidden',
+};
+
+export const previewHeaderStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  borderBottomWidth: 1,
+  borderBottomColor: '#E2E8F0',
+};
+
+export const previewTitleStyle = {
+  flex: 1,
+  fontSize: 16,
+  fontWeight: '700',
+  color: '#0F172A',
+  marginRight: 12,
+};
+
+export const previewContentStyle = {
+  padding: 16,
+  alignItems: 'center',
+};
+
+export const previewImageStyle = {
+  width: '100%',
+  height: 360,
+  maxHeight: 480,
+};
+
+export const previewFallbackStyle = {
+  alignItems: 'center',
+  gap: 12,
+  paddingVertical: 24,
+};
+
+export const previewFallbackTextStyle = {
+  fontSize: 14,
+  color: '#64748B',
+  textAlign: 'center',
+};
