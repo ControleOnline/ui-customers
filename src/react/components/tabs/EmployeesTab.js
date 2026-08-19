@@ -14,7 +14,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
@@ -168,9 +168,11 @@ const EmployeesTab = ({
     }
   }, [getPeopleLinks, txt_message_loadError, parentPeopleId]);
 
-  useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchEmployees();
+    }, [fetchEmployees]),
+  );
 
   useEffect(() => {
     setLinkTypeOptions(
