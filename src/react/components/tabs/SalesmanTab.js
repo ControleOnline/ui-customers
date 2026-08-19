@@ -43,66 +43,44 @@ const fetchPeopleMediaUrl = async ({peopleActions, peopleId, mediaType}) => {
 
 const fetchPeopleMediaUrls = async ({peopleActions, mediaTypes, peopleIds}) => {
   const uniqueIds = [...new Set((peopleIds || []).map(extractId).filter(Boolean))];
-  const types = [...new Set((mediaTypes || []).filter(Boolean))];
-  if (uniqueIds.length === 0 || types.length === 0) {
-    return {};
-  }
+  const entries = await Promise.all(
+    uniqueIds.map(async peopleId => {
+      for (const mediaType of mediaTypes) {
+        const imageUrl = await fetchPeopleMediaUrl({
+          peopleActions,
+          peopleId,
+          mediaType,
+        }).catch(() => '');
 
-  const byPeopleId = {};
-
-  // Uma chamada batch por mediaType (people[] + mediaType.type).
-  for (const mediaType of types) {
-    try {
-      const response = await peopleActions.getPeopleMedia({
-        people: uniqueIds.map(id => `/people/${id}`),
-        'mediaType.type': mediaType,
-        itemsPerPage: Math.max(uniqueIds.length, 1),
-      });
-      for (const media of normalizeCollection(response)) {
-        const peopleId = extractId(
-          media?.people?.['@id'] || media?.people?.id || media?.people,
-        );
-        if (!peopleId) {
-          continue;
-        }
-        const imageUrl = resolveFileImageUrl(media?.file);
-        if (!imageUrl) {
-          continue;
-        }
-        if (!byPeopleId[peopleId]) {
-          byPeopleId[peopleId] = {};
-        }
-        if (!byPeopleId[peopleId][mediaType]) {
-          byPeopleId[peopleId][mediaType] = imageUrl;
+        if (imageUrl) {
+          return [peopleId, imageUrl];
         }
       }
-    } catch {
-      // Fallback N+1 se o filtro batch não for aceito.
-      await Promise.all(
-        uniqueIds.map(async peopleId => {
-          try {
-            const imageUrl = await fetchPeopleMediaUrl({
-              peopleActions,
-              peopleId,
-              mediaType,
-            });
-            if (!imageUrl) {
-              return;
-            }
-            if (!byPeopleId[peopleId]) {
-              byPeopleId[peopleId] = {};
-            }
-            byPeopleId[peopleId][mediaType] = imageUrl;
-          } catch {
-            // Keep other media types when one request fails.
-          }
-        }),
-      );
-    }
-  }
 
-  return byPeopleId;
+      return null;
+    }),
+  );
+
+  return entries
+    .filter(Boolean)
+    .reduce((accumulator, [peopleId, imageUrl]) => {
+      accumulator[peopleId] = imageUrl;
+      return accumulator;
+    }, {});
 };
+
+const SalesmanTab = ({
+  client,
+  customStyles,
+  linkType,
+  emptyText,
+  errorText,
+}) => {
+  const navigation = useNavigation();
+
+  const peopleStore = useStore('people');
+  const peopleLinkStore = useStore('people_link');
+  const peopleActions = peopleStore?.actions || {};
   const getPeopleLinks = peopleLinkStore?.actions?.getItems;
 
   const [clients, setClients] = useState([]);

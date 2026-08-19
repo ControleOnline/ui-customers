@@ -32,7 +32,6 @@ import EmployeesTab from '../components/tabs/EmployeesTab';
 import ContractsTab from '../components/tabs/ContractsTab';
 import ProductsTab from '../components/tabs/ProductsTab';
 import MediaTab from '../components/tabs/MediaTab';
-import CategoriesTab from '../components/tabs/CategoriesTab';
 import FiscalTab from '../components/tabs/FiscalTab';
 import {
   buildEmployeeContactsFromPeopleLinks,
@@ -397,17 +396,6 @@ const ClientDetails = ({ route, navigation }) => {
       );
     }
 
-    if (activeTabKey === 'categories') {
-      return (
-        <ScrollView
-          style={styles.tabScroll}
-          contentContainerStyle={inlineStyle_342_16}
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={false}>
-          <CategoriesTab client={client} />
-        </ScrollView>
-      );
-    }
 
     if (activeTabKey === 'sellers' || activeTabKey === 'users') {
       return (

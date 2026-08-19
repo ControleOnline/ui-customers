@@ -67,7 +67,8 @@ import {
   resolveEmployeeContactLinkType,
   formatEmployeeContactTitle,
   formatEmployeeContactMeta,
-  buildEmployeeCreatePayload,
+  extractEmployeeSaveErrorMessage,
+  saveEmployeeContact,
 } from './employeesTabHelpers';
 
 
@@ -201,44 +202,28 @@ const EmployeesTab = ({
   };
 
   const handleSaveEmployee = async () => {
-    const name = normalizeIdentityValue(formData.name);
-    const alias = normalizeIdentityValue(formData.alias);
-
-    if (!name || !alias) {
-      showError(txt_message_requiredError);
-      return;
-    }
-
-    let foundationDate;
-    if (formData.foundationDateBr) {
-      foundationDate = parseBrDateToYmd(formData.foundationDateBr);
-      if (!foundationDate) {
-        showError('Data invalida. Use o formato DD/MM/AAAA.');
-        return;
-      }
-    }
-
-    if (!peopleActions?.company || !parentPeopleId) {
-      showError(txt_message_createError);
-      return;
-    }
-
     setIsSaving(true);
     try {
-      const payload = buildEmployeeCreatePayload({
-        name,
-        alias,
-        foundationDate,
-        linkType: formData.linkType,
+      await saveEmployeeContact({
+        peopleActions,
+        peopleLinkActions: peopleLinkStore?.actions,
+        form: formData,
         parentPeopleId,
       });
-
-      await peopleActions.company(payload);
       showSuccess(txt_message_createSuccess);
       handleCloseModal();
       fetchEmployees();
     } catch (saveError) {
-      showError(saveError?.message || txt_message_createError);
+      if (saveError?.code === 'REQUIRED') {
+        showError(txt_message_requiredError);
+      } else if (saveError?.code === 'INVALID_DATE') {
+        showError(saveError.message);
+      } else {
+        showError(
+          extractEmployeeSaveErrorMessage(saveError, txt_message_createError) ||
+            txt_message_createError,
+        );
+      }
     } finally {
       setIsSaving(false);
     }

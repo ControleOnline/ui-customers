@@ -211,13 +211,13 @@ export const buildEmployeeCreatePayload = ({
   linkType,
   parentPeopleId,
 }) => {
+  const normalizedParentId = extractId(parentPeopleId);
   const payload = {
     name,
     alias,
     peopleType: 'F',
-    company: `/people/${parentPeopleId}`,
+    company: normalizedParentId ? `/people/${normalizedParentId}` : undefined,
     linkType: normalizeEmployeeLinkType(linkType),
-    'extra-data': {},
   };
 
   if (foundationDate) {
@@ -225,4 +225,93 @@ export const buildEmployeeCreatePayload = ({
   }
 
   return payload;
+};
+
+export const extractEmployeeSaveErrorMessage = (error, fallback = '') => {
+  if (!error) return fallback || '';
+  if (Array.isArray(error?.message)) {
+    const joined = error.message
+      .map(item => (typeof item === 'string' ? item : item?.message || item?.detail || ''))
+      .filter(Boolean)
+      .join(', ');
+    if (joined) return joined;
+  }
+  if (typeof error?.message === 'string' && error.message.trim()) {
+    if (
+      error.message === 'Request failed' &&
+      (error?.response?.data?.message || error?.detail || error?.hydra?.description)
+    ) {
+      return error.response?.data?.message || error.detail || error.hydra?.description || error.message;
+    }
+    return error.message;
+  }
+  if (typeof error?.detail === 'string' && error.detail.trim()) return error.detail;
+  if (typeof error === 'string' && error.trim()) return error;
+  return fallback || '';
+};
+
+export const buildEmployeePeopleLinkPayload = ({ companyId, peopleId, linkType }) => {
+  const company = extractId(companyId);
+  const people = extractId(peopleId);
+  if (!company || !people) return null;
+  return {
+    company: `/people/${company}`,
+    people: `/people/${people}`,
+    linkType: normalizeEmployeeLinkType(linkType),
+  };
+};
+
+export const saveEmployeeContact = async ({
+  peopleActions,
+  peopleLinkActions,
+  form,
+  parentPeopleId,
+}) => {
+  const name = normalizeIdentityValue(form.name);
+  const alias = normalizeIdentityValue(form.alias);
+  if (!name || !alias) {
+    const err = new Error('required');
+    err.code = 'REQUIRED';
+    throw err;
+  }
+  let foundationDate;
+  if (form.foundationDateBr) {
+    foundationDate = parseBrDateToYmd(form.foundationDateBr);
+    if (!foundationDate) {
+      const err = new Error('Data invalida. Use o formato DD/MM/AAAA.');
+      err.code = 'INVALID_DATE';
+      throw err;
+    }
+  }
+  if (!peopleActions?.company || !parentPeopleId) {
+    const err = new Error('missing_actions');
+    err.code = 'MISSING';
+    throw err;
+  }
+  const payload = buildEmployeeCreatePayload({
+    name,
+    alias,
+    foundationDate,
+    linkType: form.linkType,
+    parentPeopleId,
+  });
+  const created = await peopleActions.company(payload);
+  const createdPeopleId = extractId(
+    created?.id || created?.['@id'] || created?.data?.id || created?.data?.['@id'],
+  );
+  if (createdPeopleId && peopleLinkActions?.save) {
+    const linkPayload = buildEmployeePeopleLinkPayload({
+      companyId: parentPeopleId,
+      peopleId: createdPeopleId,
+      linkType: form.linkType,
+    });
+    if (linkPayload) {
+      try {
+        await peopleLinkActions.save(linkPayload);
+      } catch (_e) {
+        // link may already exist from backend postPersist
+      }
+    }
+  }
+  return created;
 };
