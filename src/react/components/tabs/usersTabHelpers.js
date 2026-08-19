@@ -1,16 +1,6 @@
-/**
- * Pure helpers for UsersTab — keep the component under the 500-line limit.
- */
+const extractId = value => String(value || '').replace(/\D/g, '');
 
-export const extractId = value => String(value || '').replace(/\D/g, '');
-
-/** API Platform expects people as IRI (e.g. /people/106218), not a bare id. */
-export const toPeopleIri = value => {
-  const id = extractId(value);
-  return id ? `/people/${id}` : '';
-};
-
-export const normalizeUserItem = entry => {
+const normalizeUserItem = entry => {
   if (!entry) {
     return null;
   }
@@ -37,8 +27,8 @@ export const normalizeUserItem = entry => {
   };
 };
 
-export const mapUsersForClient = users =>
-  (Array.isArray(users) ? users : []).map(user => ({
+const mapUsersForClient = users =>
+  users.map(user => ({
     id: extractId(user?.id) || user?.id,
     '@id': extractId(user?.id) || user?.id,
     username: user?.username || user?.name || '',
@@ -46,47 +36,7 @@ export const mapUsersForClient = users =>
     apiKey: user?.apiKey || '',
   }));
 
-export const extractErrorMessage = error => {
-  if (Array.isArray(error?.message)) {
-    return error.message
-      .map(item => item?.message || item)
-      .filter(Boolean)
-      .join(', ');
-  }
-
-  const status = error?.response?.status || error?.status;
-  if (status === 401) {
-    return 'Autenticação necessária. Faça login novamente e tente criar o usuário.';
-  }
-
-  if (error?.response?.data?.message) {
-    return String(error.response.data.message);
-  }
-
-  if (error?.response?.data?.error) {
-    return String(error.response.data.error);
-  }
-
-  if (error?.response?.data?.response?.error) {
-    return String(error.response.data.response.error);
-  }
-
-  const msg = error?.message || '';
-  if (/authentication required/i.test(msg)) {
-    return 'Autenticação necessária. Faça login novamente e tente criar o usuário.';
-  }
-
-  return msg;
-};
-
-export const buildCreateUserPayload = ({ username, password, confirmPassword, peopleId }) => ({
-  username: String(username || '').trim(),
-  password: String(password || ''),
-  confirmPassword: String(confirmPassword || ''),
-  people: toPeopleIri(peopleId) || peopleId,
-});
-
-export const formatApiKeyPreview = value => {
+const formatApiKeyPreview = value => {
   const apiKey = String(value || '').trim();
   if (!apiKey) {
     return 'Chave de API indisponivel';
@@ -99,7 +49,7 @@ export const formatApiKeyPreview = value => {
   return `${apiKey.slice(0, 8)}...${apiKey.slice(-6)}`;
 };
 
-export const copyTextToClipboard = async text => {
+const copyTextToClipboard = async text => {
   const normalizedText = String(text ?? '').trim();
   if (!normalizedText) {
     return false;
@@ -115,4 +65,48 @@ export const copyTextToClipboard = async text => {
   }
 
   return false;
+};
+
+const extractErrorMessage = error => {
+  if (Array.isArray(error?.violations) && error.violations.length) {
+    return error.violations
+      .map(item => item?.message || item)
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  return error?.message || error?.error || (typeof error === 'string' ? error : '');
+};
+
+const apiKeyModalStyles = {
+  buttonRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  secondaryButton: {
+    flex: 1,
+    minWidth: 132,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#64748B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+};
+
+module.exports = {
+  apiKeyModalStyles,
+  copyTextToClipboard,
+  extractErrorMessage,
+  extractId,
+  formatApiKeyPreview,
+  mapUsersForClient,
+  normalizeUserItem,
 };
