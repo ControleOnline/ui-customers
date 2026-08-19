@@ -34,6 +34,7 @@ import {
   normalizeLinkType,
   toPeopleIri,
 } from './generalTabHelpers';
+import FranchiseCommissionSection from './FranchiseCommissionSection';
 
 const GeneralTab = ({
   client,
@@ -431,6 +432,11 @@ const GeneralTab = ({
           </TouchableOpacity>
         )}
       </View>
+      <FranchiseCommissionSection
+        client={client}
+        parentCompanyIri={parentCompanyIri}
+        isEditing={isEditing}
+      />
       <ClassificationChips client={client} />
       {isPessoaFisica && (
         <ContactTab
