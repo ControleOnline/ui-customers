@@ -1,69 +1,29 @@
 import React, { useState, useEffect } from 'react';
 
 import {
-  ActivityIndicator,
   Text,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   View,
-  Keyboard,
 } from 'react-native';
 
-import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 
-import {
-  inlineStyle_174_6,
-  inlineStyle_175_12,
-  inlineStyle_188_14,
-  inlineStyle_197_16,
-  inlineStyle_200_49,
-  inlineStyle_208_10,
-  inlineStyle_213_20,
-  inlineStyle_214_22,
-  inlineStyle_216_18,
-  inlineStyle_224_20,
-  inlineStyle_225_22,
-  inlineStyle_226_22,
-  inlineStyle_228_20,
-  inlineStyle_239_20,
-  inlineStyle_248_20,
-  inlineStyle_249_22,
-  inlineStyle_250_22,
-  inlineStyle_252_20,
-  inlineStyle_263_20,
-  inlineStyle_275_20,
-  inlineStyle_276_22,
-  inlineStyle_278_18,
-  inlineStyle_288_20,
-  inlineStyle_289_22,
-  inlineStyle_290_22,
-  inlineStyle_292_20,
-  inlineStyle_303_20,
-  inlineStyle_312_20,
-  inlineStyle_313_22,
-  inlineStyle_314_22,
-  inlineStyle_316_20,
-  inlineStyle_327_20,
-  inlineStyle_339_16,
-  inlineStyle_341_14,
-  inlineStyle_348_20,
-} from './UsersTab.styles';
+import UsersTabUserModal from './UsersTabUserModal';
+import UsersTabApiKeyModal from './UsersTabApiKeyModal';
 
 import {
   extractId,
+  toPeopleIri,
   normalizeUserItem,
   mapUsersForClient,
   extractErrorMessage,
   formatApiKeyPreview,
   copyTextToClipboard,
-  buildCreateUserPayload,
 } from './usersTabHelpers';
-
 
 const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -124,6 +84,16 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     setShowApiKeyModal(false);
   };
 
+  const extractErrorMessage = error => {
+    if (Array.isArray(error?.message)) {
+      return error.message
+        .map(item => item?.message || item)
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    return error?.message || '';
+  };
 
   const handleSave = async () => {
     if (!editingItem) {
@@ -142,7 +112,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           username: formData.username,
           password: formData.password,
           confirmPassword: formData.confirmPassword,
-          people: extractId(client?.id || client?.['@id']),
+          people: toPeopleIri(client?.id || client?.['@id']),
         };
 
         if (!userData.people) {
@@ -305,242 +275,6 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     });
   };
 
-  const renderModal = () => (
-    <AnimatedModal
-      visible={showModal}
-      onRequestClose={closeModal}
-      style={inlineStyle_174_6}>
-      <View style={inlineStyle_175_12}>
-        {/* Header */}
-        <View style={inlineStyle_188_14}>
-          <Text style={inlineStyle_197_16}>
-            {editingItem ? 'Editar Senha do Usuário' : 'Adicionar Usuário'}
-          </Text>
-          <TouchableOpacity onPress={closeModal} style={inlineStyle_200_49}>
-            <Icon name="close" size={20} color="#64748B" />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          style={inlineStyle_208_10}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag">
-          {editingItem ? (
-            <View>
-              <View style={inlineStyle_213_20}>
-                <Text style={inlineStyle_214_22}>Usuário</Text>
-                <TextInput
-                  style={inlineStyle_216_18}
-                  value={formData.username}
-                  editable={false}
-                />
-              </View>
-              <View style={inlineStyle_224_20}>
-                <Text style={inlineStyle_225_22}>Nova senha</Text>
-                <View style={inlineStyle_226_22}>
-                  <TextInput
-                    style={inlineStyle_228_20}
-                    placeholder="Nova senha"
-                    value={formData.password}
-                    onChangeText={text => setFormData({ ...formData, password: text })}
-                    secureTextEntry={!showPassword}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(prev => !prev)}
-                    style={inlineStyle_239_20}>
-                    <Icon
-                      name={showPassword ? 'visibility-off' : 'visibility'}
-                      size={20}
-                      color="#6c757d"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={inlineStyle_248_20}>
-                <Text style={inlineStyle_249_22}>Confirmar nova senha</Text>
-                <View style={inlineStyle_250_22}>
-                  <TextInput
-                    style={inlineStyle_252_20}
-                    placeholder="Confirmar nova senha"
-                    value={formData.confirmPassword}
-                    onChangeText={text => setFormData({ ...formData, confirmPassword: text })}
-                    secureTextEntry={!showConfirmPassword}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowConfirmPassword(prev => !prev)}
-                    style={inlineStyle_263_20}>
-                    <Icon
-                      name={showConfirmPassword ? 'visibility-off' : 'visibility'}
-                      size={20}
-                      color="#6c757d"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          ) : (
-            <View>
-              <View style={inlineStyle_275_20}>
-                <Text style={inlineStyle_276_22}>Usuário</Text>
-                <TextInput
-                  style={inlineStyle_278_18}
-                  placeholder="Nome de usuário"
-                  value={formData.username}
-                  onChangeText={text => setFormData({ ...formData, username: text })}
-                  autoCapitalize="none"
-                />
-              </View>
-              <View style={inlineStyle_288_20}>
-                <Text style={inlineStyle_289_22}>Senha</Text>
-                <View style={inlineStyle_290_22}>
-                  <TextInput
-                    style={inlineStyle_292_20}
-                    placeholder="Senha"
-                    value={formData.password}
-                    onChangeText={text => setFormData({ ...formData, password: text })}
-                    secureTextEntry={!showPassword}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(prev => !prev)}
-                    style={inlineStyle_303_20}>
-                    <Icon
-                      name={showPassword ? 'visibility-off' : 'visibility'}
-                      size={20}
-                      color="#6c757d"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={inlineStyle_312_20}>
-                <Text style={inlineStyle_313_22}>Confirmar Senha</Text>
-                <View style={inlineStyle_314_22}>
-                  <TextInput
-                    style={inlineStyle_316_20}
-                    placeholder="Confirmar senha"
-                    value={formData.confirmPassword}
-                    onChangeText={text => setFormData({ ...formData, confirmPassword: text })}
-                    secureTextEntry={!showConfirmPassword}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowConfirmPassword(prev => !prev)}
-                    style={inlineStyle_327_20}>
-                    <Icon
-                      name={showConfirmPassword ? 'visibility-off' : 'visibility'}
-                      size={20}
-                      color="#6c757d"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          )}
-
-          <View style={inlineStyle_339_16}>
-            <TouchableOpacity
-              style={inlineStyle_341_14}
-              onPress={() => {
-                Keyboard.dismiss();
-                closeModal();
-              }}>
-              <Text style={inlineStyle_348_20}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={customStyles.saveButton}
-              onPress={() => {
-                Keyboard.dismiss();
-                handleSave();
-              }}>
-              <FeatherIcon
-                name="save"
-                size={16}
-                color={customStyles.iconButtonPrimaryIcon.color}
-              />
-              <Text style={customStyles.saveButtonText}>Salvar</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-    </AnimatedModal>
-  );
-
-  const renderApiKeyModal = () => (
-    <AnimatedModal
-      visible={showApiKeyModal}
-      onRequestClose={closeApiKeyModal}
-      style={inlineStyle_174_6}>
-      <View style={inlineStyle_175_12}>
-        <View style={inlineStyle_188_14}>
-          <Text style={inlineStyle_197_16}>Chave de API</Text>
-          <TouchableOpacity onPress={closeApiKeyModal} style={inlineStyle_200_49}>
-            <Icon name="close" size={20} color="#64748B" />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          style={inlineStyle_208_10}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag">
-          <View style={inlineStyle_213_20}>
-            <Text style={inlineStyle_214_22}>Usuário</Text>
-            <TextInput
-              style={inlineStyle_216_18}
-              value={apiKeyItem?.username || apiKeyItem?.name || ''}
-              editable={false}
-            />
-          </View>
-
-          <View style={inlineStyle_248_20}>
-            <Text style={inlineStyle_249_22}>Chave atual</Text>
-            <TextInput
-              style={inlineStyle_252_20}
-              value={apiKeyItem?.apiKey || ''}
-              editable={false}
-              multiline
-            />
-          </View>
-
-          <View style={inlineStyle_apiKeyButtonRow}>
-            <TouchableOpacity
-              style={inlineStyle_apiKeySecondaryButton}
-              onPress={handleCopyApiKey}>
-              <Text style={inlineStyle_apiKeySecondaryText}>Copiar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={inlineStyle_apiKeySecondaryButton}
-              onPress={closeApiKeyModal}>
-              <Text style={inlineStyle_apiKeySecondaryText}>Fechar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                customStyles.saveButton,
-                isRefreshingApiKey && customStyles.saveButtonDisabled,
-              ]}
-              onPress={() => handleRefreshApiKey(apiKeyItem)}
-              disabled={isRefreshingApiKey}>
-              {isRefreshingApiKey ? (
-                <ActivityIndicator
-                  size="small"
-                  color={customStyles.saveButtonText.color}
-                />
-              ) : (
-                <>
-                  <FeatherIcon
-                    name="plus"
-                    size={16}
-                    color={customStyles.iconButtonPrimaryIcon.color}
-                  />
-                  <Text style={customStyles.saveButtonText}>Nova chave</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-    </AnimatedModal>
-  );
-
   return (
     <>
       <View style={customStyles.tabContent}>
@@ -626,8 +360,28 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           )}
         </View>
       </View>
-      {renderModal()}
-      {renderApiKeyModal()}
+      <UsersTabUserModal
+        visible={showModal}
+        onClose={closeModal}
+        editingItem={editingItem}
+        formData={formData}
+        setFormData={setFormData}
+        showPassword={showPassword}
+        setShowPassword={setShowPassword}
+        showConfirmPassword={showConfirmPassword}
+        setShowConfirmPassword={setShowConfirmPassword}
+        customStyles={customStyles}
+        onSave={handleSave}
+      />
+      <UsersTabApiKeyModal
+        visible={showApiKeyModal}
+        onClose={closeApiKeyModal}
+        apiKeyItem={apiKeyItem}
+        customStyles={customStyles}
+        isRefreshingApiKey={isRefreshingApiKey}
+        onCopy={handleCopyApiKey}
+        onRefresh={() => handleRefreshApiKey(apiKeyItem)}
+      />
     </>
   );
 };

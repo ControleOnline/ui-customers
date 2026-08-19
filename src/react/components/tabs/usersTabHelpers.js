@@ -4,6 +4,12 @@
 
 export const extractId = value => String(value || '').replace(/\D/g, '');
 
+/** API Platform expects people as IRI (e.g. /people/106218), not a bare id. */
+export const toPeopleIri = value => {
+  const id = extractId(value);
+  return id ? `/people/${id}` : '';
+};
+
 export const normalizeUserItem = entry => {
   if (!entry) {
     return null;
@@ -40,13 +46,17 @@ export const mapUsersForClient = users =>
     apiKey: user?.apiKey || '',
   }));
 
-
 export const extractErrorMessage = error => {
   if (Array.isArray(error?.message)) {
     return error.message
       .map(item => item?.message || item)
       .filter(Boolean)
       .join(', ');
+  }
+
+  const status = error?.response?.status || error?.status;
+  if (status === 401) {
+    return 'Autenticação necessária. Faça login novamente e tente criar o usuário.';
   }
 
   if (error?.response?.data?.message) {
@@ -61,14 +71,19 @@ export const extractErrorMessage = error => {
     return String(error.response.data.response.error);
   }
 
-  return error?.message || '';
+  const msg = error?.message || '';
+  if (/authentication required/i.test(msg)) {
+    return 'Autenticação necessária. Faça login novamente e tente criar o usuário.';
+  }
+
+  return msg;
 };
 
 export const buildCreateUserPayload = ({ username, password, confirmPassword, peopleId }) => ({
   username: String(username || '').trim(),
   password: String(password || ''),
   confirmPassword: String(confirmPassword || ''),
-  people: peopleId,
+  people: toPeopleIri(peopleId) || peopleId,
 });
 
 export const formatApiKeyPreview = value => {
