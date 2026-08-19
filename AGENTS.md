@@ -46,3 +46,8 @@ Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.
 | `ui-crm` | Entrada comercial / handoff | https://github.com/ControleOnline/ui-crm/wiki |
 | `api-platform-people` | Backend `people_link` / SalesmanService | https://github.com/ControleOnline/api-platform-people/wiki |
 | `app-community` | Home do app e mapa de submódulos | https://github.com/ControleOnline/app-community/wiki |
+
+### Usuários no detalhe de pessoa
+
+- Aba `UsersTab` em `src/react/components/tabs/` (helpers em `usersTabHelpers.js`, modais em `UserFormModal` / `UserApiKeyModal`).
+- Lista geral da empresa: `UsersPage` em `ui-users` (rota Manager `UsersPage` / path `users`).
