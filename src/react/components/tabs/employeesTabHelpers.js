@@ -5,7 +5,7 @@ import {
 import { normalizeEmployeeLinkType } from './employeeContacts';
 
 export const extractId = value => String(value || '').replace(/\D/g, '');
-export const normalizeIdentityValue = value => formatDisplayUppercase(value);
+export const normalizeIdentityValue = value => String(value ?? "").replace(/\s+/g, " ").trim();
 
 export const normalizeCollection = payload => {
   if (Array.isArray(payload)) return payload;

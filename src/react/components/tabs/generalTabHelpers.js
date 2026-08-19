@@ -2,10 +2,9 @@
  * Pure helpers for GeneralTab (registration form, dates, link types).
  * Extracted to keep GeneralTab.js under the absolute 500-line limit.
  */
-import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 
 const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
-const normalizeIdentityValue = value => formatDisplayUppercase(normalizeText(value));
+const normalizeIdentityValue = value => normalizeText(value);
 const extractId = value => String(value || '').replace(/\D/g, '');
 
 const normalizeEnable = value => {

@@ -3,6 +3,7 @@
  */
 import {
   normalizeEnable,
+  normalizeIdentityValue,
   normalizeLinkType,
   formatYmdToBr,
   parseBrDateToYmd,
@@ -13,6 +14,16 @@ import {
 } from '../../../components/tabs/generalTabHelpers';
 
 describe('generalTabHelpers', () => {
+  describe('normalizeIdentityValue', () => {
+    it('preserves mixed case typed by the user', () => {
+      expect(normalizeIdentityValue('Cláudia Silva')).toBe('Cláudia Silva');
+      expect(normalizeIdentityValue('  ACME Ltda  ')).toBe('ACME Ltda');
+      expect(normalizeIdentityValue('kibelicia comida árabe')).toBe('kibelicia comida árabe');
+    });
+    it('collapses internal whitespace without changing case', () => {
+      expect(normalizeIdentityValue('Ana   Maria')).toBe('Ana Maria');
+    });
+  });
   describe('normalizeEnable', () => {
     it('accepts boolean true/false', () => {
       expect(normalizeEnable(true)).toBe(true);
