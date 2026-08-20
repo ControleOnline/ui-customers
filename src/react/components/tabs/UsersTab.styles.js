@@ -247,3 +247,28 @@ export const inlineStyle_348_20 = {
   fontWeight: '600',
   color: '#64748B',
 };
+
+export const timezoneListStyle = {
+  borderWidth: 1,
+  borderColor: '#e9ecef',
+  borderRadius: 12,
+  backgroundColor: '#f8f9fa',
+  overflow: 'hidden',
+};
+
+export const timezoneOptionStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  borderBottomWidth: 1,
+  borderBottomColor: '#e9ecef',
+};
+
+export const timezoneOptionTextStyle = {
+  fontSize: 15,
+  color: '#212529',
+  flex: 1,
+  paddingRight: 8,
+};
