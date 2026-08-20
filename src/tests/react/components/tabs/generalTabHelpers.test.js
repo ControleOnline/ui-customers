@@ -49,6 +49,8 @@ describe('generalTabHelpers', () => {
     it('is case-insensitive', () => {
       expect(normalizeLinkType('OWNER')).toBe('owner');
       expect(normalizeLinkType(' Manager ')).toBe('manager');
+      expect(normalizeLinkType('SALESMAN')).toBe('salesman');
+      expect(normalizeLinkType(' After-Sales ')).toBe('after-sales');
     });
   });
 
