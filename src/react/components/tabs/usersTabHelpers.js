@@ -13,6 +13,13 @@ const normalizeUserItem = entry => {
     entry?.apiKey || entry?.api_key || entry?.user?.apiKey || entry?.user?.api_key || '',
   ).trim();
   const role = String(entry?.role || 'Usuario').trim() || 'Usuario';
+  const timezoneId = extractId(
+    entry?.timezone?.id ||
+      entry?.timezone?.['@id'] ||
+      entry?.timezone_id ||
+      entry?.timezoneId ||
+      entry?.timezone,
+  );
 
   if (!id && !username && !apiKey) {
     return null;
@@ -24,6 +31,7 @@ const normalizeUserItem = entry => {
     name: username,
     role,
     apiKey,
+    timezoneId: timezoneId || '',
   };
 };
 
@@ -34,6 +42,7 @@ const mapUsersForClient = users =>
     username: user?.username || user?.name || '',
     role: user?.role || 'Usuario',
     apiKey: user?.apiKey || '',
+    timezoneId: user?.timezoneId || '',
   }));
 
 const formatApiKeyPreview = value => {
@@ -101,12 +110,56 @@ const apiKeyModalStyles = {
   },
 };
 
+
+const toTimezoneItem = entry => {
+  if (!entry) {
+    return null;
+  }
+  const id = extractId(entry?.id || entry?.['@id']);
+  if (!id) {
+    return null;
+  }
+  const name = String(entry?.name || entry?.timezone || '').trim();
+  const displayName = String(
+    entry?.displayName || entry?.label || entry?.offset || name,
+  ).trim();
+  return {
+    id,
+    name,
+    displayName: displayName || name || id,
+  };
+};
+
+const extractCollectionItems = response => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (Array.isArray(response?.member)) {
+    return response.member;
+  }
+  if (Array.isArray(response?.['hydra:member'])) {
+    return response['hydra:member'];
+  }
+  if (Array.isArray(response?.items)) {
+    return response.items;
+  }
+  return [];
+};
+
+const toTimezoneIri = timezoneId => {
+  const id = extractId(timezoneId);
+  return id ? `/timezones/${id}` : null;
+};
+
 module.exports = {
   apiKeyModalStyles,
   copyTextToClipboard,
+  extractCollectionItems,
   extractErrorMessage,
   extractId,
   formatApiKeyPreview,
   mapUsersForClient,
   normalizeUserItem,
+  toTimezoneIri,
+  toTimezoneItem,
 };

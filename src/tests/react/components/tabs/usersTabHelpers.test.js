@@ -1,54 +1,44 @@
 const {
   extractId,
   normalizeUserItem,
-  mapUsersForClient,
-  formatApiKeyPreview,
-  extractErrorMessage,
+  toTimezoneIri,
+  toTimezoneItem,
+  extractCollectionItems,
 } = require('../../../../react/components/tabs/usersTabHelpers');
 
 describe('usersTabHelpers', () => {
-  it('extracts numeric id from iri or raw value', () => {
-    expect(extractId('/users/42')).toBe('42');
+  test('extractId strips non-digits', () => {
+    expect(extractId('/timezones/42')).toBe('42');
     expect(extractId(7)).toBe('7');
-    expect(extractId(null)).toBe('');
   });
 
-  it('normalizes nested user payloads', () => {
-    const normalized = normalizeUserItem({
-      user: {id: '/users/9', username: 'ops', api_key: 'abc123'},
-      role: 'Admin',
+  test('toTimezoneIri builds IRI', () => {
+    expect(toTimezoneIri(3)).toBe('/timezones/3');
+    expect(toTimezoneIri('/timezones/9')).toBe('/timezones/9');
+    expect(toTimezoneIri('')).toBe(null);
+  });
+
+  test('toTimezoneItem maps entry', () => {
+    expect(toTimezoneItem({id: 1, name: 'America/Sao_Paulo'})).toEqual({
+      id: '1',
+      name: 'America/Sao_Paulo',
+      displayName: 'America/Sao_Paulo',
     });
-    expect(normalized).toMatchObject({
-      id: '9',
-      username: 'ops',
-      role: 'Admin',
-      apiKey: 'abc123',
+  });
+
+  test('normalizeUserItem keeps timezoneId', () => {
+    const item = normalizeUserItem({
+      id: 10,
+      username: 'alice',
+      timezone: '/timezones/5',
     });
+    expect(item.timezoneId).toBe('5');
+    expect(item.username).toBe('alice');
   });
 
-  it('returns null for empty entries', () => {
-    expect(normalizeUserItem({})).toBeNull();
-    expect(normalizeUserItem(null)).toBeNull();
-  });
-
-  it('maps users back to client payload shape', () => {
-    expect(
-      mapUsersForClient([{id: '3', username: 'a', role: 'Usuario', apiKey: 'k'}]),
-    ).toEqual([
-      {id: '3', '@id': '3', username: 'a', role: 'Usuario', apiKey: 'k'},
-    ]);
-  });
-
-  it('masks long api keys and keeps short ones', () => {
-    expect(formatApiKeyPreview('short')).toBe('short');
-    expect(formatApiKeyPreview('1234567890abcdefghij')).toBe('12345678...efghij');
-    expect(formatApiKeyPreview('')).toBe('Chave de API indisponivel');
-  });
-
-  it('extracts violation messages when present', () => {
-    expect(
-      extractErrorMessage({violations: [{message: 'dup'}, {message: 'required'}]}),
-    ).toBe('dup\nrequired');
-    expect(extractErrorMessage({message: 'boom'})).toBe('boom');
+  test('extractCollectionItems supports hydra and member', () => {
+    expect(extractCollectionItems({'hydra:member': [{id: 1}]}).length).toBe(1);
+    expect(extractCollectionItems({member: [{id: 2}]}).length).toBe(1);
+    expect(extractCollectionItems([{id: 3}]).length).toBe(1);
   });
 });

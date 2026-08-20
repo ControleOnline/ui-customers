@@ -18,6 +18,7 @@ import {
   extractId,
   mapUsersForClient,
   normalizeUserItem,
+  toTimezoneIri,
 } from './usersTabHelpers';
 import UserFormModal from './UserFormModal';
 import UserApiKeyModal from './UserApiKeyModal';
@@ -94,12 +95,19 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
         return;
       }
 
+      const timezoneIri = toTimezoneIri(formData.timezoneId);
+      if (!timezoneIri) {
+        showError('Timezone é obrigatório.');
+        return;
+      }
+
       try {
         const userData = {
           username: formData.username,
           password: formData.password,
           confirmPassword: formData.confirmPassword,
           people: extractId(client?.id || client?.['@id']),
+          timezone: timezoneIri,
         };
 
         if (!userData.people) {
