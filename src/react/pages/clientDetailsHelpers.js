@@ -134,3 +134,50 @@ export const mergeLinkedContactIntoClient = ({
     peopleLink: linkedContact.peopleLink,
   };
 };
+
+
+/**
+ * Soft-delete (app-community#374): confirm + call removePeople, then navigate back.
+ * Physical DELETE is never used; backend maps DELETE to deleted=true.
+ */
+export const confirmPeopleSoftDelete = ({
+  Alert,
+  clientId,
+  removePeople,
+  navigation,
+  setIsRemoving,
+}) => {
+  if (!clientId || typeof removePeople !== 'function') {
+    return;
+  }
+
+  Alert.alert(
+    'Remover pessoa',
+    'A pessoa será marcada como removida e deixará de aparecer nas listagens. O registro permanece no banco (exclusão lógica). Deseja continuar?',
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Remover',
+        style: 'destructive',
+        onPress: async () => {
+          setIsRemoving?.(true);
+          try {
+            await removePeople(clientId);
+            if (navigation?.canGoBack?.()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate?.('Clients');
+            }
+          } catch (error) {
+            Alert.alert(
+              'Falha ao remover',
+              error?.message || 'Não foi possível remover a pessoa. Tente novamente.',
+            );
+          } finally {
+            setIsRemoving?.(false);
+          }
+        },
+      },
+    ],
+  );
+};
