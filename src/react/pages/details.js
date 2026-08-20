@@ -17,6 +17,8 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -57,6 +59,7 @@ import {
   resolveInitialTabIndex,
   resolveRouteClientId,
   resolveRouteClientSeed,
+  confirmPeopleSoftDelete,
 } from './clientDetailsHelpers';
 
 const ClientDetails = ({ route, navigation }) => {
@@ -75,6 +78,9 @@ const ClientDetails = ({ route, navigation }) => {
   const getPeopleItems = peopleActions?.getItems;
   const getPeopleLinks = peopleLinkStore?.actions?.getItems;
   const savePeople = peopleActions?.save;
+  const removePeople = peopleActions?.remove;
+  const [isRemoving, setIsRemoving] = useState(false);
+
   const detailsStyles = useMemo(() => createDetailsStyles(themeColors), [themeColors]);
 
   const parentCompanyId = extractId(routeParams?.parentCompanyId);
@@ -463,6 +469,18 @@ const ClientDetails = ({ route, navigation }) => {
     );
   })();
 
+
+  const handleSoftDelete = useCallback(() => {
+    if (isRemoving) return;
+    confirmPeopleSoftDelete({
+      Alert,
+      clientId,
+      removePeople,
+      navigation,
+      setIsRemoving,
+    });
+  }, [clientId, isRemoving, navigation, removePeople]);
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.headerProfile}>
@@ -485,6 +503,21 @@ const ClientDetails = ({ route, navigation }) => {
         </Text>
 
         <Text style={styles.profileId}>{`ID: ${client.id}`}</Text>
+        {clientId && !client?.deleted ? (
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={handleSoftDelete}
+            disabled={isRemoving}
+            accessibilityRole="button"
+            accessibilityLabel="Remover pessoa"
+          >
+            {isRemoving ? (
+              <ActivityIndicator size="small" color="#B91C1C" />
+            ) : (
+              <Text style={styles.removeButtonText}>Remover</Text>
+            )}
+          </TouchableOpacity>
+        ) : null}
       </View>
       <View style={styles.tabsHeader}>
         {tabs.map(tab => (

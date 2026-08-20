@@ -73,3 +73,38 @@ describe('clientDetailsHelpers', () => {
     ).toBe(0);
   });
 });
+
+describe('confirmPeopleSoftDelete', () => {
+  it('calls removePeople and navigates back after confirm', async () => {
+    const { confirmPeopleSoftDelete } = require('../../../react/pages/clientDetailsHelpers');
+    const removePeople = jest.fn().mockResolvedValue(undefined);
+    const goBack = jest.fn();
+    const setIsRemoving = jest.fn();
+    const Alert = {
+      alert: jest.fn((title, message, buttons) => {
+        const removeBtn = buttons.find(b => b.text === 'Remover');
+        return removeBtn.onPress();
+      }),
+    };
+
+    await confirmPeopleSoftDelete({
+      Alert,
+      clientId: '42',
+      removePeople,
+      navigation: { canGoBack: () => true, goBack },
+      setIsRemoving,
+    });
+
+    expect(removePeople).toHaveBeenCalledWith('42');
+    expect(goBack).toHaveBeenCalled();
+    expect(setIsRemoving).toHaveBeenCalledWith(true);
+    expect(setIsRemoving).toHaveBeenCalledWith(false);
+  });
+
+  it('does nothing without clientId or removePeople', () => {
+    const { confirmPeopleSoftDelete } = require('../../../react/pages/clientDetailsHelpers');
+    const Alert = { alert: jest.fn() };
+    confirmPeopleSoftDelete({ Alert, clientId: '', removePeople: jest.fn() });
+    expect(Alert.alert).not.toHaveBeenCalled();
+  });
+});
