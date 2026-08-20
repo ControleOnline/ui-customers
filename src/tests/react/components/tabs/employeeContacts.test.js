@@ -21,6 +21,12 @@ describe('employeeContacts', () => {
   it('normalizes supported link types and falls back to employee', () => {
     expect(normalizeEmployeeLinkType('OWNER')).toBe('owner')
     expect(normalizeEmployeeLinkType('courier')).toBe('courier')
+    expect(normalizeEmployeeLinkType('SALESMAN')).toBe('salesman')
+    expect(normalizeEmployeeLinkType('after-sales')).toBe('after-sales')
+    expect(normalizeEmployeeLinkType('SALESMAN')).toBe('salesman')
+    expect(normalizeEmployeeLinkType('after-sales')).toBe('after-sales')
+    expect(normalizeEmployeeLinkType('SALESMAN')).toBe('salesman')
+    expect(normalizeEmployeeLinkType('after-sales')).toBe('after-sales')
     expect(normalizeEmployeeLinkType('unknown')).toBe('employee')
   })
 

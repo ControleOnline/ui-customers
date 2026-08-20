@@ -1,4 +1,4 @@
-const EMPLOYEE_CONTACT_LINK_TYPES = ['employee', 'owner', 'director', 'manager', 'courier']
+const EMPLOYEE_CONTACT_LINK_TYPES = ['employee', 'owner', 'director', 'manager', 'salesman', 'after-sales', 'courier']
 
 const extractId = value => String(value || '').replace(/\D/g, '')
 const normalizeEmployeeLinkTypeStrict = value => {

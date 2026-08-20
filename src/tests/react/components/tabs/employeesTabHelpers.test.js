@@ -46,6 +46,8 @@ describe('employeesTabHelpers', () => {
   it('extractId and LINK_TYPE_OPTIONS', () => {
     expect(extractId('/people/3')).toBe('3');
     expect(LINK_TYPE_OPTIONS.some(o => o.value === 'employee')).toBe(true);
+    expect(LINK_TYPE_OPTIONS.some(o => o.value === 'salesman')).toBe(true);
+    expect(LINK_TYPE_OPTIONS.some(o => o.value === 'after-sales')).toBe(true);
   });
 
   it('buildEmployeeCreatePayload omits company when parent id missing', () => {
