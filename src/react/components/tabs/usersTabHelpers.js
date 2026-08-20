@@ -1,5 +1,11 @@
 const extractId = value => String(value || '').replace(/\D/g, '');
 
+/** API Platform expects people as IRI (e.g. /people/106218), not a bare id. */
+const toPeopleIri = value => {
+  const id = extractId(value);
+  return id ? `/people/${id}` : '';
+};
+
 const normalizeUserItem = entry => {
   if (!entry) {
     return null;
@@ -84,7 +90,28 @@ const extractErrorMessage = error => {
       .join('\n');
   }
 
-  return error?.message || error?.error || (typeof error === 'string' ? error : '');
+  if (Array.isArray(error?.message)) {
+    return error.message
+      .map(item => item?.message || item)
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  const status = error?.response?.status || error?.status;
+  if (status === 401) {
+    return 'Autenticação necessária. Faça login novamente e tente criar o usuário.';
+  }
+
+  if (error?.response?.data?.message) {
+    return String(error.response.data.message);
+  }
+
+  const msg = error?.message || error?.error || (typeof error === 'string' ? error : '');
+  if (/authentication required/i.test(String(msg))) {
+    return 'Autenticação necessária. Faça login novamente e tente criar o usuário.';
+  }
+
+  return msg;
 };
 
 const apiKeyModalStyles = {
@@ -157,6 +184,7 @@ module.exports = {
   extractCollectionItems,
   extractErrorMessage,
   extractId,
+  toPeopleIri,
   formatApiKeyPreview,
   mapUsersForClient,
   normalizeUserItem,

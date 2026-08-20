@@ -18,6 +18,7 @@ import {
   extractId,
   mapUsersForClient,
   normalizeUserItem,
+  toPeopleIri,
   toTimezoneIri,
 } from './usersTabHelpers';
 import UserFormModal from './UserFormModal';
@@ -106,7 +107,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           username: formData.username,
           password: formData.password,
           confirmPassword: formData.confirmPassword,
-          people: extractId(client?.id || client?.['@id']),
+          people: toPeopleIri(client?.id || client?.['@id']),
           timezone: timezoneIri,
         };
 
