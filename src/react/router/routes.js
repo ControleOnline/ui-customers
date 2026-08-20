@@ -76,6 +76,19 @@ const customersRoutes = [
       showBottomToolBar: true,
     },
   },
+  // Dedicated detail route for My Companies (self-service company).
+  // Reuses the same ClientDetails screen/component so tabs stay shared;
+  // URL and navigation origin differ from CRM /client-details.
+  {
+    name: 'MyCompanyDetails',
+    component: Client,
+    options: {
+      headerShown: true,
+      headerBackVisible: true,
+      title: () => global.t?.t('people', 'title', 'company') || 'Empresa',
+      showBottomToolBar: true,
+    },
+  },
 ];
 
 export default customersRoutes;
