@@ -12,7 +12,6 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
 import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
-import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import {
   buildPeopleLinkReadParams,
@@ -28,85 +27,20 @@ import {
   shouldDisplayCommission,
 } from './salesmanTabHelpers';
 import { inlineStyle_46_16 } from './SalesmanTab.styles';
+import { normalizeSalesmanLink } from './salesmanTab.helpers';
+import SalesmanManageModal from './SalesmanManageModal';
+import { useSalesmanManage } from './useSalesmanManage';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { colors } from '@controleonline/../../src/styles/colors';
+import SalesmanCommissionBlock from './SalesmanCommissionBlock';
 
-const normalizeCollection = payload => {
-  if (Array.isArray(payload)) return payload;
-  if (!payload || typeof payload !== 'object') return [];
-  if (Array.isArray(payload.member)) return payload.member;
-  if (Array.isArray(payload['hydra:member'])) return payload['hydra:member'];
-  if (Array.isArray(payload.items)) return payload.items;
-  return [];
-};
+import {
+  COMPANY_ICON_MEDIA_TYPES,
+  fetchPeopleMediaUrls,
+  normalizeCollection,
+} from './salesmanTabMedia';
 
-const COMPANY_ICON_MEDIA_TYPES = ['icon'];
-
-const fetchPeopleMediaUrl = async ({ peopleActions, peopleId, mediaType }) => {
-  const response = await peopleActions.getPeopleMedia({
-    people: `/people/${peopleId}`,
-    'mediaType.type': mediaType,
-    itemsPerPage: 1,
-  });
-  const media = normalizeCollection(response)[0];
-
-  return resolveFileImageUrl(media?.file);
-};
-
-const fetchPeopleMediaUrls = async ({ peopleActions, mediaTypes, peopleIds }) => {
-  const uniqueIds = [...new Set((peopleIds || []).map(extractId).filter(Boolean))];
-  const entries = await Promise.all(
-    uniqueIds.map(async peopleId => {
-      for (const mediaType of mediaTypes) {
-        const imageUrl = await fetchPeopleMediaUrl({
-          peopleActions,
-          peopleId,
-          mediaType,
-        }).catch(() => '');
-
-        if (imageUrl) {
-          return [peopleId, imageUrl];
-        }
-      }
-
-      return null;
-    }),
-  );
-
-  return entries
-    .filter(Boolean)
-    .reduce((accumulator, [peopleId, imageUrl]) => {
-      accumulator[peopleId] = imageUrl;
-      return accumulator;
-    }, {});
-};
-
-const resolveAppType = () => {
-  try {
-    if (typeof localStorage !== 'undefined') {
-      return String(localStorage.getItem('app-type') || '').trim();
-    }
-  } catch (_) {
-    /* noop */
-  }
-  return '';
-};
-
-const resolveSessionUser = authStore => {
-  const fromStore = authStore?.getters?.user || authStore?.state?.user;
-  if (fromStore && typeof fromStore === 'object') {
-    return fromStore;
-  }
-  try {
-    if (typeof localStorage !== 'undefined') {
-      const raw = localStorage.getItem('session');
-      if (raw) {
-        return JSON.parse(raw);
-      }
-    }
-  } catch (_) {
-    /* noop */
-  }
-  return null;
-};
+import { resolveAppType, resolveSessionUser } from './salesmanTabSession';
 
 const SalesmanTab = ({
   client,
@@ -116,7 +50,7 @@ const SalesmanTab = ({
   errorText,
 }) => {
   const navigation = useNavigation();
-  const { showError, showSuccess } = useMessage();
+  const { showDialog, showError, showSuccess } = useMessage();
 
   const peopleStore = useStore('people');
   const peopleLinkStore = useStore('people_link');
@@ -125,6 +59,7 @@ const SalesmanTab = ({
   const peopleGetters = peopleStore?.getters || {};
   const getPeopleLinks = peopleLinkStore?.actions?.getItems;
   const savePeopleLink = peopleLinkStore?.actions?.save;
+  const removePeopleLink = peopleLinkStore?.actions?.remove;
 
   const [clients, setClients] = useState([]);
   const [defaultLinksBySalesmanId, setDefaultLinksBySalesmanId] = useState({});
@@ -258,6 +193,38 @@ const SalesmanTab = ({
     };
   }, [clientId, errorText, getPeopleLinks, linkType, loadDefaultSalesmanLinks]);
 
+  const {
+    canManage,
+    linkedNormalized,
+    showManageModal,
+    editingManageLink,
+    manageForm,
+    setManageForm,
+    isManageSaving,
+    salesmanOptions,
+    openManageModal,
+    closeManageModal,
+    handleManageSave,
+    handleManageDelete,
+  } = useSalesmanManage({
+    appType,
+    client,
+    clientId,
+    currentCompanyId,
+    linkType,
+    clients,
+    setClients,
+    setIsLoading,
+    peopleActions,
+    getPeopleLinks,
+    savePeopleLink,
+    removePeopleLink,
+    loadDefaultSalesmanLinks,
+    showDialog,
+    showError,
+    showSuccess,
+  });
+
   const openEdit = item => {
     const id = extractId(item?.id || item?.['@id']);
     const minRaw = item?.minimum_comission ?? item?.minimumComission;
@@ -313,106 +280,37 @@ const SalesmanTab = ({
     }
   };
 
-  const renderCommissionBlock = item => {
-    if (!displayCommission) {
-      return null;
-    }
-
-    const salesmanId = extractId(item?.company?.id || item?.company?.['@id']);
-    const defaultLink = defaultLinksBySalesmanId[salesmanId] || null;
-    const effective = resolveEffectiveCommission(item, defaultLink);
-    const linkId = extractId(item?.id || item?.['@id']);
-    const isEditingThis = editingLinkId === linkId;
-
-    if (isEditingThis && canEdit) {
-      return (
-        <View style={{ marginTop: 6, gap: 6 }} testID={`salesman-commission-edit-${linkId}`}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={customStyles.itemSubtext}>Comissão %</Text>
-            <TextInput
-              testID={`salesman-commission-input-${linkId}`}
-              value={editForm.comission}
-              onChangeText={text =>
-                setEditForm(prev => ({ ...prev, comission: text.replace(/[^\d.,]/g, '') }))
-              }
-              keyboardType="decimal-pad"
-              style={{
-                minWidth: 64,
-                borderWidth: 1,
-                borderColor: customStyles.itemSubtext?.color || '#D7E1EC',
-                borderRadius: 6,
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                color: customStyles.itemText?.color,
-              }}
-            />
-            <Text style={customStyles.itemSubtext}>Mín %</Text>
-            <TextInput
-              testID={`salesman-minimum-commission-input-${linkId}`}
-              value={editForm.minimumComission}
-              onChangeText={text =>
-                setEditForm(prev => ({
-                  ...prev,
-                  minimumComission: text.replace(/[^\d.,]/g, ''),
-                }))
-              }
-              keyboardType="decimal-pad"
-              style={{
-                minWidth: 64,
-                borderWidth: 1,
-                borderColor: customStyles.itemSubtext?.color || '#D7E1EC',
-                borderRadius: 6,
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                color: customStyles.itemText?.color,
-              }}
-            />
-          </View>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity
-              testID={`salesman-commission-save-${linkId}`}
-              onPress={() => saveEdit(item)}
-              disabled={isSaving}>
-              <Text style={[customStyles.itemSubtext, { fontWeight: '600' }]}>
-                {isSaving ? 'Salvando…' : 'Salvar'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity testID={`salesman-commission-cancel-${linkId}`} onPress={cancelEdit}>
-              <Text style={customStyles.itemSubtext}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
-    }
-
-    return (
-      <View
-        style={{ marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 6 }}
-        testID={`salesman-commission-${linkId}`}>
-        <Text
-          style={customStyles.itemSubtext}
-          testID={`salesman-commission-label-${linkId}`}>
-          {formatCommissionSubtitle(effective)}
-        </Text>
-        {canEdit ? (
-          <TouchableOpacity
-            testID={`salesman-commission-edit-btn-${linkId}`}
-            onPress={() => openEdit(item)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <FeatherIcon
-              name="edit-2"
-              size={14}
-              color={customStyles.iconButtonGhostIcon?.color || '#6C7787'}
-            />
-          </TouchableOpacity>
-        ) : null}
-      </View>
-    );
-  };
+  const renderCommissionBlock = item => (
+    <SalesmanCommissionBlock
+      item={item}
+      displayCommission={displayCommission}
+      canEdit={canEdit}
+      editingLinkId={editingLinkId}
+      editForm={editForm}
+      setEditForm={setEditForm}
+      isSaving={isSaving}
+      defaultLinksBySalesmanId={defaultLinksBySalesmanId}
+      openEdit={openEdit}
+      cancelEdit={cancelEdit}
+      saveEdit={saveEdit}
+      customStyles={customStyles}
+    />
+  );
 
   return (
+    <>
     <View style={customStyles.tabContent}>
       <View style={customStyles.section}>
+        {canManage ? (
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <TouchableOpacity
+              onPress={() => openManageModal(null)}
+              accessibilityLabel="Vincular vendedor"
+              testID="salesman-manage-add-btn">
+              <Icon name="add" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
         {isLoading ? (
           <View style={inlineStyle_46_16}>
             <ActivityIndicator
@@ -472,6 +370,36 @@ const SalesmanTab = ({
                     {renderCommissionBlock(item)}
                   </View>
                 </View>
+                {canManage ? (
+                  <View style={{ flexDirection: 'row' }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        const link = linkedNormalized.find(
+                          entry =>
+                            entry.id === linkId ||
+                            entry.sellerId === extractId(item?.company?.id),
+                        );
+                        openManageModal(link || normalizeSalesmanLink(item));
+                      }}
+                      style={{ padding: 6 }}
+                      testID={`salesman-manage-edit-${linkId}`}>
+                      <Icon name="edit" size={18} color={colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        const link = linkedNormalized.find(
+                          entry =>
+                            entry.id === linkId ||
+                            entry.sellerId === extractId(item?.company?.id),
+                        );
+                        handleManageDelete(link || { id: linkId });
+                      }}
+                      style={{ padding: 6 }}
+                      testID={`salesman-manage-delete-${linkId}`}>
+                      <Icon name="delete-outline" size={18} color="#DC2626" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
                 <View style={customStyles.iconButtonGhost}>
                   <FeatherIcon
                     name="chevron-right"
@@ -479,12 +407,26 @@ const SalesmanTab = ({
                     color={customStyles.iconButtonGhostIcon.color}
                   />
                 </View>
+                )}
               </TouchableOpacity>
             );
           })
         )}
       </View>
     </View>
+    {canManage ? (
+      <SalesmanManageModal
+        visible={showManageModal}
+        onClose={closeManageModal}
+        editingLink={editingManageLink}
+        formData={manageForm}
+        setFormData={setManageForm}
+        salesmanOptions={salesmanOptions}
+        isSaving={isManageSaving}
+        onSave={handleManageSave}
+      />
+    ) : null}
+    </>
   );
 };
 
