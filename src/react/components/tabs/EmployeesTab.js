@@ -63,6 +63,7 @@ import {
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
   resolveEmployeeLinkType,
+  buildEmployeeDetailNavParams,
   resolveEmployeeContactLinkType,
   formatEmployeeContactTitle,
   formatEmployeeContactMeta,
@@ -286,19 +287,16 @@ const EmployeesTab = ({
                 ]}
                 activeOpacity={0.8}
                 onPress={() => {
-                  const clientId = extractId(item?.id || item?.['@id']);
-                  if (!clientId) {
+                  const params = buildEmployeeDetailNavParams({
+                    employee: item,
+                    parentPeopleId,
+                  });
+                  if (!params) {
                     return;
                   }
 
                   peopleActions?.setItem?.(item);
-                  navigation.push('ClientDetails', {
-                    clientId,
-                    contextKey: 'contacts',
-                    initialTab: 'contacts',
-                    parentCompanyId: parentPeopleId,
-                    linkType: resolveEmployeeLinkType(item),
-                  });
+                  navigation.push('ClientDetails', params);
                 }}>
                 <View style={customStyles.itemContent}>
                   <PeopleAvatar

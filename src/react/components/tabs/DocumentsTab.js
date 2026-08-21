@@ -117,7 +117,7 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   };
 
   useEffect(() => {
-    if (!currentCompany || !client) return;
+    if (!client) return;
     const rawDocuments = Array.isArray(client?.document)
       ? client.document.map(d => ({
         id: d.id || d['@id'],
@@ -129,9 +129,10 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
       }))
       : [];
 
-    actionsDocumentsType.getItems({
-      'company_document.people': currentCompany?.id,
-    });
+    // Always load the full document_types catalog so the type selector is available
+    // for new companies/people (no company_document links yet). Filtering by peopleType
+    // happens in getAvailableDocumentTypes.
+    actionsDocumentsType.getItems({});
     setDocuments(rawDocuments);
   }, [client, currentCompany]);
 
@@ -147,10 +148,21 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     setFormData({});
   };
 
+  const normalizePeopleType = (value) => {
+    const v = String(value || '').toLowerCase();
+    if (v === 'f' || v === 'fisica' || v === 'pf' || v === 'pessoa_fisica') return 'F';
+    if (v === 'j' || v === 'juridica' || v === 'pj' || v === 'pessoa_juridica') return 'J';
+    return String(value || '');
+  };
+
   const getAvailableDocumentTypes = () => {
-    const availableTypes = items.filter(
-      type => type.peopleType === client?.peopleType,
-    );
+    const clientPeopleType = normalizePeopleType(client?.peopleType);
+    const availableTypes = items.filter(type => {
+      const typePeople = normalizePeopleType(type.peopleType);
+      // If type has no peopleType, keep it available (catalog may omit the field)
+      if (!typePeople) return true;
+      return typePeople === clientPeopleType;
+    });
 
     // Se estiver editando, permite o tipo atual + tipos não utilizados
     if (editingItem) {
