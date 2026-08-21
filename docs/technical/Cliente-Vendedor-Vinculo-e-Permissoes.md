@@ -1,84 +1,152 @@
-# Cliente × Vendedor — vínculo e permissões (ui-customers)
+# Cliente × Vendedor — vínculo e permissões
 
-Documentação técnica do papel de `ui-customers` na entrega `ControleOnline/ui-crm#2`, estendida por `ui-customers#10` (comissão de franquia) e `ui-customers#12` (comissão de vendedor + override por cliente).
+Documentação técnica do papel de **`ui-customers`** no fluxo de vínculo cliente↔vendedor (trilha `ui-crm#2` + gestão administrativa `ui-customers#20`).
 
-## Papel deste módulo
+## Como este módulo se encaixa
 
-Aba **Vendedores** no detalhe do cliente (`ClientDetails`).
+| Visão (`APP_TYPE`) | Uso de `ui-customers` neste fluxo |
+| --- | --- |
+| **CRM** | Recebe handoff do `ui-crm` e mostra o detalhe do cliente; lista o vendedor **sem** gestão administrativa (sem botão +, edit, delete, modal) |
+| **MANAGER** | Detalhe administrativo: vincular, editar, remover vendedores; ver e editar comissão / mínimo (conforme regras de role) |
+| Outros (POS, etc.) | Reutilizam o detalhe conforme permissão; não assumem regras comerciais do CRM nem CRUD de vendedores |
 
-- Lista vínculos `sellers-client` via store `people_link`.
-- Navegação para o detalhe da pessoa/empresa vinculada.
-- Gestão administrativa (vincular, editar, remover, múltiplos vínculos, comissões) deve ocorrer **somente** quando `APP_TYPE=MANAGER` (ou `ADMIN`).
+Página canônica do fluxo completo (CRM / backend):  
+- [ui-crm — Cliente × Vendedor](https://github.com/ControleOnline/ui-crm/wiki/Cliente-Vendedor-Vinculo-e-Permissoes)  
+- [api-platform-people — Cliente × Vendedor](https://github.com/ControleOnline/api-platform-people/wiki/Cliente-Vendedor-Vinculo-e-Permissoes)
 
-## Arquivos principais
+## Objetivo
 
-- `src/react/components/tabs/SalesmanTab.js`
-- `src/react/components/tabs/salesmanTabHelpers.js` (precedência de comissão, permissão de edição, formatação)
-- helpers de montagem de links em `employeeContacts.js`
-- página de detalhe: `src/react/pages/details.js` (passa contexto / `APP_TYPE` para a aba)
+Registrar regras de negócio, modularização e contratos da aba **Vendedores** no detalhe do cliente:
 
-## Regra de negócio — sentido do fluxo de comissão
+1. listagem de vínculos `sellers-client` via store `people_link`;
+2. gestão administrativa (vincular / editar / remover) **somente** quando `APP_TYPE=MANAGER`;
+3. edição de comissão / mínimo (override) restrita a roles adequadas (`ROLE_SUPER` / `ROLE_OWNER` em MANAGER);
+4. modularização dos componentes ≤ 500 linhas e testes focais.
 
-| Papel do vínculo | `linkType` | Direção do pagamento | Quem paga / quem recebe |
-| --- | --- | --- | --- |
-| **Franquia** | `franchisee` | Franqueada → Franqueadora | A franqueada **paga** a comissão ao franqueador |
-| **Vendedor** | `salesman` (empresa↔vendedor) e `sellers-client` (vendedor↔cliente) | Empresa → Vendedor | O vendedor **recebe** a comissão da empresa da qual é vendedor |
+## Repositórios afetados
 
-Essa distinção é obrigatória na documentação e, quando possível, em tooltips/ajuda da UI.
+| Módulo | Papel no fluxo |
+| --- | --- |
+| `ui-crm` | Handoff do CRM para o detalhe do cliente com contexto de vendedores |
+| `ui-customers` | Aba `Vendedores` no detalhe do cliente (listagem + gestão UI) |
+| `api-platform-people` | Vínculo automático, distribuição de vendedores e recurso `people_link` |
+| `app-community` | Fronteira de apps (`MANAGER` vs `CRM`) em `MODOS_OPERACAO.md` |
 
-## Precedência de comissão (vendedor)
+## Regras de negócio (UI)
 
-No vínculo padrão do vendedor com a empresa (`people_link` com `linkType = salesman`) pode existir uma comissão padrão (ex.: 10%).
+### Permissões por app
 
-Quando existir vínculo específico do vendedor com **aquele cliente** (`people_link` com `linkType = sellers-client`), a comissão informada nesse vínculo **prevalece** (ex.: 15%).
-
-Ordem de resolução (por campo `comission` / `minimum_comission`):
-
-1. Valor do vínculo **vendedor ↔ cliente** (`sellers-client`), se estiver preenchido (inclui `0`)
-2. Senão, valor padrão do vínculo **vendedor ↔ empresa** (`salesman`)
-3. Senão, sem valor (`—`)
-
-Na aba **Vendedores** o valor **efetivo** é exibido com indicação:
-
-- `override` — veio do vínculo cliente-vendedor
-- `padrão` — veio do vínculo vendedor-empresa
-
-Implementação canônica: `resolveEffectiveCommission` em `salesmanTabHelpers.js`.
-
-## Regras de UI
-
-| Capacidade | MANAGER / ADMIN | Não MANAGER |
+| Capacidade | `APP_TYPE=MANAGER` | Fora de `MANAGER` (ex.: CRM) |
 | --- | --- | --- |
-| Ver vendedor | sim | sim |
-| CRUD de vínculos | sim | não |
-| Ver comissão / comissão mínima | sim | não |
-| Editar comissão (lápis) | somente `ROLE_SUPER` ou `ROLE_OWNER` | não |
+| Ver quem é o vendedor vinculado | sim | sim |
+| Botão **+** (vincular novo) | sim | não |
+| Edit / delete por linha | sim | não |
+| Modal de gestão (picker + comissão / mínimo) | sim | não |
+| Ver % de comissão / mínimo | sim | não |
+| Editar comissão (override) | sim (ROLE_SUPER / ROLE_OWNER) | não |
 
-Edição de `comission` / `minimum_comission` no vínculo `sellers-client`:
+A fronteira oficial de **CRUD administrativo** é por **app** (`APP_TYPE === MANAGER`), via helper `canManageSalesmen(appType)`. A UI **não** é o enforcement final — escrita em `people_link` e comissão devem ser filtradas no backend.
 
-- **Editável** (ícone de lápis) para **superadmin** (`ROLE_SUPER`) ou **owner** (`ROLE_OWNER`) da empresa.
-- Somente leitura para demais perfis.
-- Persistência via `people_link.save` no backend (`api-platform-people`).
+### Modelo de dados (vínculos)
 
-## Contrato com outros módulos
+- `PeopleLink` com `linkType`:
+  - `client` — empresa ↔ cliente
+  - `salesman` — empresa ↔ vendedor
+  - `sellers-client` — vendedor ↔ cliente
+- Campos sensíveis no vínculo: `comission`, `minimum_comission`
+
+### Fluxo de gestão (MANAGER)
+
+1. `SalesmanTab` carrega vínculos `sellers-client` do cliente.
+2. Se `canManageSalesmen(appType)`:
+   - exibe botão **+** (`salesman-manage-add-btn`);
+   - por linha: ações de editar e remover;
+   - abre `SalesmanManageModal` com picker de vendedores da empresa (já com `linkType=salesman`) e campos de comissão / mínimo.
+3. Save usa `people_link` actions (`save` / `remove`) com payload montado por `buildSalesmanSavePayload`.
+4. Fora de MANAGER: apenas listagem + navegação para o detalhe da pessoa vinculada; nenhum controle de CRUD.
+
+## Modularização (`ui-customers`)
+
+Arquivos principais (todos ≤ 500 linhas):
+
+| Arquivo | Responsabilidade |
+| --- | --- |
+| `src/react/components/tabs/SalesmanTab.js` | Aba: listagem, gate MANAGER, integração com modal e bloco de comissão |
+| `src/react/components/tabs/useSalesmanManage.js` | Hook de gestão administrativa (load options, open/save/remove modal state) |
+| `src/react/components/tabs/SalesmanManageModal.js` | Modal de vincular/editar (picker + comissão / mínimo) |
+| `src/react/components/tabs/SalesmanCommissionBlock.js` | Bloco de exibição/edição de comissão (override por role) |
+| `src/react/components/tabs/salesmanTab.helpers.js` | Helpers puros: `canManageSalesmen`, normalize, options, save payload |
+| `src/react/components/tabs/salesmanTabHelpers.js` | Helpers de comissão / display (legado + override) |
+| `src/react/components/tabs/salesmanTabMedia.js` | Media / avatar collection helpers |
+| `src/react/components/tabs/salesmanTabSession.js` | `resolveAppType` (localStorage `app-type`) e session user |
+
+Gate principal:
+
+```js
+export const canManageSalesmen = appType =>
+  normalizeAppType(appType) === 'MANAGER';
+```
+
+`APP_TYPE` é lido de `localStorage.getItem('app-type')` via `resolveAppType()`.
+
+## Contratos com outros módulos
 
 | Origem | Expectativa |
 | --- | --- |
 | `ui-crm` | chega com `clientId`, `contextKey=client`, opcionalmente `initialTab=sellers` |
-| `api-platform-people` | leitura/escrita de `people_link`; campos `comission`, `minimum_comission`, `linkType`; vínculo automático e filtros de segurança |
+| `api-platform-people` | leitura/escrita de `people_link`; vínculo automático e campos de comissão; enforcement no backend |
+| `app-community` | composição do submodule; `MODOS_OPERACAO.md` define fronteira MANAGER vs CRM |
 
-## Segurança
+```mermaid
+flowchart LR
+  CRM["ui-crm\nCRM list/detail entry"]
+  NAV["clientDetailsNavigation\nclientId + contextKey + initialTab"]
+  DET["ui-customers\nClientDetails"]
+  TAB["SalesmanTab"]
+  HOOK["useSalesmanManage\n+ SalesmanManageModal"]
+  API["api-platform-people\nPeopleLink + SalesmanService"]
 
-A UI **não** é enforcement final. Comissão e escrita de vínculos sensíveis devem ser filtradas no backend (`PeopleLink` / `PeopleLinkService`).
+  CRM --> NAV --> DET --> TAB
+  TAB -->|"APP_TYPE=MANAGER"| HOOK
+  TAB --> API
+  HOOK --> API
+  API -->|"auto-link on client"| API
+```
 
-- Comissão não deve ser exposta fora de `MANAGER`/`ADMIN` na UI.
-- Escrita restrita a superadmin/owner na UI; o backend deve aplicar o mesmo menor privilégio.
+## Segurança (pontos de atenção)
+
+1. Restrição de CRUD e comissão fora de `MANAGER` **não** pode depender só de UI.
+2. Escrita em `people_link` deve respeitar menor privilégio (evitar que “pode ler” vire “pode escrever” em outros `linkType`).
+3. Escopo multiempresa: gestor de uma empresa não deve herdar gestão de `sellers-client` de outra empresa só porque o vendedor é compartilhado.
+4. Commission override continua nas regras já aceitas (`ui-customers#10` / `#12`); manage não amplia privilégio além do contexto MANAGER.
 
 ## Testes
 
-- Unit: `src/tests/react/components/tabs/salesmanTabHelpers.test.js` (precedência, permissão, formatação)
-- Browser smoke: `src/tests/browser/manager/client-details-salesman-commission.spec.js` (padrão, override, editável vs somente leitura)
+- Unit: `npm run test:salesman-tab` (helpers + gate `canManageSalesmen`).
+- Browser smoke (MANAGER):
+  - `src/tests/browser/manager/client-details-salesman-manage.spec.js` — + / edit / delete + modal.
+  - `src/tests/browser/manager/client-details-salesman-commission.spec.js` — comissão.
+- non-MANAGER: ausência de controles CRUD coberta nos smokes.
 
-## Documento canônico do fluxo completo
+## Instalação / operação
 
-Ver também: `ControleOnline/ui-crm` → `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md`
+Não há pacote isolado. O fluxo depende dos submódulos front (`ui-crm`, `ui-customers`) compostos no app e do módulo PHP `api-platform-people` na API.
+
+Config relevante por empresa (backend):
+
+- chave `salesman-distribution-strategy` (default `random`)
+
+## Manutenção
+
+Ao alterar este fluxo:
+
+1. atualizar esta página e as cópias nos módulos afetados (`docs/technical/` + wiki);
+2. manter testes focais de helpers da aba e smoke MANAGER vs non-MANAGER;
+3. validar enforcement de `people_link` no backend antes de liberar exposição de comissão ou CRUD.
+
+## Referências internas
+
+- Issues: `ControleOnline/ui-crm#2` (fluxo original), `ControleOnline/ui-customers#20` (gestão administrativa MANAGER), `#10` / `#12` (comissão)
+- PRs históricos: `ui-customers#3`, `ui-crm#10`, `api-platform-people#4`
+- Fronteira de apps: [app-community/MODOS_OPERACAO.md](https://github.com/ControleOnline/app-community/blob/master/MODOS_OPERACAO.md)
+- Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md`
