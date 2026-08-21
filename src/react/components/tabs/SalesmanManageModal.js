@@ -112,10 +112,15 @@ const SalesmanManageModal = ({
       visible={visible}
       onRequestClose={onClose}
       style={{ paddingHorizontal: 20 }}>
-      <View style={styles.modalCard}>
+      <View style={styles.modalCard} testID="salesman-manage-modal">
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>{title}</Text>
-          <TouchableOpacity onPress={onClose} accessibilityLabel="Fechar">
+          <Text style={styles.modalTitle} testID="salesman-manage-modal-title">
+            {title}
+          </Text>
+          <TouchableOpacity
+            onPress={onClose}
+            accessibilityLabel="Fechar"
+            testID="salesman-manage-modal-close">
             <Icon name="close" size={20} color="#64748B" />
           </TouchableOpacity>
         </View>
@@ -123,10 +128,11 @@ const SalesmanManageModal = ({
         <ScrollView keyboardShouldPersistTaps="handled">
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Vendedor</Text>
-            <View style={styles.pickerContainer}>
+            <View style={styles.pickerContainer} testID="salesman-manage-picker">
               <Picker
                 selectedValue={formData.sellerIri}
                 enabled={!editingLink}
+                testID="salesman-manage-seller-picker"
                 onValueChange={value =>
                   setFormData(previous => ({ ...previous, sellerIri: value }))
                 }>
@@ -152,6 +158,7 @@ const SalesmanManageModal = ({
                 setFormData(previous => ({ ...previous, commission: value }))
               }
               placeholder="0"
+              testID="salesman-manage-commission-input"
             />
           </View>
 
@@ -168,6 +175,7 @@ const SalesmanManageModal = ({
                 }))
               }
               placeholder="0"
+              testID="salesman-manage-minimum-input"
             />
           </View>
         </ScrollView>
@@ -176,13 +184,15 @@ const SalesmanManageModal = ({
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={onClose}
-            disabled={isSaving}>
+            disabled={isSaving}
+            testID="salesman-manage-cancel-btn">
             <Text style={styles.secondaryButtonText}>Cancelar</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={onSave}
-            disabled={isSaving}>
+            disabled={isSaving}
+            testID="salesman-manage-save-btn">
             {isSaving ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
