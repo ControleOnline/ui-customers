@@ -231,6 +231,11 @@ export const inlineStyle_327_20 = {
 export const inlineStyle_339_16 = {
   flexDirection: 'row',
   gap: 12,
+  paddingHorizontal: 24,
+  paddingTop: 12,
+  paddingBottom: 24,
+  borderTopWidth: 1,
+  borderTopColor: '#F1F5F9',
 };
 
 export const inlineStyle_341_14 = {
@@ -243,9 +248,12 @@ export const inlineStyle_341_14 = {
 };
 
 export const inlineStyle_348_20 = {
-  fontSize: 16,
-  fontWeight: '600',
-  color: '#64748B',
+  flex: 1,
+  paddingVertical: 14,
+  borderRadius: 12,
+  backgroundColor: '#0F172A',
+  alignItems: 'center',
+  justifyContent: 'center',
 };
 
 export const timezoneListStyle = {
@@ -254,6 +262,7 @@ export const timezoneListStyle = {
   borderRadius: 12,
   backgroundColor: '#f8f9fa',
   overflow: 'hidden',
+  maxHeight: 220,
 };
 
 export const timezoneOptionStyle = {
