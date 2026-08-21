@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Text,
   TouchableOpacity,
+  ScrollView,
   View,
 } from 'react-native';
 
@@ -11,17 +12,18 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 
+import UsersTabUserModal from './UsersTabUserModal';
+import UsersTabApiKeyModal from './UsersTabApiKeyModal';
 
 import {
-  copyTextToClipboard,
-  extractErrorMessage,
   extractId,
-  mapUsersForClient,
+  toPeopleIri,
   normalizeUserItem,
-  toTimezoneIri,
+  mapUsersForClient,
+  extractErrorMessage,
+  formatApiKeyPreview,
+  copyTextToClipboard,
 } from './usersTabHelpers';
-import UserFormModal from './UserFormModal';
-import UserApiKeyModal from './UserApiKeyModal';
 
 const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -82,6 +84,16 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     setShowApiKeyModal(false);
   };
 
+  const extractErrorMessage = error => {
+    if (Array.isArray(error?.message)) {
+      return error.message
+        .map(item => item?.message || item)
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    return error?.message || '';
+  };
 
   const handleSave = async () => {
     if (!editingItem) {
@@ -95,19 +107,12 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
         return;
       }
 
-      const timezoneIri = toTimezoneIri(formData.timezoneId);
-      if (!timezoneIri) {
-        showError('Timezone é obrigatório.');
-        return;
-      }
-
       try {
         const userData = {
           username: formData.username,
           password: formData.password,
           confirmPassword: formData.confirmPassword,
-          people: extractId(client?.id || client?.['@id']),
-          timezone: timezoneIri,
+          people: toPeopleIri(client?.id || client?.['@id']),
         };
 
         if (!userData.people) {
@@ -270,31 +275,6 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     });
   };
 
-  const renderModals = () => (
-    <>
-      <UserFormModal
-        visible={showModal}
-        onClose={closeModal}
-        editingItem={editingItem}
-        formData={formData}
-        setFormData={setFormData}
-        showPassword={showPassword}
-        setShowPassword={setShowPassword}
-        showConfirmPassword={showConfirmPassword}
-        setShowConfirmPassword={setShowConfirmPassword}
-        onSave={handleSave}
-      />
-      <UserApiKeyModal
-        visible={showApiKeyModal}
-        onClose={closeApiKeyModal}
-        apiKeyItem={apiKeyItem}
-        isRefreshingApiKey={isRefreshingApiKey}
-        onCopy={handleCopyApiKey}
-        onRefresh={handleRefreshApiKey}
-      />
-    </>
-  );
-
   return (
     <>
       <View style={customStyles.tabContent}>
@@ -380,7 +360,28 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           )}
         </View>
       </View>
-      {renderModals()}
+      <UsersTabUserModal
+        visible={showModal}
+        onClose={closeModal}
+        editingItem={editingItem}
+        formData={formData}
+        setFormData={setFormData}
+        showPassword={showPassword}
+        setShowPassword={setShowPassword}
+        showConfirmPassword={showConfirmPassword}
+        setShowConfirmPassword={setShowConfirmPassword}
+        customStyles={customStyles}
+        onSave={handleSave}
+      />
+      <UsersTabApiKeyModal
+        visible={showApiKeyModal}
+        onClose={closeApiKeyModal}
+        apiKeyItem={apiKeyItem}
+        customStyles={customStyles}
+        isRefreshingApiKey={isRefreshingApiKey}
+        onCopy={handleCopyApiKey}
+        onRefresh={() => handleRefreshApiKey(apiKeyItem)}
+      />
     </>
   );
 };

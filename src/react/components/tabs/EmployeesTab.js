@@ -14,14 +14,11 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
-import {
-  uppercaseText,
-} from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import {
   buildEmployeeContactsFromPeopleLinks,
   buildPeopleLinkReadParams,
@@ -67,7 +64,8 @@ import {
   resolveEmployeeContactLinkType,
   formatEmployeeContactTitle,
   formatEmployeeContactMeta,
-  buildEmployeeCreatePayload,
+  extractEmployeeSaveErrorMessage,
+  saveEmployeeContact,
 } from './employeesTabHelpers';
 
 
@@ -168,9 +166,11 @@ const EmployeesTab = ({
     }
   }, [getPeopleLinks, txt_message_loadError, parentPeopleId]);
 
-  useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchEmployees();
+    }, [fetchEmployees]),
+  );
 
   useEffect(() => {
     setLinkTypeOptions(
@@ -201,44 +201,28 @@ const EmployeesTab = ({
   };
 
   const handleSaveEmployee = async () => {
-    const name = normalizeIdentityValue(formData.name);
-    const alias = normalizeIdentityValue(formData.alias);
-
-    if (!name || !alias) {
-      showError(txt_message_requiredError);
-      return;
-    }
-
-    let foundationDate;
-    if (formData.foundationDateBr) {
-      foundationDate = parseBrDateToYmd(formData.foundationDateBr);
-      if (!foundationDate) {
-        showError('Data invalida. Use o formato DD/MM/AAAA.');
-        return;
-      }
-    }
-
-    if (!peopleActions?.company || !parentPeopleId) {
-      showError(txt_message_createError);
-      return;
-    }
-
     setIsSaving(true);
     try {
-      const payload = buildEmployeeCreatePayload({
-        name,
-        alias,
-        foundationDate,
-        linkType: formData.linkType,
+      await saveEmployeeContact({
+        peopleActions,
+        peopleLinkActions: peopleLinkStore?.actions,
+        form: formData,
         parentPeopleId,
       });
-
-      await peopleActions.company(payload);
       showSuccess(txt_message_createSuccess);
       handleCloseModal();
       fetchEmployees();
     } catch (saveError) {
-      showError(saveError?.message || txt_message_createError);
+      if (saveError?.code === 'REQUIRED') {
+        showError(txt_message_requiredError);
+      } else if (saveError?.code === 'INVALID_DATE') {
+        showError(saveError.message);
+      } else {
+        showError(
+          extractEmployeeSaveErrorMessage(saveError, txt_message_createError) ||
+            txt_message_createError,
+        );
+      }
     } finally {
       setIsSaving(false);
     }
@@ -358,7 +342,7 @@ const EmployeesTab = ({
               </Text>
               <TextInput
                 value={formData.name}
-                onChangeText={text => setFormData(prev => ({ ...prev, name: uppercaseText(text) }))}
+                onChangeText={text => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="Digite o nome"
                 style={inlineStyle_338_16}
                 placeholderTextColor="#6c757d"
@@ -372,7 +356,7 @@ const EmployeesTab = ({
               </Text>
               <TextInput
                 value={formData.alias}
-                onChangeText={text => setFormData(prev => ({ ...prev, alias: uppercaseText(text) }))}
+                onChangeText={text => setFormData(prev => ({ ...prev, alias: text }))}
                 placeholder="Digite o apelido"
                 style={inlineStyle_365_16}
                 placeholderTextColor="#6c757d"
