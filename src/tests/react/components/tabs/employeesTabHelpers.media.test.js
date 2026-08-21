@@ -5,7 +5,11 @@ import {
 
 jest.mock('@controleonline/ui-common/src/react/utils/fileUrl', () => ({
   resolveFileImageUrl: file => (file?.url ? file.url : file?.['@id'] || ''),
-}));
+}), { virtual: true });
+
+jest.mock('@controleonline/ui-common/src/react/utils/entityDisplay', () => ({
+  formatDisplayUppercase: value => String(value || '').toUpperCase(),
+}), { virtual: true });
 
 describe('fetchPeopleMediaUrls batch', () => {
   it('issues a single getPeopleMedia call for multiple people ids', async () => {
@@ -32,8 +36,24 @@ describe('fetchPeopleMediaUrls batch', () => {
     });
   });
 
+  it('falls back to per-id calls when batch rejects', async () => {
+    const getPeopleMedia = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('batch unsupported'))
+      .mockResolvedValueOnce([{ people: { id: 1 }, file: { url: 'https://cdn/1.png' } }])
+      .mockResolvedValueOnce([{ people: { id: 2 }, file: { url: 'https://cdn/2.png' } }]);
+
+    const result = await fetchPeopleMediaUrls({
+      peopleActions: { getPeopleMedia },
+      mediaType: 'avatar',
+      peopleIds: [1, 2],
+    });
+
     expect(getPeopleMedia).toHaveBeenCalledTimes(3);
-    expect(result).toEqual({ '1': 'https://cdn/1.png' });
+    expect(result).toEqual({
+      '1': 'https://cdn/1.png',
+      '2': 'https://cdn/2.png',
+    });
   });
 });
 
@@ -49,5 +69,10 @@ describe('extractPeopleMediaUrl from people_links payload', () => {
       ],
     });
     expect(url).toBe('https://cdn/avatar.png');
+  });
+
+  it('returns empty string when peopleMedia is missing', () => {
+    expect(extractPeopleMediaUrl({ id: 10 })).toBe('');
+    expect(extractPeopleMediaUrl(null)).toBe('');
   });
 });

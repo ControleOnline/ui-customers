@@ -21,7 +21,7 @@ import {
 import ContactTab from './ContactTab';
 import DocumentsTab from './DocumentsTab';
 import AddressesTab from './AddressesTab';
-import ClassificationChips from './ClassificationChips';
+import PeopleCategoriesPanel from './PeopleCategoriesPanel';
 import { createGeneralTabStyles } from './GeneralTab.styles';
 import {
   normalizeIdentityValue,
@@ -431,7 +431,11 @@ const GeneralTab = ({
           </TouchableOpacity>
         )}
       </View>
-      <ClassificationChips client={client} />
+      <PeopleCategoriesPanel
+        client={client}
+        isEditing={isEditing}
+        parentCompanyIri={parentCompanyIri}
+      />
       {isPessoaFisica && (
         <ContactTab
           client={client}
