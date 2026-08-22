@@ -286,10 +286,20 @@ const UserFormModal = ({
         </ScrollView>
 
         <View style={inlineStyle_339_16}>
-          <TouchableOpacity onPress={onClose} style={inlineStyle_341_14}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={inlineStyle_341_14}
+            accessibilityLabel="Cancelar"
+            accessibilityRole="button"
+            testID="user-form-cancel">
             <Text style={{color: '#64748B', fontWeight: '600'}}>Cancelar</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={onSave} style={inlineStyle_348_20}>
+          <TouchableOpacity
+            onPress={onSave}
+            style={inlineStyle_348_20}
+            accessibilityLabel="Salvar"
+            accessibilityRole="button"
+            testID="user-form-save">
             <Text style={{color: '#FFFFFF', fontWeight: '600'}}>Salvar</Text>
           </TouchableOpacity>
         </View>

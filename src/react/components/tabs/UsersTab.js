@@ -304,7 +304,10 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             {isEditing && (
               <TouchableOpacity
                 onPress={() => openModal()}
-                style={customStyles.iconButtonPrimary}>
+                style={customStyles.iconButtonPrimary}
+                accessibilityLabel="Adicionar usuário"
+                accessibilityRole="button"
+                testID="users-tab-add-user">
                 <FeatherIcon
                   name="plus"
                   size={16}
