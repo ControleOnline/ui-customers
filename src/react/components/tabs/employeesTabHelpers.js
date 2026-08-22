@@ -145,6 +145,8 @@ export const LINK_TYPE_OPTIONS = [
   { value: 'owner', translationKey: 'owner' },
   { value: 'director', translationKey: 'director' },
   { value: 'manager', translationKey: 'manager' },
+  { value: 'salesman', translationKey: 'salesman' },
+  { value: 'after-sales', translationKey: 'after-sales' },
   { value: 'courier', translationKey: 'courier' },
 ];
 

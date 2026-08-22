@@ -92,4 +92,3 @@ const customersRoutes = [
 ];
 
 export default customersRoutes;
-

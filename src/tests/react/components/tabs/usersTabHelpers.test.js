@@ -1,9 +1,11 @@
 const {
   extractId,
+  toPeopleIri,
   normalizeUserItem,
   toTimezoneIri,
   toTimezoneItem,
   extractCollectionItems,
+  extractErrorMessage,
 } = require('../../../../react/components/tabs/usersTabHelpers');
 
 describe('usersTabHelpers', () => {
@@ -16,6 +18,19 @@ describe('usersTabHelpers', () => {
     expect(toTimezoneIri(3)).toBe('/timezones/3');
     expect(toTimezoneIri('/timezones/9')).toBe('/timezones/9');
     expect(toTimezoneIri('')).toBe(null);
+  });
+
+  test('toPeopleIri builds API Platform IRI', () => {
+    expect(toPeopleIri(106218)).toBe('/people/106218');
+    expect(toPeopleIri('/people/9')).toBe('/people/9');
+    expect(toPeopleIri('')).toBe('');
+  });
+
+  test('extractErrorMessage maps Authentication required', () => {
+    expect(extractErrorMessage({message: 'Authentication required'})).toMatch(/Autenticação necessária/);
+    expect(
+      extractErrorMessage({response: {status: 401, data: {message: 'Authentication required'}}}),
+    ).toMatch(/Autenticação necessária/);
   });
 
   test('toTimezoneItem maps entry', () => {
