@@ -1,3 +1,4 @@
+const { mapPasswordErrorMessage } = require('@controleonline/ui-common/src/react/utils/passwordPolicy');
 const extractId = value => String(value || '').replace(/\D/g, '');
 
 const normalizeUserItem = entry => {
@@ -77,14 +78,16 @@ const copyTextToClipboard = async text => {
 };
 
 const extractErrorMessage = error => {
+  let message = '';
   if (Array.isArray(error?.violations) && error.violations.length) {
-    return error.violations
+    message = error.violations
       .map(item => item?.message || item)
       .filter(Boolean)
       .join('\n');
+  } else {
+    message = error?.message || error?.error || (typeof error === 'string' ? error : '');
   }
-
-  return error?.message || error?.error || (typeof error === 'string' ? error : '');
+  return mapPasswordErrorMessage(message || '');
 };
 
 const apiKeyModalStyles = {

@@ -16,6 +16,9 @@ import {
   toTimezoneItem,
 } from './usersTabHelpers';
 import {
+  PASSWORD_HELP_LINES,
+} from '@controleonline/ui-common/src/react/utils/passwordPolicy';
+import {
   inlineStyle_174_6,
   inlineStyle_175_12,
   inlineStyle_188_14,
@@ -128,6 +131,17 @@ const UserFormModal = ({
           <TouchableOpacity onPress={onClose} style={inlineStyle_200_49}>
             <Icon name="close" size={20} color="#64748B" />
           </TouchableOpacity>
+
+          <View style={{marginBottom: 12, padding: 10, borderRadius: 8, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0'}}>
+            <Text style={{fontSize: 13, fontWeight: '600', color: '#334155', marginBottom: 4}}>
+              Requisitos da senha
+            </Text>
+            {PASSWORD_HELP_LINES.map(line => (
+              <Text key={line} style={{fontSize: 12, color: '#64748B', lineHeight: 18}}>
+                • {line}
+              </Text>
+            ))}
+          </View>
         </View>
 
         <ScrollView
