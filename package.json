@@ -11,7 +11,7 @@
     "test:fiscal-shortcut": "node --test src/tests/react/components/tabs/fiscalTabContract.test.mjs",
     "test:documents": "node --test src/tests/react/components/tabs/documentsTabHelpers.test.mjs src/tests/react/components/tabs/documentsTabContract.test.mjs",
     "test:employee-link-types": "node --test src/tests/react/components/tabs/employeeLinkTypes.contract.test.mjs",
-    "test:salesman-tab": "node --test src/tests/react/components/tabs/salesmanTab.helpers.test.mjs src/tests/react/components/tabs/salesmanTabHelpers.test.mjs"
+    "test:salesman-tab": "node --test src/tests/react/components/tabs/salesmanTab.helpers.test.mjs src/tests/react/components/tabs/salesmanTabHelpers.test.mjs src/tests/react/components/tabs/salesmanTabMedia.no-redeclare.test.mjs"
   },
   "repository": {
     "type": "git",
