@@ -216,6 +216,7 @@ const MediaTab = ({ client, onChanged = null }) => {
                     companyId={clientId}
                     context="people_media"
                     libraryContexts={['people_media']}
+                    additionalLibraryFiles={peopleMedia}
                     attachments={currentMedia ? [currentMedia] : []}
                     acceptedTypes={COMPANY_MEDIA_ACCEPT_ATTRIBUTE}
                     fileType="image"
