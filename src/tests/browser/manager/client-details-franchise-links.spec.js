@@ -346,6 +346,10 @@ test.describe('manager client-details franchise/filial links', () => {
       timeout: 5000,
     });
     await expect(page.getByTestId('franchise-link-type-picker')).toBeVisible();
+    await expect(page.getByTestId('franchise-link-comission-input')).toBeVisible();
+    await expect(
+      page.getByTestId('franchise-link-minimum-comission-input'),
+    ).toBeVisible();
     await expect(page.getByTestId('franchise-link-save-btn')).toBeVisible();
 
     // people_links foi consultado com company do cliente
