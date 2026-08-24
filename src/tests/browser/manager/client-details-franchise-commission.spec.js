@@ -80,6 +80,7 @@ const mockFranchiseCommissionApi = async (
   const company = createCompany({ownerEnabled});
   let currentLink = {...franchiseeLink};
   const putBodies = [];
+  const peopleLinkGetUrls = [];
 
   await page.route(`${API_ORIGIN}/**`, async route => {
     const request = route.request();
@@ -133,9 +134,22 @@ const mockFranchiseCommissionApi = async (
 
     if (pathname === 'people_links' || pathname.startsWith('people_links/')) {
       if (method === 'GET') {
-        const linkType = url.searchParams.get('linkType') || '';
+        peopleLinkGetUrls.push(url.toString());
+        const linkTypes = [
+          ...url.searchParams.getAll('linkType[]'),
+          ...url.searchParams.getAll('linkType[0]'),
+        ];
+        if (url.searchParams.has('linkType')) {
+          return route.fulfill({
+            status: 400,
+            headers: jsonHeaders(),
+            body: JSON.stringify({
+              detail: 'Unexpected value for parameter "linkType": expecting "array", got "string".',
+            }),
+          });
+        }
         const people = url.searchParams.get('people') || '';
-        if (linkType === 'franchisee' || people === '42') {
+        if (linkTypes.includes('franchisee') || people === '42') {
           return route.fulfill({
             status: 200,
             headers: jsonHeaders(),
@@ -249,7 +263,10 @@ const mockFranchiseCommissionApi = async (
     {appVersion, roles, ownerEnabled},
   );
 
-  return {getPutBodies: () => putBodies};
+  return {
+    getPutBodies: () => putBodies,
+    getPeopleLinkGetUrls: () => peopleLinkGetUrls,
+  };
 };
 
 test.describe('client-details franchise commission browser smoke', () => {
@@ -265,6 +282,9 @@ test.describe('client-details franchise commission browser smoke', () => {
     });
     await expect(page.getByText(/10%/)).toBeVisible();
     await expect(page.getByText(/2000/)).toBeVisible();
+    expect(api.getPeopleLinkGetUrls()).toEqual(
+      expect.arrayContaining([expect.stringMatching(/linkType(%5B%5D|%5B0%5D)=franchisee/)]),
+    );
 
     const editBtn = page.getByTestId('edit-franchise-commission');
     await expect(editBtn).toBeVisible();
