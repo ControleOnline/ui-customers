@@ -79,7 +79,9 @@ const SalesmanTab = ({
   const appType = useMemo(() => resolveAppType(), []);
   const displayCommission = shouldDisplayCommission(appType);
   const sessionUser = useMemo(() => resolveSessionUser(authStore), [authStore]);
-  const canEdit = displayCommission && canEditSalesmanCommission(sessionUser);
+  const canEdit =
+    displayCommission &&
+    canEditSalesmanCommission(sessionUser, peopleGetters?.currentCompany);
 
   const loadDefaultSalesmanLinks = useCallback(
     async salesmanIds => {
@@ -97,7 +99,8 @@ const SalesmanTab = ({
       try {
         const response = await getPeopleLinks({
           company: currentCompanyId,
-          linkType: 'salesman',
+          // people_links.linkType is an array filter in the API contract.
+          linkType: ['salesman'],
           itemsPerPage: Math.max(uniqueIds.length, 50),
         });
         const indexed = indexDefaultSalesmanLinksByPeopleId(response);
