@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   buildAvailableFranchiseOptions,
+  buildFranchiseLinkReadParams,
   buildFranchiseLinksFromPeopleLinks,
   buildFranchiseSavePayload,
   canManageFranchiseLinks,
@@ -9,6 +10,12 @@ import {
   normalizeFranchiseLink,
   normalizeFranchiseLinkType,
 } from '../../../../react/components/tabs/franchiseLinksTab.helpers.js';
+
+assert.deepEqual(buildFranchiseLinkReadParams('/people/11'), {
+  company: '11',
+  linkType: ['franchisee', 'filial'],
+  itemsPerPage: 100,
+});
 
 assert.equal(canManageFranchiseLinks('MANAGER'), true);
 assert.equal(canManageFranchiseLinks('manager'), true);
