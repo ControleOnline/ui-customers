@@ -9,6 +9,14 @@
 
 export const FRANCHISE_LINK_TYPES = ['franchisee', 'filial'];
 
+export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => ({
+  company: extractEntityId(companyId),
+  // The API owns relationship filtering; sending both exact values avoids
+  // downloading unrelated people_link rows and filtering the dataset in UI.
+  linkType: [...FRANCHISE_LINK_TYPES],
+  itemsPerPage,
+});
+
 export const extractEntityId = value => {
   if (value == null || value === '') {
     return '';
