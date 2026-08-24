@@ -125,6 +125,9 @@ export const normalizeFranchiseLink = item => {
     linkedName: linked.name,
     linkedAlias: linked.alias,
     linkType,
+    comission: item?.comission ?? item?.commission ?? 0,
+    minimumComission:
+      item?.minimum_comission ?? item?.minimumComission ?? 0,
   };
 };
 
@@ -165,6 +168,9 @@ export const buildFranchiseSavePayload = ({
     company: companyIri,
     people: formData.linkedIri,
     linkType,
+    comission: Number(String(formData.comission ?? 0).replace(',', '.')) || 0,
+    minimum_comission:
+      Number(String(formData.minimumComission ?? 0).replace(',', '.')) || 0,
     enable: true,
   };
 };
