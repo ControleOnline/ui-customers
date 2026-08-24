@@ -208,6 +208,9 @@ const FranchiseLinksTab = ({
                         ]}>
                         {typeLabel}
                       </Text>
+                      <Text style={customStyles.itemSubtext}>
+                        {`Comissão: ${Number(item?.comission || 0)}% · Mínima: ${Number(item?.minimum_comission ?? item?.minimumComission ?? 0)}`}
+                      </Text>
                     </View>
                   </View>
                   {canManage ? (
