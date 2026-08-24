@@ -60,13 +60,20 @@ assert.equal(link.linkedName, 'Franquia X');
 
 const payload = buildFranchiseSavePayload({
   editingLink: null,
-  formData: { linkedIri: '/people/20', linkType: 'filial' },
+  formData: {
+    linkedIri: '/people/20',
+    linkType: 'filial',
+    comission: '12,5',
+    minimumComission: '250',
+  },
   companyIri: '/people/1',
 });
 assert.deepEqual(payload, {
   company: '/people/1',
   people: '/people/20',
   linkType: 'filial',
+  comission: 12.5,
+  minimum_comission: 250,
   enable: true,
 });
 
