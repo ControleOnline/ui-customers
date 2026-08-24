@@ -71,7 +71,8 @@ export const canEditFranchiseCommission = ({user = null, currentCompany = null} 
  * Build read params for franchisee people_link lookup.
  */
 export const buildFranchiseeLinkParams = ({peopleId = '', companyId = ''} = {}) => {
-  const params = {linkType: 'franchisee'};
+  // API Platform exposes linkType as an array filter on people_links.
+  const params = {linkType: ['franchisee']};
   const pid = extractId(peopleId);
   const cid = extractId(companyId);
   if (pid) {
