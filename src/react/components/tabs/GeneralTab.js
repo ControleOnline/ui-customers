@@ -15,9 +15,6 @@ import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStore } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
-import {
-  uppercaseText,
-} from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import ContactTab from './ContactTab';
 import DocumentsTab from './DocumentsTab';
 import AddressesTab from './AddressesTab';
@@ -34,6 +31,7 @@ import {
   normalizeLinkType,
   toPeopleIri,
 } from './generalTabHelpers';
+import FranchiseCommissionSection from './FranchiseCommissionSection';
 
 const GeneralTab = ({
   client,
@@ -301,7 +299,7 @@ const GeneralTab = ({
           </Text>
           <TextInput
             value={registrationForm.name}
-            onChangeText={text => setRegistrationForm(prev => ({ ...prev, name: uppercaseText(text) }))}
+            onChangeText={text => setRegistrationForm(prev => ({ ...prev, name: text }))}
             placeholder={nameLabel}
             style={styles.input}
             placeholderTextColor={themeColors.inputPlaceholderText}
@@ -314,7 +312,7 @@ const GeneralTab = ({
           </Text>
           <TextInput
             value={registrationForm.alias}
-            onChangeText={text => setRegistrationForm(prev => ({ ...prev, alias: uppercaseText(text) }))}
+            onChangeText={text => setRegistrationForm(prev => ({ ...prev, alias: text }))}
             placeholder={aliasLabel}
             style={styles.input}
             placeholderTextColor={themeColors.inputPlaceholderText}
@@ -431,6 +429,11 @@ const GeneralTab = ({
           </TouchableOpacity>
         )}
       </View>
+      <FranchiseCommissionSection
+        client={client}
+        parentCompanyIri={parentCompanyIri}
+        isEditing={isEditing}
+      />
       <PeopleCategoriesPanel
         client={client}
         isEditing={isEditing}
