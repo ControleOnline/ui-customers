@@ -33,6 +33,7 @@ import ContractsTab from '../components/tabs/ContractsTab';
 import ProductsTab from '../components/tabs/ProductsTab';
 import MediaTab from '../components/tabs/MediaTab';
 import FiscalTab from '../components/tabs/FiscalTab';
+import FranchiseLinksTab from '../components/tabs/FranchiseLinksTab';
 import {
   buildEmployeeContactsFromPeopleLinks,
   buildPeopleLinkReadParams,
@@ -415,6 +416,22 @@ const ClientDetails = ({ route, navigation }) => {
           ) : (
             <UsersTab {...tabProps} />
           )}
+        </ScrollView>
+      );
+    }
+
+    if (activeTabKey === 'franchise') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_299_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          <FranchiseLinksTab
+            {...tabProps}
+            emptyText="Nenhuma franquia ou filial vinculada"
+            errorText="Não foi possível carregar os vínculos de franquia/filial."
+          />
         </ScrollView>
       );
     }
