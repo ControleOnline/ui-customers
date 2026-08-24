@@ -34,7 +34,7 @@ describe('employeeContacts', () => {
     ).toEqual({
       company: '29',
       people: '31',
-      linkType: 'sellers-client',
+      linkType: ['sellers-client'],
     })
   })
 
