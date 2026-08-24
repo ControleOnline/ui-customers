@@ -39,6 +39,8 @@ export function useFranchiseLinksManage({
   const [manageForm, setManageForm] = useState({
     linkedIri: '',
     linkType: 'franchisee',
+    comission: '',
+    minimumComission: '',
   });
   const [isManageSaving, setIsManageSaving] = useState(false);
 
@@ -98,6 +100,8 @@ export function useFranchiseLinksManage({
     setManageForm({
       linkedIri: link?.linkedIri || '',
       linkType: link?.linkType || 'franchisee',
+      comission: String(link?.comission ?? ''),
+      minimumComission: String(link?.minimumComission ?? ''),
     });
     setShowManageModal(true);
   }, []);
