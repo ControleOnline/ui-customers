@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   buildAvailableFranchiseOptions,
+  buildFranchiseLinkReadParams,
   buildFranchiseSavePayload,
   canManageFranchiseLinks,
   normalizeFranchiseLink,
   toPeopleIri,
-  FRANCHISE_LINK_TYPES,
 } from './franchiseLinksTab.helpers';
 import { extractId } from './salesmanTabHelpers';
 import { buildFranchiseLinksFromPeopleLinks } from './franchiseLinksTab.helpers';
@@ -111,20 +111,10 @@ export function useFranchiseLinksManage({
     if (!getPeopleLinks || !clientId) {
       return;
     }
-    // Fetch both types (API exact filter is single value; fetch without type then filter)
-    const response = await getPeopleLinks({
-      company: clientId,
-      itemsPerPage: 100,
-    });
+    const response = await getPeopleLinks(buildFranchiseLinkReadParams(clientId));
     const next = buildFranchiseLinksFromPeopleLinks(response, {
       companyId: clientId,
-    }).filter(link =>
-      FRANCHISE_LINK_TYPES.includes(
-        String(link?.linkType || '')
-          .trim()
-          .toLowerCase(),
-      ),
-    );
+    });
     setLinks(next);
   }, [getPeopleLinks, clientId, setLinks]);
 
