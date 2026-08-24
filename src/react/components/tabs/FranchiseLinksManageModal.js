@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -45,6 +46,15 @@ const styles = {
     borderColor: '#CBD5E1',
     borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#0F172A',
     backgroundColor: '#FFFFFF',
   },
   modalActions: {
@@ -134,6 +144,32 @@ const FranchiseLinksManageModal = ({
                 ))}
               </Picker>
             </View>
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Comissão (%)</Text>
+            <TextInput
+              value={formData.comission}
+              onChangeText={value =>
+                setFormData(previous => ({ ...previous, comission: value }))
+              }
+              keyboardType="decimal-pad"
+              style={styles.input}
+              testID="franchise-link-comission-input"
+            />
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Comissão mínima</Text>
+            <TextInput
+              value={formData.minimumComission}
+              onChangeText={value =>
+                setFormData(previous => ({ ...previous, minimumComission: value }))
+              }
+              keyboardType="decimal-pad"
+              style={styles.input}
+              testID="franchise-link-minimum-comission-input"
+            />
           </View>
 
           <View style={styles.fieldGroup}>
