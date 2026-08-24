@@ -1,14 +1,27 @@
 /**
  * Pure helpers for Franchise/Filial (PJ→PJ) people_link management.
  * Administrative CRUD is gated by APP_TYPE === MANAGER.
+ *
+ * task-485: extractEntityId must accept object | IRI string | scalar id so
+ * GET /people_links?company=… rows are not filtered out when company/people
+ * are not fully expanded in the payload.
  */
 
 export const FRANCHISE_LINK_TYPES = ['franchisee', 'filial'];
 
-export const extractEntityId = value =>
-  String(value || '')
+export const extractEntityId = value => {
+  if (value == null || value === '') {
+    return '';
+  }
+  if (typeof value === 'object') {
+    return String(value.id || value['@id'] || '')
+      .replace(/\D/g, '')
+      .trim();
+  }
+  return String(value)
     .replace(/\D/g, '')
     .trim();
+};
 
 export const toPeopleIri = value => {
   const directIri = String(value?.['@id'] || value || '').trim();
@@ -48,17 +61,26 @@ export const franchiseLinkTypeLabel = (linkType, t) => {
 };
 
 export const normalizeFranchiseCandidate = item => {
-  const peopleId = extractEntityId(item?.id || item?.['@id']);
+  // Accept full People object, IRI string or numeric id
+  const peopleId = extractEntityId(item);
   const peopleIri = toPeopleIri(item);
-  const peopleName = String(item?.name || item?.alias || '').trim();
-  const peopleAlias = String(item?.alias || '').trim();
-  const peopleType = String(item?.peopleType || '').toUpperCase();
+  const peopleName = String(
+    (typeof item === 'object' && item
+      ? item.name || item.alias
+      : '') || '',
+  ).trim();
+  const peopleAlias = String(
+    (typeof item === 'object' && item ? item.alias : '') || '',
+  ).trim();
+  const peopleType = String(
+    (typeof item === 'object' && item ? item.peopleType : '') || '',
+  ).toUpperCase();
 
-  if (!peopleId || !peopleIri || !peopleName) {
+  if (!peopleId || !peopleIri) {
     return null;
   }
 
-  // Only PJ (legal entity)
+  // Only PJ (legal entity) when type is known; allow missing type (partial embed)
   if (peopleType && peopleType !== 'J') {
     return null;
   }
@@ -66,7 +88,7 @@ export const normalizeFranchiseCandidate = item => {
   return {
     id: peopleId,
     iri: peopleIri,
-    name: peopleName,
+    name: peopleName || `ID ${peopleId}`,
     alias: peopleAlias,
     peopleType: peopleType || 'J',
   };
@@ -74,7 +96,9 @@ export const normalizeFranchiseCandidate = item => {
 
 export const normalizeFranchiseLink = item => {
   // Linked PJ is in `people` when company is the current client (parent)
-  const linked = normalizeFranchiseCandidate(item?.people || {});
+  const linked = normalizeFranchiseCandidate(
+    item?.people ?? item?.people_id ?? null,
+  );
   if (!linked) {
     return null;
   }
@@ -153,29 +177,46 @@ export const buildFranchiseLinksFromPeopleLinks = (
 
   return extractItems(payload)
     .filter(link => {
+      // company/people may be object, IRI string or scalar (task-485)
       const linkCompanyId = extractEntityId(
-        link?.company?.id || link?.company?.['@id'],
+        link?.company ?? link?.company_id,
       );
       const linkType = normalizeFranchiseLinkType(link?.linkType);
       const linkedPeopleId = extractEntityId(
-        link?.people?.id || link?.people?.['@id'],
+        link?.people ?? link?.people_id,
       );
-      const peopleType = String(link?.people?.peopleType || '').toUpperCase();
+      const peopleType = String(
+        (typeof link?.people === 'object' && link?.people
+          ? link.people.peopleType
+          : '') || '',
+      ).toUpperCase();
 
       if (!linkType || !linkedPeopleId) {
         return false;
       }
-      if (normalizedCompanyId && linkCompanyId !== normalizedCompanyId) {
+      if (normalizedCompanyId && linkCompanyId && linkCompanyId !== normalizedCompanyId) {
         return false;
       }
-      // PJ only
+      // When company filter was requested but row has no company id, keep if people exists
+      // (API already filtered by company query param).
+      // PJ only when type known
       if (peopleType && peopleType !== 'J') {
         return false;
       }
       return true;
     })
-    .map(link => ({
-      ...link,
-      // ensure company/people objects present for list rendering
-    }));
+    .map(link => {
+      const peopleRaw = link?.people;
+      let people = peopleRaw;
+      if (typeof peopleRaw !== 'object' || peopleRaw == null) {
+        const id = extractEntityId(peopleRaw ?? link?.people_id);
+        people = id
+          ? { id, '@id': `/people/${id}`, name: `ID ${id}`, peopleType: 'J' }
+          : {};
+      }
+      return {
+        ...link,
+        people,
+      };
+    });
 };
