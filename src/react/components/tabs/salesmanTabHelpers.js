@@ -108,14 +108,17 @@ export const formatCommissionSubtitle = effective => {
  * Edit permission for commission fields on client SalesmanTab.
  * Same criterion as franchisee commission (#10): ROLE_SUPER or ROLE_OWNER.
  */
-export const canEditSalesmanCommission = (user = null) => {
+export const canEditSalesmanCommission = (user = null, currentCompany = null) => {
   const roles = Array.isArray(user?.roles)
     ? user.roles
     : Array.isArray(user?.role)
       ? user.role
       : [];
 
-  return roles.some(role => EDITABLE_COMMISSION_ROLES.includes(String(role)));
+  return (
+    roles.some(role => EDITABLE_COMMISSION_ROLES.includes(String(role))) ||
+    Boolean(currentCompany?.user?.owner_enabled)
+  );
 };
 
 /**
