@@ -16,10 +16,10 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '@controleonline/../../src/styles/colors';
 
 import {
+  buildFranchiseLinkReadParams,
   buildFranchiseLinksFromPeopleLinks,
   franchiseLinkTypeLabel,
   normalizeFranchiseLink,
-  FRANCHISE_LINK_TYPES,
 } from './franchiseLinksTab.helpers';
 import { extractId } from './salesmanTabHelpers';
 import { resolveAppType } from './salesmanTabSession';
@@ -63,23 +63,14 @@ const FranchiseLinksTab = ({
     setIsLoading(true);
     setError('');
 
-    getPeopleLinks({
-      company: clientId,
-      itemsPerPage: 100,
-    })
+    getPeopleLinks(buildFranchiseLinkReadParams(clientId))
       .then(items => {
         if (cancelled) {
           return;
         }
         const next = buildFranchiseLinksFromPeopleLinks(items, {
           companyId: clientId,
-        }).filter(link =>
-          FRANCHISE_LINK_TYPES.includes(
-            String(link?.linkType || '')
-              .trim()
-              .toLowerCase(),
-          ),
-        );
+        });
         setLinks(next);
       })
       .catch(() => {
