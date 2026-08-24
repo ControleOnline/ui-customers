@@ -64,7 +64,9 @@ export const buildPeopleLinkReadParams = ({
   }
 
   if (normalizedLinkType) {
-    params.linkType = normalizedLinkType
+    // The people_links API declares linkType as an array filter. Keeping the
+    // value scalar makes API Platform reject the whole request with HTTP 400.
+    params.linkType = [normalizedLinkType]
   }
 
   if (itemsPerPage) {
