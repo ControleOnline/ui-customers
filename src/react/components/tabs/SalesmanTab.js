@@ -79,7 +79,9 @@ const SalesmanTab = ({
   const appType = useMemo(() => resolveAppType(), []);
   const displayCommission = shouldDisplayCommission(appType);
   const sessionUser = useMemo(() => resolveSessionUser(authStore), [authStore]);
-  const canEdit = displayCommission && canEditSalesmanCommission(sessionUser);
+  const canEdit =
+    displayCommission &&
+    canEditSalesmanCommission(sessionUser, peopleGetters?.currentCompany);
 
   const loadDefaultSalesmanLinks = useCallback(
     async salesmanIds => {
