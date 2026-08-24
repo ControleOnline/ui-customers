@@ -1,6 +1,21 @@
-const EMPLOYEE_CONTACT_LINK_TYPES = ['employee', 'owner', 'director', 'manager', 'courier']
+const EMPLOYEE_CONTACT_LINK_TYPES = ['employee', 'owner', 'director', 'manager', 'salesman', 'after-sales', 'courier']
 
 const extractId = value => String(value || '').replace(/\D/g, '')
+
+/** Resolve people/company id whether the field is an object or a plain IRI string. */
+const extractEntityId = value => {
+  if (value == null || value === '') {
+    return ''
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    return extractId(value)
+  }
+  if (typeof value === 'object') {
+    return extractId(value.id || value['@id'] || value)
+  }
+  return ''
+}
+
 const normalizeEmployeeLinkTypeStrict = value => {
   const normalized = String(value || '').trim().toLowerCase()
 
@@ -33,6 +48,7 @@ export const buildPeopleLinkReadParams = ({
   companyId = '',
   peopleId = '',
   linkType = '',
+  itemsPerPage = 100,
 } = {}) => {
   const params = {}
   const normalizedCompanyId = extractId(companyId)
@@ -51,6 +67,10 @@ export const buildPeopleLinkReadParams = ({
     params.linkType = normalizedLinkType
   }
 
+  if (itemsPerPage) {
+    params.itemsPerPage = itemsPerPage
+  }
+
   return params
 }
 
@@ -67,8 +87,8 @@ export const filterPeopleLinksByScope = (
     : []
 
   return extractPeopleLinkItems(payload).filter(link => {
-    const linkCompanyId = extractId(link?.company?.id || link?.company?.['@id'])
-    const linkPeopleId = extractId(link?.people?.id || link?.people?.['@id'])
+    const linkCompanyId = extractEntityId(link?.company)
+    const linkPeopleId = extractEntityId(link?.people)
     const linkType = String(link?.linkType || '').trim().toLowerCase()
 
     if (normalizedCompanyId && linkCompanyId !== normalizedCompanyId) {
@@ -94,7 +114,7 @@ export const buildSalesmanLinksFromPeopleLinks = (
   return filterPeopleLinksByScope(payload, {
     peopleId: clientId,
     linkTypes: [linkType],
-  }).filter(link => extractId(link?.company?.id || link?.company?.['@id']))
+  }).filter(link => extractEntityId(link?.company))
 }
 
 export const buildEmployeeContactsFromPeopleLinks = (
@@ -111,20 +131,27 @@ export const buildEmployeeContactsFromPeopleLinks = (
     linkTypes: normalizedAllowedLinkTypes,
   })
     .map(link => {
-      const person = link?.people
-      const personId = extractId(person?.id || person?.['@id'])
+      const personRaw = link?.people
+      const personId = extractEntityId(personRaw)
       const normalizedLinkType = normalizeEmployeeLinkTypeStrict(link?.linkType)
 
       if (!personId || (companyId && personId === companyId)) {
         return null
       }
 
+      const person =
+        personRaw && typeof personRaw === 'object'
+          ? personRaw
+          : { id: personId, '@id': `/people/${personId}` }
+
       if (String(person?.peopleType || '').toUpperCase() === 'J') {
         return null
       }
 
       return {
-        ...(person || {}),
+        ...person,
+        id: person.id || personId,
+        '@id': person['@id'] || `/people/${personId}`,
         linkType: normalizedLinkType,
         peopleLink: link,
       }
