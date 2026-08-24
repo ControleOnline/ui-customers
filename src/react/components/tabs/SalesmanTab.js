@@ -162,7 +162,8 @@ const SalesmanTab = ({
       try {
         const response = await getPeopleLinks({
           company: currentCompanyId,
-          linkType: 'salesman',
+          // people_links.linkType is an array filter in the API contract.
+          linkType: ['salesman'],
           itemsPerPage: Math.max(uniqueIds.length, 50),
         });
         const indexed = indexDefaultSalesmanLinksByPeopleId(response);
