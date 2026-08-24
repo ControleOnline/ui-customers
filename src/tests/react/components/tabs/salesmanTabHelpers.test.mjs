@@ -59,6 +59,13 @@ describe('salesmanTabHelpers', () => {
       assert.equal(canEditSalesmanCommission({ roles: ['ROLE_SUPER'] }), true);
       assert.equal(canEditSalesmanCommission({ roles: ['ROLE_OWNER'] }), true);
       assert.equal(canEditSalesmanCommission({ roles: ['ROLE_ADMIN'] }), false);
+      assert.equal(
+        canEditSalesmanCommission(
+          { roles: ['ROLE_ADMIN'] },
+          { user: { owner_enabled: true } },
+        ),
+        true,
+      );
       assert.equal(canEditSalesmanCommission({}), false);
     });
   });
