@@ -98,7 +98,7 @@ describe('franchiseCommissionHelpers', () => {
   describe('buildFranchiseeLinkParams', () => {
     it('includes linkType franchisee and ids', () => {
       expect(buildFranchiseeLinkParams({peopleId: '/people/11', companyId: 3})).toEqual({
-        linkType: 'franchisee',
+        linkType: ['franchisee'],
         people: '11',
         company: '3',
       });
