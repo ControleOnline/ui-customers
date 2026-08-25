@@ -7,15 +7,27 @@
  * are not fully expanded in the payload.
  */
 
-export const FRANCHISE_LINK_TYPES = ['franchisee', 'filial'];
+/**
+ * Types that exist in people_link.link_type MySQL SET (api-platform-people).
+ * `filial` is NOT in the SET — do not send it on GET or the IN filter can
+ * empty the collection (app-community#521).
+ */
+export const FRANCHISE_LINK_TYPES = ['franchisee'];
 
-export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => ({
-  company: extractEntityId(companyId),
-  // The API owns relationship filtering; sending both exact values avoids
-  // downloading unrelated people_link rows and filtering the dataset in UI.
-  linkType: [...FRANCHISE_LINK_TYPES],
-  itemsPerPage,
-});
+/** UI-only labels / residual payloads may still mention filial. */
+export const FRANCHISE_LINK_TYPES_UI = ['franchisee', 'filial'];
+
+export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => {
+  const company = extractEntityId(companyId);
+  return {
+    // Numeric id is accepted by PeopleLinkService::normalizeIdentifier + SearchFilter.
+    company,
+    // Only valid SET values — never `filial` (task-521).
+    linkType: [...FRANCHISE_LINK_TYPES],
+    enable: true,
+    itemsPerPage,
+  };
+};
 
 export const extractEntityId = value => {
   if (value == null || value === '') {
@@ -54,7 +66,8 @@ export const normalizeFranchiseLinkType = value => {
   const normalized = String(value || '')
     .trim()
     .toLowerCase();
-  return FRANCHISE_LINK_TYPES.includes(normalized) ? normalized : '';
+  // Accept UI residual `filial` for display; API read uses FRANCHISE_LINK_TYPES only.
+  return FRANCHISE_LINK_TYPES_UI.includes(normalized) ? normalized : '';
 };
 
 export const franchiseLinkTypeLabel = (linkType, t) => {
