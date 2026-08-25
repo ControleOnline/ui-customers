@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   buildAvailableFranchiseOptions,
   buildFranchiseLinkReadParams,
+  extractEntityId,
   buildFranchiseLinksFromPeopleLinks,
   buildFranchiseSavePayload,
   canManageFranchiseLinks,
@@ -13,7 +14,8 @@ import {
 
 assert.deepEqual(buildFranchiseLinkReadParams('/people/11'), {
   company: '11',
-  linkType: ['franchisee', 'filial'],
+  linkType: ['franchisee'],
+  enable: true,
   itemsPerPage: 100,
 });
 
@@ -125,3 +127,39 @@ assert.equal(options.length, 1);
 assert.equal(options[0].id, '2');
 
 console.log('franchiseLinksTab.helpers.test.mjs OK');
+
+
+// task-521 regression: API rows with company_id=5 + link_type franchisee must survive
+// build when people is only an id/IRI (staging payload shape).
+const stagingLike = buildFranchiseLinksFromPeopleLinks(
+  {
+    member: [
+      {
+        id: 51,
+        linkType: 'franchisee',
+        company: 5,
+        people: 51,
+        enable: true,
+      },
+      {
+        id: 52,
+        linkType: 'franchisee',
+        company: '/people/5',
+        people: '/people/52',
+        enable: true,
+      },
+      {
+        id: 99,
+        linkType: 'employee',
+        company: 5,
+        people: 7,
+        enable: true,
+      },
+    ],
+  },
+  { companyId: 5 },
+);
+assert.equal(stagingLike.length, 2);
+assert.equal(extractEntityId(stagingLike[0].people), '51');
+assert.equal(extractEntityId(stagingLike[1].people), '52');
+
