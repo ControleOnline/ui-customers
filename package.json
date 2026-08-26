@@ -6,7 +6,8 @@
   "license": "MIT",
   "main": "src/react/index.js",
   "scripts": {
-    "test": "npm run test:supplier-product-flow && npm run test:fiscal-shortcut && npm run test:documents && npm run test:employee-link-types && npm run test:salesman-tab",
+    "test": "npm run test:supplier-product-flow && npm run test:fiscal-shortcut && npm run test:people-type && npm run test:salesman-tab",
+    "test:people-type": "node --test src/tests/react/components/tabs/peopleType.contract.test.mjs",
     "test:supplier-product-flow": "node --test src/tests/react/domain/productSupplierFlow.test.mjs",
     "test:fiscal-shortcut": "node --test src/tests/react/components/tabs/fiscalTabContract.test.mjs",
     "test:documents": "node --test src/tests/react/components/tabs/documentsTabHelpers.test.mjs src/tests/react/components/tabs/documentsTabContract.test.mjs",

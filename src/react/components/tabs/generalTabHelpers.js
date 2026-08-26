@@ -98,6 +98,22 @@ const normalizeLinkType = value => {
     : 'employee';
 };
 
+/** Canonical People.peopleType: F (PF) | J (PJ). API enum — do not invent values. */
+const PEOPLE_TYPE_OPTIONS = [
+  { value: 'F', label: 'Pessoa Física' },
+  { value: 'J', label: 'Pessoa Jurídica' },
+];
+
+const normalizePeopleType = value => {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase();
+  if (normalized === 'J' || normalized === 'JURIDICA' || normalized === 'PJ') {
+    return 'J';
+  }
+  return 'F';
+};
+
 const toPeopleIri = value => {
   const directIri = String(value?.['@id'] || '').trim();
   if (directIri.startsWith('/people/')) {
@@ -118,5 +134,7 @@ export {
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
   normalizeLinkType,
+  PEOPLE_TYPE_OPTIONS,
+  normalizePeopleType,
   toPeopleIri,
 };

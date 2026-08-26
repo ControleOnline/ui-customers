@@ -29,10 +29,11 @@ import {
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
   normalizeLinkType,
+  PEOPLE_TYPE_OPTIONS,
+  normalizePeopleType,
   toPeopleIri,
 } from './generalTabHelpers';
 import FranchiseCommissionSection from './FranchiseCommissionSection';
-
 const GeneralTab = ({
   client,
   customStyles,
@@ -90,7 +91,7 @@ const GeneralTab = ({
       alias: normalizeIdentityValue(client?.alias),
       dateBr: formatYmdToBr(client?.foundationDate),
       enable: normalizeEnable(client?.enable ?? client?.enabled),
-      peopleType: String(client?.peopleType || 'J').toUpperCase(),
+      peopleType: normalizePeopleType(client?.peopleType || 'J'),
       linkType: normalizeLinkType(initialContactLinkType),
     };
 
@@ -139,7 +140,7 @@ const GeneralTab = ({
     };
   }, [canEditLinkType, contactPeopleIri, parentCompanyIri, peopleLinkActions]);
 
-  const isPessoaFisica = registrationForm.peopleType === 'F';
+  const isPessoaFisica = normalizePeopleType(registrationForm.peopleType) === 'F';
   const isAvatarUploadDisabled = isSavingClientAvatar;
   const avatarUploadLabel = isPessoaFisica ? 'subir avatar' : 'subir ícone';
   const nameLabel = isPessoaFisica ? global.t?.t('users','label','name') : global.t?.t('users','label','companyName');
@@ -152,6 +153,8 @@ const GeneralTab = ({
       normalizeIdentityValue(registrationForm.alias) !== normalizeIdentityValue(originalRegistrationForm.alias) ||
       String(registrationForm.dateBr || '') !== String(originalRegistrationForm.dateBr || '') ||
       Boolean(registrationForm.enable) !== Boolean(originalRegistrationForm.enable) ||
+      normalizePeopleType(registrationForm.peopleType) !==
+        normalizePeopleType(originalRegistrationForm.peopleType) ||
       (canEditLinkType &&
         normalizeLinkType(registrationForm.linkType) !==
           normalizeLinkType(originalRegistrationForm.linkType))
@@ -210,10 +213,12 @@ const GeneralTab = ({
         }
       }
 
+      const peopleType = normalizePeopleType(registrationForm.peopleType);
       const payload = {
         name,
         alias,
         enable: Boolean(registrationForm.enable),
+        peopleType,
       };
 
       if (foundationDate) {
@@ -225,6 +230,7 @@ const GeneralTab = ({
       onUpdateClient?.('name', name);
       onUpdateClient?.('alias', alias);
       onUpdateClient?.('enable', Boolean(registrationForm.enable));
+      onUpdateClient?.('peopleType', peopleType);
       if (canEditLinkType) {
         onUpdateClient?.('linkType', normalizeLinkType(registrationForm.linkType));
       }
@@ -237,6 +243,7 @@ const GeneralTab = ({
         name,
         alias,
         enable: Boolean(registrationForm.enable),
+        peopleType,
         dateBr: foundationDate ? formatYmdToBr(foundationDate) : registrationForm.dateBr,
         linkType: normalizeLinkType(registrationForm.linkType),
       };
@@ -375,6 +382,33 @@ const GeneralTab = ({
             />
           </View>
         </View>
+
+        {isEditing && (
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Tipo</Text>
+            <View style={styles.inputRow}>
+              <Picker
+                selectedValue={normalizePeopleType(registrationForm.peopleType)}
+                onValueChange={value =>
+                  setRegistrationForm(prev => ({
+                    ...prev,
+                    peopleType: normalizePeopleType(value),
+                  }))
+                }
+                mode={pickerMode}
+                accessibilityLabel="Tipo de colaborador"
+                style={styles.inputRowField}>
+                {PEOPLE_TYPE_OPTIONS.map(option => (
+                  <Picker.Item
+                    key={option.value}
+                    label={option.label}
+                    value={option.value}
+                  />
+                ))}
+              </Picker>
+            </View>
+          </View>
+        )}
 
         {canEditLinkType && (
           <View style={styles.fieldGroup}>

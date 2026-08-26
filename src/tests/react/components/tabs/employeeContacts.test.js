@@ -23,10 +23,6 @@ describe('employeeContacts', () => {
     expect(normalizeEmployeeLinkType('courier')).toBe('courier')
     expect(normalizeEmployeeLinkType('SALESMAN')).toBe('salesman')
     expect(normalizeEmployeeLinkType('after-sales')).toBe('after-sales')
-    expect(normalizeEmployeeLinkType('SALESMAN')).toBe('salesman')
-    expect(normalizeEmployeeLinkType('after-sales')).toBe('after-sales')
-    expect(normalizeEmployeeLinkType('SALESMAN')).toBe('salesman')
-    expect(normalizeEmployeeLinkType('after-sales')).toBe('after-sales')
     expect(normalizeEmployeeLinkType('unknown')).toBe('employee')
   })
 
@@ -88,7 +84,7 @@ describe('employeeContacts', () => {
     ).toEqual([requestedLink])
   })
 
-  it('maps people links to physical contacts for the customer details tab', () => {
+  it('maps people links to PF and PJ contacts for the customer details tab', () => {
     expect(
       buildEmployeeContactsFromPeopleLinks(
         {
@@ -159,6 +155,18 @@ describe('employeeContacts', () => {
         }),
       }),
       expect.objectContaining({
+        id: 33,
+        '@id': '/people/33',
+        name: 'Filial',
+        alias: 'Filial',
+        peopleType: 'J',
+        linkType: 'employee',
+        peopleLink: expect.objectContaining({
+          id: 32,
+          linkType: 'employee',
+        }),
+      }),
+      expect.objectContaining({
         id: 35,
         '@id': '/people/35',
         name: 'Rafael',
@@ -216,8 +224,6 @@ describe('employeeContacts', () => {
       }),
     ])
   })
-
-
   it('excludes soft-deleted people and disabled people_links', () => {
     expect(
       buildEmployeeContactsFromPeopleLinks(
