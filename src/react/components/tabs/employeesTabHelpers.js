@@ -146,10 +146,30 @@ export const LINK_TYPE_OPTIONS = [
   { value: 'owner', translationKey: 'owner' },
   { value: 'director', translationKey: 'director' },
   { value: 'manager', translationKey: 'manager' },
-  { value: 'salesman', translationKey: 'salesman' },
-  { value: 'after-sales', translationKey: 'after-sales' },
   { value: 'courier', translationKey: 'courier' },
 ];
+
+/** Canonical People.peopleType values from API (enum F|J). Do not invent types. */
+export const PEOPLE_TYPE_OPTIONS = [
+  { value: 'F', label: 'Pessoa Física' },
+  { value: 'J', label: 'Pessoa Jurídica' },
+];
+
+export const normalizePeopleType = value => {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase();
+  if (normalized === 'J' || normalized === 'JURIDICA' || normalized === 'PJ') {
+    return 'J';
+  }
+  return 'F';
+};
+
+export const formatPeopleTypeLabel = value => {
+  const type = normalizePeopleType(value);
+  const option = PEOPLE_TYPE_OPTIONS.find(item => item.value === type);
+  return option?.label || type;
+};
 
 export const resolveEmployeeLinkType = employee =>
   normalizeEmployeeLinkType(
@@ -203,8 +223,14 @@ export const formatEmployeeContactTitle = employee => {
 export const formatEmployeeContactMeta = employee => {
   const id = extractId(employee?.id || employee?.['@id']) || '-';
   const linkType = resolveEmployeeContactLinkType(employee);
-
-  return linkType ? `ID: ${id} / ${linkType}` : `ID: ${id}`;
+  const peopleType = formatPeopleTypeLabel(
+    employee?.peopleType || employee?.people?.peopleType,
+  );
+  const parts = [`ID: ${id}`, peopleType];
+  if (linkType) {
+    parts.push(linkType);
+  }
+  return parts.join(' / ');
 };
 
 export const buildEmployeeCreatePayload = ({
@@ -213,14 +239,15 @@ export const buildEmployeeCreatePayload = ({
   foundationDate,
   linkType,
   parentPeopleId,
+  peopleType,
 }) => {
-  const normalizedParentId = extractId(parentPeopleId);
   const payload = {
     name,
     alias,
-    peopleType: 'F',
-    company: normalizedParentId ? `/people/${normalizedParentId}` : undefined,
+    peopleType: normalizePeopleType(peopleType),
+    company: `/people/${parentPeopleId}`,
     linkType: normalizeEmployeeLinkType(linkType),
+    'extra-data': {},
   };
 
   if (foundationDate) {
@@ -228,93 +255,4 @@ export const buildEmployeeCreatePayload = ({
   }
 
   return payload;
-};
-
-export const extractEmployeeSaveErrorMessage = (error, fallback = '') => {
-  if (!error) return fallback || '';
-  if (Array.isArray(error?.message)) {
-    const joined = error.message
-      .map(item => (typeof item === 'string' ? item : item?.message || item?.detail || ''))
-      .filter(Boolean)
-      .join(', ');
-    if (joined) return joined;
-  }
-  if (typeof error?.message === 'string' && error.message.trim()) {
-    if (
-      error.message === 'Request failed' &&
-      (error?.response?.data?.message || error?.detail || error?.hydra?.description)
-    ) {
-      return error.response?.data?.message || error.detail || error.hydra?.description || error.message;
-    }
-    return error.message;
-  }
-  if (typeof error?.detail === 'string' && error.detail.trim()) return error.detail;
-  if (typeof error === 'string' && error.trim()) return error;
-  return fallback || '';
-};
-
-export const buildEmployeePeopleLinkPayload = ({ companyId, peopleId, linkType }) => {
-  const company = extractId(companyId);
-  const people = extractId(peopleId);
-  if (!company || !people) return null;
-  return {
-    company: `/people/${company}`,
-    people: `/people/${people}`,
-    linkType: normalizeEmployeeLinkType(linkType),
-  };
-};
-
-export const saveEmployeeContact = async ({
-  peopleActions,
-  peopleLinkActions,
-  form,
-  parentPeopleId,
-}) => {
-  const name = normalizeIdentityValue(form.name);
-  const alias = normalizeIdentityValue(form.alias);
-  if (!name || !alias) {
-    const err = new Error('required');
-    err.code = 'REQUIRED';
-    throw err;
-  }
-  let foundationDate;
-  if (form.foundationDateBr) {
-    foundationDate = parseBrDateToYmd(form.foundationDateBr);
-    if (!foundationDate) {
-      const err = new Error('Data invalida. Use o formato DD/MM/AAAA.');
-      err.code = 'INVALID_DATE';
-      throw err;
-    }
-  }
-  if (!peopleActions?.company || !parentPeopleId) {
-    const err = new Error('missing_actions');
-    err.code = 'MISSING';
-    throw err;
-  }
-  const payload = buildEmployeeCreatePayload({
-    name,
-    alias,
-    foundationDate,
-    linkType: form.linkType,
-    parentPeopleId,
-  });
-  const created = await peopleActions.company(payload);
-  const createdPeopleId = extractId(
-    created?.id || created?.['@id'] || created?.data?.id || created?.data?.['@id'],
-  );
-  if (createdPeopleId && peopleLinkActions?.save) {
-    const linkPayload = buildEmployeePeopleLinkPayload({
-      companyId: parentPeopleId,
-      peopleId: createdPeopleId,
-      linkType: form.linkType,
-    });
-    if (linkPayload) {
-      try {
-        await peopleLinkActions.save(linkPayload);
-      } catch (_e) {
-        // link may already exist from backend postPersist
-      }
-    }
-  }
-  return created;
 };

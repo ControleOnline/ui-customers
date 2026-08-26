@@ -5,6 +5,8 @@ import {
   normalizeEnable,
   normalizeIdentityValue,
   normalizeLinkType,
+  normalizePeopleType,
+  PEOPLE_TYPE_OPTIONS,
   formatYmdToBr,
   parseBrDateToYmd,
   formatDateInput,
@@ -138,6 +140,16 @@ describe('generalTabHelpers', () => {
           originalLinkType: 'employee',
         }),
       ).toBe(false);
+    });
+  });
+
+  describe('normalizePeopleType', () => {
+    it('maps only F and J from API enum', () => {
+      expect(normalizePeopleType('F')).toBe('F');
+      expect(normalizePeopleType('J')).toBe('J');
+      expect(normalizePeopleType('juridica')).toBe('J');
+      expect(normalizePeopleType('contrato')).toBe('F');
+      expect(PEOPLE_TYPE_OPTIONS.map(o => o.value)).toEqual(['F', 'J']);
     });
   });
 });
