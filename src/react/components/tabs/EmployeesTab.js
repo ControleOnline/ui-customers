@@ -249,6 +249,8 @@ const EmployeesTab = ({
           <View style={customStyles.sectionHeader}>
             <Text style={customStyles.sectionTitle}>{txt_title}</Text>
             <TouchableOpacity
+              testID="employee-add-button"
+              accessibilityLabel="addPeople"
               onPress={handleOpenModal}
               style={customStyles.iconButtonPrimary}>
               <FeatherIcon
@@ -355,6 +357,7 @@ const EmployeesTab = ({
                 Nome *
               </Text>
               <TextInput
+                testID="employee-name-input"
                 value={formData.name}
                 onChangeText={text => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="Digite o nome"
@@ -369,6 +372,7 @@ const EmployeesTab = ({
                 Apelido *
               </Text>
               <TextInput
+                testID="employee-alias-input"
                 value={formData.alias}
                 onChangeText={text => setFormData(prev => ({ ...prev, alias: text }))}
                 placeholder="Digite o apelido"

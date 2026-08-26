@@ -9,6 +9,8 @@ import {
   extractId,
   LINK_TYPE_OPTIONS,
   buildEmployeeDetailNavParams,
+  normalizeIdentityValue,
+  formatEmployeeContactTitle,
 } from '../../../../react/components/tabs/employeesTabHelpers';
 
 describe('employeesTabHelpers', () => {
@@ -60,5 +62,17 @@ describe('employeesTabHelpers', () => {
     expect(
       buildEmployeeDetailNavParams({ employee: {}, parentPeopleId: '15' }),
     ).toBeNull();
+  });
+
+  it('normalizeIdentityValue keeps mixed case and trims whitespace (app-community#626)', () => {
+    expect(normalizeIdentityValue('  Maria Silva  ')).toBe('Maria Silva');
+    expect(normalizeIdentityValue('Cláudia Mixed')).toBe('Cláudia Mixed');
+    expect(normalizeIdentityValue('MARIA')).toBe('MARIA');
+  });
+
+  it('formatEmployeeContactTitle displays stored capitalization', () => {
+    expect(
+      formatEmployeeContactTitle({ name: 'Maria Silva', alias: 'Mari' }),
+    ).toBe('Maria Silva / Mari');
   });
 });

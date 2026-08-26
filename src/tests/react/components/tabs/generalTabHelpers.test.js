@@ -10,9 +10,17 @@ import {
   toPeopleIri,
   extractId,
   LINK_TYPE_OPTIONS,
+  normalizeIdentityValue,
 } from '../../../components/tabs/generalTabHelpers';
 
 describe('generalTabHelpers', () => {
+  describe('normalizeIdentityValue', () => {
+    it('preserves mixed case and only trims whitespace (app-community#626)', () => {
+      expect(normalizeIdentityValue('  Maria Silva  ')).toBe('Maria Silva');
+      expect(normalizeIdentityValue('Cláudia Mixed Case')).toBe('Cláudia Mixed Case');
+    });
+  });
+
   describe('normalizeEnable', () => {
     it('accepts boolean true/false', () => {
       expect(normalizeEnable(true)).toBe(true);
