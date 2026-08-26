@@ -148,14 +148,19 @@ export const confirmPeopleSoftDelete = ({
   removePeople,
   navigation,
   setIsRemoving,
+  isEmployeeContext = false,
 }) => {
   if (!clientId || typeof removePeople !== 'function') {
     return;
   }
 
+  const message = isEmployeeContext
+    ? 'O colaborador será marcado como removido e os vínculos com a empresa (people_link) serão desativados. O registro permanece no banco (exclusão lógica). Deseja continuar?'
+    : 'A pessoa será marcada como removida e deixará de aparecer nas listagens. O registro permanece no banco (exclusão lógica). Deseja continuar?';
+
   Alert.alert(
-    'Remover pessoa',
-    'A pessoa será marcada como removida e deixará de aparecer nas listagens. O registro permanece no banco (exclusão lógica). Deseja continuar?',
+    isEmployeeContext ? 'Remover colaborador' : 'Remover pessoa',
+    message,
     [
       { text: 'Cancelar', style: 'cancel' },
       {
@@ -173,7 +178,8 @@ export const confirmPeopleSoftDelete = ({
           } catch (error) {
             Alert.alert(
               'Falha ao remover',
-              error?.message || 'Não foi possível remover a pessoa. Tente novamente.',
+              error?.message ||
+                'Não foi possível remover. Verifique vínculos (pedidos, comissões, acessos) e tente novamente.',
             );
           } finally {
             setIsRemoving?.(false);

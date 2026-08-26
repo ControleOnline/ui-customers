@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   ActivityIndicator,
+  Alert,
   Keyboard,
   Platform,
   ScrollView,
@@ -112,6 +113,8 @@ const EmployeesTab = ({
   const peopleActions = peopleStore.actions || {};
   const peopleLinkStore = useStore('people_link');
   const getPeopleLinks = peopleLinkStore?.actions?.getItems;
+  const removePeople = peopleActions?.remove;
+  const removePeopleLink = peopleLinkStore?.actions?.remove;
 
   const parentPeopleId = useMemo(
     () => extractId(client?.id || client?.['@id']),
@@ -228,6 +231,62 @@ const EmployeesTab = ({
     }
   };
 
+  const handleRemoveEmployee = useCallback(
+    employee => {
+      const peopleId = extractId(employee?.id || employee?.['@id']);
+      const linkId =
+        extractId(employee?.peopleLinkId) ||
+        extractId(employee?.peopleLink?.id || employee?.peopleLink?.['@id']);
+
+      if (!peopleId && !linkId) {
+        showError('Não foi possível identificar o colaborador para remover.');
+        return;
+      }
+
+      Alert.alert(
+        'Remover colaborador',
+        'O colaborador será marcado como removido e o vínculo com a empresa será desativado. O registro permanece no banco (exclusão lógica). Deseja continuar?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Remover',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                if (peopleId && typeof removePeople === 'function') {
+                  await removePeople(peopleId);
+                } else if (linkId && typeof removePeopleLink === 'function') {
+                  await removePeopleLink(linkId);
+                } else {
+                  showError(
+                    'Não foi possível remover o colaborador (ação indisponível).',
+                  );
+                  return;
+                }
+                showSuccess('Colaborador removido com sucesso.');
+                setEmployees(prev =>
+                  (prev || []).filter(
+                    item =>
+                      extractId(item?.id || item?.['@id']) !== peopleId &&
+                      extractId(
+                        item?.peopleLink?.id || item?.peopleLink?.['@id'],
+                      ) !== linkId,
+                  ),
+                );
+              } catch (error) {
+                showError(
+                  error?.message ||
+                    'Não foi possível remover o colaborador. Verifique vínculos e tente novamente.',
+                );
+              }
+            },
+          },
+        ],
+      );
+    },
+    [removePeople, removePeopleLink, showError, showSuccess],
+  );
+
   return (
     <>
       <View style={customStyles.tabContent}>
@@ -301,12 +360,30 @@ const EmployeesTab = ({
                     </Text>
                   </View>
                 </View>
-                <View style={customStyles.iconButtonGhost}>
-                  <FeatherIcon
-                    name="edit-2"
-                    size={16}
-                    color={customStyles.iconButtonGhostIcon.color}
-                  />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={customStyles.iconButtonGhost}>
+                    <FeatherIcon
+                      name="edit-2"
+                      size={16}
+                      color={customStyles.iconButtonGhostIcon.color}
+                    />
+                  </View>
+                  <TouchableOpacity
+                    style={customStyles.iconButtonGhost}
+                    onPress={event => {
+                      event?.stopPropagation?.();
+                      handleRemoveEmployee(item);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remover colaborador"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <FeatherIcon
+                      name="trash-2"
+                      size={16}
+                      color="#B91C1C"
+                    />
+                  </TouchableOpacity>
                 </View>
               </TouchableOpacity>
             ))
