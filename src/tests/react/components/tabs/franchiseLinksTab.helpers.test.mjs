@@ -162,4 +162,3 @@ const stagingLike = buildFranchiseLinksFromPeopleLinks(
 assert.equal(stagingLike.length, 2);
 assert.equal(extractEntityId(stagingLike[0].people), '51');
 assert.equal(extractEntityId(stagingLike[1].people), '52');
-
