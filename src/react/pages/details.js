@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { formatDisplayUppercase } from '@controleonline/ui-common/src/react/utils/entityDisplay';
+import { normalizeText } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
 import { useStore, useStores } from '@store';
@@ -387,7 +387,7 @@ const ClientDetails = ({ route, navigation }) => {
           <PeopleAvatar
             people={client}
             imageUrl={clientAvatarImageUrl}
-            name={formatDisplayUppercase(client.name)}
+            name={normalizeText(client.name)}
             size={64}
             backgroundColor={themeColors.buttonBackground}
             borderColor={themeColors.buttonText}
@@ -398,7 +398,7 @@ const ClientDetails = ({ route, navigation }) => {
           />
         </View>
         <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">
-          {formatDisplayUppercase(client.name)}
+          {normalizeText(client.name)}
         </Text>
 
         <Text style={styles.profileId}>{`ID: ${client.id}`}</Text>

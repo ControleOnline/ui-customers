@@ -5,7 +5,11 @@ import {
 
 jest.mock('@controleonline/ui-common/src/react/utils/fileUrl', () => ({
   resolveFileImageUrl: file => (file?.url ? file.url : file?.['@id'] || ''),
-}));
+}), { virtual: true });
+
+jest.mock('@controleonline/ui-common/src/react/utils/entityDisplay', () => ({
+  normalizeText: value => String(value || '').trim(),
+}), { virtual: true });
 
 describe('fetchPeopleMediaUrls batch', () => {
   it('issues a single getPeopleMedia call for multiple people ids', async () => {

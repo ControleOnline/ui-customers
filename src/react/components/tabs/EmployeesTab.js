@@ -19,6 +19,7 @@ import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
+// Identity fields preserve user capitalization (app-community#626).
 import {
   buildEmployeeContactsFromPeopleLinks,
   buildPeopleLinkReadParams,
