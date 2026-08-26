@@ -8,7 +8,7 @@ jest.mock('@controleonline/ui-common/src/react/utils/fileUrl', () => ({
 }), { virtual: true });
 
 jest.mock('@controleonline/ui-common/src/react/utils/entityDisplay', () => ({
-  formatDisplayUppercase: value => String(value || '').toUpperCase(),
+  normalizeText: value => String(value || '').trim(),
 }), { virtual: true });
 
 describe('fetchPeopleMediaUrls batch', () => {

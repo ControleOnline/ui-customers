@@ -1,11 +1,12 @@
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import {
-  formatDisplayUppercase,
+  normalizeText as entityNormalizeText,
 } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { normalizeEmployeeLinkType } from './employeeContacts';
 
 export const extractId = value => String(value || '').replace(/\D/g, '');
-export const normalizeIdentityValue = value => formatDisplayUppercase(value);
+export const normalizeIdentityValue = value =>
+  entityNormalizeText(value).replace(/\s+/g, ' ').trim();
 
 export const normalizeCollection = payload => {
   if (Array.isArray(payload)) return payload;
@@ -191,8 +192,8 @@ export const resolveEmployeeContactLinkType = employee =>
   ).trim();
 
 export const formatEmployeeContactTitle = employee => {
-  const name = formatDisplayUppercase(employee?.name) || '-';
-  const alias = formatDisplayUppercase(employee?.alias);
+  const name = normalizeIdentityValue(employee?.name) || '-';
+  const alias = normalizeIdentityValue(employee?.alias);
 
   return alias ? `${name} / ${alias}` : name;
 };
