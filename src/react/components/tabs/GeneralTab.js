@@ -34,7 +34,6 @@ import {
   toPeopleIri,
 } from './generalTabHelpers';
 import FranchiseCommissionSection from './FranchiseCommissionSection';
-
 const GeneralTab = ({
   client,
   customStyles,
@@ -397,6 +396,7 @@ const GeneralTab = ({
                   }))
                 }
                 mode={pickerMode}
+                accessibilityLabel="Tipo de colaborador"
                 style={styles.inputRowField}>
                 {PEOPLE_TYPE_OPTIONS.map(option => (
                   <Picker.Item
