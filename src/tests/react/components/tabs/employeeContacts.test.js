@@ -216,4 +216,62 @@ describe('employeeContacts', () => {
       }),
     ])
   })
+
+
+  it('excludes soft-deleted people and disabled people_links', () => {
+    expect(
+      buildEmployeeContactsFromPeopleLinks(
+        {
+          member: [
+            {
+              id: 50,
+              linkType: 'employee',
+              enable: 1,
+              company: {'@id': '/people/31'},
+              people: {
+                id: 51,
+                '@id': '/people/51',
+                name: 'Ativo',
+                peopleType: 'F',
+                deleted: false,
+              },
+            },
+            {
+              id: 52,
+              linkType: 'employee',
+              enable: 1,
+              company: {'@id': '/people/31'},
+              people: {
+                id: 53,
+                '@id': '/people/53',
+                name: 'Removido',
+                peopleType: 'F',
+                deleted: true,
+              },
+            },
+            {
+              id: 54,
+              linkType: 'manager',
+              enable: 0,
+              company: {'@id': '/people/31'},
+              people: {
+                id: 55,
+                '@id': '/people/55',
+                name: 'Desvinculado',
+                peopleType: 'F',
+                deleted: false,
+              },
+            },
+          ],
+        },
+        {parentPeopleId: '31'},
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        id: 51,
+        linkType: 'employee',
+        peopleLinkId: '50',
+      }),
+    ])
+  })
 })

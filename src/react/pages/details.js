@@ -377,8 +377,9 @@ const ClientDetails = ({ route, navigation }) => {
       removePeople,
       navigation,
       setIsRemoving,
+      isEmployeeContext: Boolean(parentCompanyId),
     });
-  }, [clientId, isRemoving, navigation, removePeople]);
+  }, [clientId, isRemoving, navigation, removePeople, parentCompanyId]);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>

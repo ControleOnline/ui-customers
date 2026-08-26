@@ -107,4 +107,27 @@ describe('confirmPeopleSoftDelete', () => {
     confirmPeopleSoftDelete({ Alert, clientId: '', removePeople: jest.fn() });
     expect(Alert.alert).not.toHaveBeenCalled();
   });
+
+  it('uses employee messaging when isEmployeeContext is true', async () => {
+    const { confirmPeopleSoftDelete } = require('../../../react/pages/clientDetailsHelpers');
+    const removePeople = jest.fn().mockResolvedValue(undefined);
+    const Alert = {
+      alert: jest.fn((title, message, buttons) => {
+        expect(title).toBe('Remover colaborador');
+        expect(message).toMatch(/vínculos com a empresa/);
+        const removeBtn = buttons.find(b => b.text === 'Remover');
+        return removeBtn.onPress();
+      }),
+    };
+
+    await confirmPeopleSoftDelete({
+      Alert,
+      clientId: '9',
+      removePeople,
+      navigation: { canGoBack: () => false, navigate: jest.fn() },
+      isEmployeeContext: true,
+    });
+
+    expect(removePeople).toHaveBeenCalledWith('9');
+  });
 });

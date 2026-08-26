@@ -150,12 +150,24 @@ export const buildEmployeeContactsFromPeopleLinks = (
         return null
       }
 
+      // Soft-deleted people must not appear as active collaborators.
+      if (person?.deleted === true || person?.deleted === 1 || person?.deleted === '1') {
+        return null
+      }
+
+      // Disabled people_link (enable=0) means desvinculado / operationally inactive.
+      const enableRaw = link?.enable ?? link?.enabled
+      if (enableRaw === 0 || enableRaw === false || enableRaw === '0') {
+        return null
+      }
+
       return {
         ...person,
         id: person.id || personId,
         '@id': person['@id'] || `/people/${personId}`,
         linkType: normalizedLinkType,
         peopleLink: link,
+        peopleLinkId: extractEntityId(link?.id || link?.['@id']),
       }
     })
     .filter(Boolean)
