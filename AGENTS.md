@@ -22,9 +22,10 @@ Sempre comece pela **Home** da wiki e siga as categorias abaixo.
 | Página | O que documenta |
 | --- | --- |
 | [Cliente × Vendedor — vínculo e permissões](https://github.com/ControleOnline/ui-customers/wiki/Cliente-Vendedor-Vinculo-e-Permissoes) | Aba Vendedores no detalhe; corte MANAGER vs CRM/outros |
+| [Client Details — criar usuário (UsersTab)](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-Criar-Usuario) | Criação de usuário no detalhe; people em IRI; auth ROLE_HUMAN |
 | Página canônica do fluxo (CRM) | https://github.com/ControleOnline/ui-crm/wiki/Cliente-Vendedor-Vinculo-e-Permissoes |
 
-Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md`
+Cópias versionadas no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md`, `docs/technical/Client-Details-Criar-Usuario.md`
 
 ### Visão deste módulo
 
@@ -45,6 +46,7 @@ Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.
 | --- | --- | --- |
 | `ui-crm` | Entrada comercial / handoff | https://github.com/ControleOnline/ui-crm/wiki |
 | `api-platform-people` | Backend `people_link` / SalesmanService | https://github.com/ControleOnline/api-platform-people/wiki |
+| `api-platform-users` | Backend `POST /users` (ROLE_HUMAN) | https://github.com/ControleOnline/api-platform-users/wiki |
 | `app-community` | Home do app e mapa de submódulos | https://github.com/ControleOnline/app-community/wiki |
 
 ### Usuários no detalhe de pessoa
