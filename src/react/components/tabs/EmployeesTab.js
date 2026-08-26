@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   ActivityIndicator,
-  Alert,
   Keyboard,
   Platform,
   ScrollView,
@@ -15,7 +14,6 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
-import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import {
   buildEmployeeContactsFromPeopleLinks,
@@ -32,13 +30,14 @@ import {
   extractPeopleMediaUrl,
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
-  buildEmployeeDetailNavParams,
   resolveEmployeeContactLinkType,
   formatEmployeeContactTitle,
   formatEmployeeContactMeta,
   buildEmployeeCreatePayload,
 } from './employeesTabHelpers';
 import EmployeeCreateFormFields from './EmployeeCreateFormFields';
+import {useEmployeeUnlink} from './useEmployeeUnlink';
+import EmployeeContactRow from './EmployeeContactRow';
 
 
 export {
@@ -59,7 +58,7 @@ const EmployeesTab = ({
   txt_message_createSuccess = global.t?.t('people','message','createSuccess'),
 }) => {
   const navigation = useNavigation();
-  const { showError, showSuccess } = useMessage();
+  const { showDialog, showError, showSuccess } = useMessage();
 
   const [employees, setEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,6 +90,15 @@ const EmployeesTab = ({
     () => extractId(client?.id || client?.['@id']),
     [client?.id, client?.['@id']],
   );
+
+  const {handleRemoveEmployee} = useEmployeeUnlink({
+    removePeople,
+    removePeopleLink,
+    showDialog,
+    showError,
+    showSuccess,
+    setEmployees,
+  });
 
   const fetchEmployees = useCallback(async () => {
     if (!parentPeopleId) {
@@ -218,62 +226,6 @@ const EmployeesTab = ({
     }
   };
 
-  const handleRemoveEmployee = useCallback(
-    employee => {
-      const peopleId = extractId(employee?.id || employee?.['@id']);
-      const linkId =
-        extractId(employee?.peopleLinkId) ||
-        extractId(employee?.peopleLink?.id || employee?.peopleLink?.['@id']);
-
-      if (!peopleId && !linkId) {
-        showError('Não foi possível identificar o colaborador para remover.');
-        return;
-      }
-
-      Alert.alert(
-        'Remover colaborador',
-        'O colaborador será marcado como removido e o vínculo com a empresa será desativado. O registro permanece no banco (exclusão lógica). Deseja continuar?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Remover',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                if (peopleId && typeof removePeople === 'function') {
-                  await removePeople(peopleId);
-                } else if (linkId && typeof removePeopleLink === 'function') {
-                  await removePeopleLink(linkId);
-                } else {
-                  showError(
-                    'Não foi possível remover o colaborador (ação indisponível).',
-                  );
-                  return;
-                }
-                showSuccess('Colaborador removido com sucesso.');
-                setEmployees(prev =>
-                  (prev || []).filter(
-                    item =>
-                      extractId(item?.id || item?.['@id']) !== peopleId &&
-                      extractId(
-                        item?.peopleLink?.id || item?.peopleLink?.['@id'],
-                      ) !== linkId,
-                  ),
-                );
-              } catch (error) {
-                showError(
-                  error?.message ||
-                    'Não foi possível remover o colaborador. Verifique vínculos e tente novamente.',
-                );
-              }
-            },
-          },
-        ],
-      );
-    },
-    [removePeople, removePeopleLink, showError, showSuccess],
-  );
-
   return (
     <>
       <View style={customStyles.tabContent}>
@@ -304,75 +256,20 @@ const EmployeesTab = ({
             <Text style={customStyles.txt_title_emptyText}>{txt_title_emptyText}</Text>
           ) : (
             employees.map(item => (
-              <TouchableOpacity
+              <EmployeeContactRow
                 key={String(
                   item?.peopleLink?.id ||
                     item?.peopleLink?.['@id'] ||
                     item?.id ||
                     item?.['@id'],
                 )}
-                style={[
-                  customStyles.listItem,
-                  customStyles.listItemWithEndAction,
-                ]}
-                activeOpacity={0.8}
-                onPress={() => {
-                  const params = buildEmployeeDetailNavParams({
-                    employee: item,
-                    parentPeopleId,
-                  });
-                  if (!params) {
-                    return;
-                  }
-
-                  peopleActions?.setItem?.(item);
-                  navigation.push('ClientDetails', params);
-                }}>
-                <View style={customStyles.itemContent}>
-                  <PeopleAvatar
-                    people={item}
-                    size={40}
-                    backgroundColor={customStyles.listAvatarBrand.backgroundColor}
-                    borderColor={customStyles.listAvatarBrand.borderColor}
-                    borderWidth={2}
-                    textColor={customStyles.listAvatarText.color}
-                    style={customStyles.listAvatar}
-                  />
-                  <View>
-                    <Text style={customStyles.itemText}>
-                      {formatEmployeeContactTitle(item)}
-                    </Text>
-                    <Text style={customStyles.itemSubtext}>
-                      {formatEmployeeContactMeta(item)}
-                    </Text>
-                  </View>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <View style={customStyles.iconButtonGhost}>
-                    <FeatherIcon
-                      name="edit-2"
-                      size={16}
-                      color={customStyles.iconButtonGhostIcon.color}
-                    />
-                  </View>
-                  <TouchableOpacity
-                    style={customStyles.iconButtonGhost}
-                    onPress={event => {
-                      event?.stopPropagation?.();
-                      handleRemoveEmployee(item);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Remover colaborador"
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <FeatherIcon
-                      name="trash-2"
-                      size={16}
-                      color="#B91C1C"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
+                item={item}
+                parentPeopleId={parentPeopleId}
+                customStyles={customStyles}
+                peopleActions={peopleActions}
+                navigation={navigation}
+                onRemove={handleRemoveEmployee}
+              />
             ))
           )}
         </View>
