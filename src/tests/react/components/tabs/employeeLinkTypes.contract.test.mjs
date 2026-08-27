@@ -1,6 +1,6 @@
 /**
- * Contract: human company link types for Colaboradores (#446).
- * Reads source files to avoid monorepo alias resolution outside jest.
+ * Contract: Contatos create/edit share the same human company link-type catalog.
+ * Refs: app-community#446 #648 #649
  */
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -22,23 +22,23 @@ const EXPECTED = [
   'courier',
 ];
 
-test('employeeContacts EMPLOYEE_CONTACT_LINK_TYPES includes salesman and after-sales', () => {
-  const src = read('src/react/components/tabs/employeeContacts.js');
+test('canonical catalog includes every human company link type', () => {
+  const src = read('src/react/utils/humanCompanyLinkTypes.js');
   for (const type of EXPECTED) {
     assert.match(src, new RegExp(`['"]${type}['"]`), `missing ${type}`);
   }
 });
 
-test('employeesTabHelpers LINK_TYPE_OPTIONS includes salesman and after-sales', () => {
-  const src = read('src/react/components/tabs/employeesTabHelpers.js');
-  assert.match(src, /value:\s*['"]salesman['"]/);
-  assert.match(src, /value:\s*['"]after-sales['"]/);
-});
+test('create and edit helpers reuse the same catalog module', () => {
+  const createSrc = read('src/react/components/tabs/employeesTabHelpers.js');
+  const editSrc = read('src/react/components/tabs/generalTabHelpers.js');
+  const contactsSrc = read('src/react/components/tabs/employeeContacts.js');
 
-test('generalTabHelpers LINK_TYPE_OPTIONS and normalize include salesman and after-sales', () => {
-  const src = read('src/react/components/tabs/generalTabHelpers.js');
-  assert.match(src, /value:\s*['"]salesman['"]/);
-  assert.match(src, /value:\s*['"]after-sales['"]/);
+  assert.match(createSrc, /humanCompanyLinkTypes/);
+  assert.match(editSrc, /humanCompanyLinkTypes/);
+  assert.match(contactsSrc, /humanCompanyLinkTypes/);
+  assert.match(createSrc, /LINK_TYPE_OPTIONS/);
+  assert.match(editSrc, /LINK_TYPE_OPTIONS/);
 });
 
 test('employees page default context covers all human company roles', () => {

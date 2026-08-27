@@ -41,6 +41,25 @@ describe('employeesTabHelpers', () => {
     expect(payload.peopleType).toBe('F');
   });
 
+  it('buildEmployeeCreatePayload accepts salesman and after-sales (#649)', () => {
+    expect(
+      buildEmployeeCreatePayload({
+        name: 'VEN',
+        alias: 'V',
+        linkType: 'salesman',
+        parentPeopleId: '15',
+      }).linkType,
+    ).toBe('salesman');
+    expect(
+      buildEmployeeCreatePayload({
+        name: 'POS',
+        alias: 'P',
+        linkType: 'after-sales',
+        parentPeopleId: '15',
+      }).linkType,
+    ).toBe('after-sales');
+  });
+
   it('buildEmployeeCreatePayload accepts peopleType J (PJ)', () => {
     const payload = buildEmployeeCreatePayload({
       name: 'EMPRESA X',
