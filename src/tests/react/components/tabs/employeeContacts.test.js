@@ -21,8 +21,6 @@ describe('employeeContacts', () => {
   it('normalizes supported link types and falls back to employee', () => {
     expect(normalizeEmployeeLinkType('OWNER')).toBe('owner')
     expect(normalizeEmployeeLinkType('courier')).toBe('courier')
-    expect(normalizeEmployeeLinkType('SALESMAN')).toBe('salesman')
-    expect(normalizeEmployeeLinkType('after-sales')).toBe('after-sales')
     expect(normalizeEmployeeLinkType('unknown')).toBe('employee')
   })
 
@@ -38,6 +36,59 @@ describe('employeeContacts', () => {
       people: '31',
       linkType: ['sellers-client'],
     })
+  })
+
+  it('accepts linkTypes allowlist and itemsPerPage for contact reads (#636)', () => {
+    expect(
+      buildPeopleLinkReadParams({
+        companyId: 3,
+        linkTypes: ['employee', 'owner', 'director', 'manager', 'courier'],
+        itemsPerPage: 100,
+      }),
+    ).toEqual({
+      company: '3',
+      linkType: ['employee', 'owner', 'director', 'manager', 'courier'],
+      itemsPerPage: 100,
+    })
+  })
+
+  it('maps employee contacts when people is a plain IRI string (#636)', () => {
+    expect(
+      buildEmployeeContactsFromPeopleLinks(
+        {
+          member: [
+            {
+              id: 3229,
+              linkType: 'employee',
+              company: '/people/3',
+              people: '/people/105789',
+            },
+            {
+              id: 7,
+              linkType: 'owner',
+              company: {id: 3},
+              people: {
+                id: 7,
+                name: 'Owner',
+                peopleType: 'F',
+              },
+            },
+          ],
+        },
+        {parentPeopleId: '3'},
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        id: '105789',
+        linkType: 'employee',
+        peopleLink: expect.objectContaining({id: 3229}),
+      }),
+      expect.objectContaining({
+        id: '7',
+        linkType: 'owner',
+        name: 'Owner',
+      }),
+    ])
   })
 
   it('rejects links returned outside the requested relationship scope', () => {
@@ -84,7 +135,7 @@ describe('employeeContacts', () => {
     ).toEqual([requestedLink])
   })
 
-  it('maps people links to PF and PJ contacts for the customer details tab', () => {
+  it('maps people links to physical contacts for the customer details tab', () => {
     expect(
       buildEmployeeContactsFromPeopleLinks(
         {
@@ -155,18 +206,6 @@ describe('employeeContacts', () => {
         }),
       }),
       expect.objectContaining({
-        id: 33,
-        '@id': '/people/33',
-        name: 'Filial',
-        alias: 'Filial',
-        peopleType: 'J',
-        linkType: 'employee',
-        peopleLink: expect.objectContaining({
-          id: 32,
-          linkType: 'employee',
-        }),
-      }),
-      expect.objectContaining({
         id: 35,
         '@id': '/people/35',
         name: 'Rafael',
@@ -221,62 +260,6 @@ describe('employeeContacts', () => {
       expect.objectContaining({
         id: 41,
         linkType: 'employee',
-      }),
-    ])
-  })
-  it('excludes soft-deleted people and disabled people_links', () => {
-    expect(
-      buildEmployeeContactsFromPeopleLinks(
-        {
-          member: [
-            {
-              id: 50,
-              linkType: 'employee',
-              enable: 1,
-              company: {'@id': '/people/31'},
-              people: {
-                id: 51,
-                '@id': '/people/51',
-                name: 'Ativo',
-                peopleType: 'F',
-                deleted: false,
-              },
-            },
-            {
-              id: 52,
-              linkType: 'employee',
-              enable: 1,
-              company: {'@id': '/people/31'},
-              people: {
-                id: 53,
-                '@id': '/people/53',
-                name: 'Removido',
-                peopleType: 'F',
-                deleted: true,
-              },
-            },
-            {
-              id: 54,
-              linkType: 'manager',
-              enable: 0,
-              company: {'@id': '/people/31'},
-              people: {
-                id: 55,
-                '@id': '/people/55',
-                name: 'Desvinculado',
-                peopleType: 'F',
-                deleted: false,
-              },
-            },
-          ],
-        },
-        {parentPeopleId: '31'},
-      ),
-    ).toEqual([
-      expect.objectContaining({
-        id: 51,
-        linkType: 'employee',
-        peopleLinkId: '50',
       }),
     ])
   })

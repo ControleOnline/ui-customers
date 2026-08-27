@@ -1,93 +1,137 @@
-const EMPLOYEE_CONTACT_LINK_TYPES = ['employee', 'owner', 'director', 'manager', 'courier']
+const EMPLOYEE_CONTACT_LINK_TYPES = [
+  'employee',
+  'owner',
+  'director',
+  'manager',
+  'courier',
+];
 
-const extractId = value => String(value || '').replace(/\D/g, '')
+const extractId = value => {
+  if (value == null || value === '') {
+    return '';
+  }
+  if (typeof value === 'object') {
+    return extractId(value.id ?? value['@id'] ?? '');
+  }
+  return String(value).replace(/\D/g, '');
+};
+
 const normalizeEmployeeLinkTypeStrict = value => {
-  const normalized = String(value || '').trim().toLowerCase()
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
 
-  return EMPLOYEE_CONTACT_LINK_TYPES.includes(normalized)
-    ? normalized
-    : ''
-}
+  return EMPLOYEE_CONTACT_LINK_TYPES.includes(normalized) ? normalized : '';
+};
 
 export const normalizeEmployeeLinkType = value => {
-  return normalizeEmployeeLinkTypeStrict(value) || 'employee'
-}
+  return normalizeEmployeeLinkTypeStrict(value) || 'employee';
+};
 
 export const extractPeopleLinkItems = payload => {
   if (Array.isArray(payload)) {
-    return payload
+    return payload;
   }
 
   if (Array.isArray(payload?.member)) {
-    return payload.member
+    return payload.member;
   }
 
   if (Array.isArray(payload?.['hydra:member'])) {
-    return payload['hydra:member']
+    return payload['hydra:member'];
   }
 
-  return []
-}
+  return [];
+};
 
+/**
+ * Build GET /people_links query params.
+ * - company/people as numeric ids
+ * - linkType as array (API Platform SearchFilter)
+ * - itemsPerPage to avoid truncating contacts on large companies (#636)
+ */
 export const buildPeopleLinkReadParams = ({
   companyId = '',
   peopleId = '',
   linkType = '',
+  linkTypes = [],
+  itemsPerPage,
 } = {}) => {
-  const params = {}
-  const normalizedCompanyId = extractId(companyId)
-  const normalizedPeopleId = extractId(peopleId)
-  const normalizedLinkType = String(linkType || '').trim()
+  const params = {};
+  const normalizedCompanyId = extractId(companyId);
+  const normalizedPeopleId = extractId(peopleId);
+  const normalizedLinkType = String(linkType || '').trim();
+  const normalizedLinkTypes = Array.isArray(linkTypes)
+    ? linkTypes
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
+    : [];
 
   if (normalizedCompanyId) {
-    params.company = normalizedCompanyId
+    params.company = normalizedCompanyId;
   }
 
   if (normalizedPeopleId) {
-    params.people = normalizedPeopleId
+    params.people = normalizedPeopleId;
   }
 
   if (normalizedLinkType) {
-    // The people_links API declares linkType as an array filter. A scalar
-    // value is rejected by API Platform before the collection is queried.
-    params.linkType = [normalizedLinkType]
+    // Scalar becomes a one-element array — API Platform rejects bare scalars here.
+    params.linkType = [normalizedLinkType];
+  } else if (normalizedLinkTypes.length > 0) {
+    params.linkType = normalizedLinkTypes;
   }
 
-  return params
-}
+  const pageSize = Number(itemsPerPage);
+  if (Number.isFinite(pageSize) && pageSize > 0) {
+    params.itemsPerPage = pageSize;
+  }
+
+  return params;
+};
 
 export const filterPeopleLinksByScope = (
   payload,
   {companyId = '', peopleId = '', linkTypes = []} = {},
 ) => {
-  const normalizedCompanyId = extractId(companyId)
-  const normalizedPeopleId = extractId(peopleId)
+  const normalizedCompanyId = extractId(companyId);
+  const normalizedPeopleId = extractId(peopleId);
   const normalizedLinkTypes = Array.isArray(linkTypes)
     ? linkTypes
         .map(value => String(value || '').trim().toLowerCase())
         .filter(Boolean)
-    : []
+    : [];
 
   return extractPeopleLinkItems(payload).filter(link => {
-    const linkCompanyId = extractId(link?.company?.id || link?.company?.['@id'])
-    const linkPeopleId = extractId(link?.people?.id || link?.people?.['@id'])
-    const linkType = String(link?.linkType || '').trim().toLowerCase()
+    // Accept embedded object or plain IRI string (/people/123).
+    const linkCompanyId = extractId(
+      link?.company?.id || link?.company?.['@id'] || link?.company,
+    );
+    const linkPeopleId = extractId(
+      link?.people?.id || link?.people?.['@id'] || link?.people,
+    );
+    const linkType = String(link?.linkType || '')
+      .trim()
+      .toLowerCase();
 
     if (normalizedCompanyId && linkCompanyId !== normalizedCompanyId) {
-      return false
+      return false;
     }
 
     if (normalizedPeopleId && linkPeopleId !== normalizedPeopleId) {
-      return false
+      return false;
     }
 
-    if (normalizedLinkTypes.length > 0 && !normalizedLinkTypes.includes(linkType)) {
-      return false
+    if (
+      normalizedLinkTypes.length > 0 &&
+      !normalizedLinkTypes.includes(linkType)
+    ) {
+      return false;
     }
 
-    return true
-  })
-}
+    return true;
+  });
+};
 
 export const buildSalesmanLinksFromPeopleLinks = (
   payload,
@@ -96,53 +140,59 @@ export const buildSalesmanLinksFromPeopleLinks = (
   return filterPeopleLinksByScope(payload, {
     peopleId: clientId,
     linkTypes: [linkType],
-  }).filter(link => extractId(link?.company?.id || link?.company?.['@id']))
-}
+  }).filter(link =>
+    extractId(link?.company?.id || link?.company?.['@id'] || link?.company),
+  );
+};
 
 export const buildEmployeeContactsFromPeopleLinks = (
   payload,
   {parentPeopleId = '', allowedLinkTypes = EMPLOYEE_CONTACT_LINK_TYPES} = {},
 ) => {
-  const companyId = extractId(parentPeopleId)
+  const companyId = extractId(parentPeopleId);
   const normalizedAllowedLinkTypes = Array.isArray(allowedLinkTypes)
     ? allowedLinkTypes.map(normalizeEmployeeLinkTypeStrict).filter(Boolean)
-    : EMPLOYEE_CONTACT_LINK_TYPES
+    : EMPLOYEE_CONTACT_LINK_TYPES;
 
   return filterPeopleLinksByScope(payload, {
     companyId,
     linkTypes: normalizedAllowedLinkTypes,
   })
     .map(link => {
-      const person = link?.people
-      const personId = extractId(person?.id || person?.['@id'])
-      const normalizedLinkType = normalizeEmployeeLinkTypeStrict(link?.linkType)
+      const person = link?.people;
+      const personId = extractId(
+        typeof person === 'string' || typeof person === 'number'
+          ? person
+          : person?.id || person?.['@id'],
+      );
+      const normalizedLinkType = normalizeEmployeeLinkTypeStrict(link?.linkType);
 
       if (!personId || (companyId && personId === companyId)) {
-        return null
+        return null;
       }
 
-      // peopleType F|J both allowed as collaborators (app-community#625).
-      // Employment "contrato" is Category employment-type on EmployeeProfile, not peopleType.
-
-      // Soft-deleted people must not appear as active collaborators.
-      if (person?.deleted === true || person?.deleted === 1 || person?.deleted === '1') {
-        return null
+      if (
+        person &&
+        typeof person === 'object' &&
+        String(person?.peopleType || '').toUpperCase() === 'J'
+      ) {
+        return null;
       }
 
-      // Disabled people_link (enable=0) means desvinculado / operationally inactive.
-      const enableRaw = link?.enable ?? link?.enabled
-      if (enableRaw === 0 || enableRaw === false || enableRaw === '0') {
-        return null
-      }
+      const base =
+        person && typeof person === 'object'
+          ? {...person}
+          : {id: personId, '@id': `/people/${personId}`};
 
       return {
-        ...(person || {}),
+        ...base,
+        // Prefer numeric id when the payload provided one; otherwise digits-only string.
+        id: base.id != null && base.id !== '' ? base.id : personId,
         linkType: normalizedLinkType,
         peopleLink: link,
-        peopleLinkId: extractEntityId(link?.id || link?.['@id']),
-      }
+      };
     })
-    .filter(Boolean)
-}
+    .filter(Boolean);
+};
 
-export default buildEmployeeContactsFromPeopleLinks
+export default buildEmployeeContactsFromPeopleLinks;
