@@ -9,24 +9,51 @@
 
 /**
  * Types that exist in people_link.link_type MySQL SET (api-platform-people).
- * `filial` is NOT in the SET — do not send it on GET or the IN filter can
- * empty the collection (app-community#521).
+ * GET still sends only `franchisee` so a stale SET without `filial` cannot
+ * empty the collection (app-community#521). Client-side accepts `filial`.
  */
 export const FRANCHISE_LINK_TYPES = ['franchisee'];
 
 /** UI-only labels / residual payloads may still mention filial. */
 export const FRANCHISE_LINK_TYPES_UI = ['franchisee', 'filial'];
 
+/**
+ * Read params for franchise links.
+ * Query BOTH sides (company=id and people=id): associations in the DB may
+ * store the viewed company as company OR as people.
+ */
 export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => {
   const company = extractEntityId(companyId);
   return {
-    // Numeric id is accepted by PeopleLinkService::normalizeIdentifier + SearchFilter.
     company,
-    // Only valid SET values — never `filial` (task-521).
     linkType: [...FRANCHISE_LINK_TYPES],
     enable: true,
     itemsPerPage,
   };
+};
+
+export const buildFranchiseLinkReadParamsByPeople = (
+  peopleId,
+  itemsPerPage = 100,
+) => {
+  const people = extractEntityId(peopleId);
+  return {
+    people,
+    linkType: [...FRANCHISE_LINK_TYPES],
+    enable: true,
+    itemsPerPage,
+  };
+};
+
+export const buildFranchiseLinkReadQueries = (companyId, itemsPerPage = 100) => {
+  const id = extractEntityId(companyId);
+  if (!id) {
+    return [];
+  }
+  return [
+    buildFranchiseLinkReadParams(id, itemsPerPage),
+    buildFranchiseLinkReadParamsByPeople(id, itemsPerPage),
+  ];
 };
 
 export const extractEntityId = value => {
@@ -34,13 +61,14 @@ export const extractEntityId = value => {
     return '';
   }
   if (typeof value === 'object') {
-    return String(value.id || value['@id'] || '')
-      .replace(/\D/g, '')
-      .trim();
+    // Nested `{id: {id: 5}}` or `{id: object}` must not become "[object Object]".
+    return extractEntityId(value.id || value['@id'] || '');
   }
-  return String(value)
-    .replace(/\D/g, '')
-    .trim();
+  const asString = String(value).trim();
+  if (asString === '[object Object]') {
+    return '';
+  }
+  return asString.replace(/\D/g, '').trim();
 };
 
 export const toPeopleIri = value => {
@@ -115,10 +143,22 @@ export const normalizeFranchiseCandidate = item => {
   };
 };
 
-export const normalizeFranchiseLink = item => {
-  // Linked PJ is in `people` when company is the current client (parent)
+export const resolveLinkedFranchiseParty = (item, companyId = '') => {
+  const selfId = extractEntityId(companyId);
+  const companySide = item?.company ?? item?.company_id ?? null;
+  const peopleSide = item?.people ?? item?.people_id ?? null;
+  const companySideId = extractEntityId(companySide);
+  const peopleSideId = extractEntityId(peopleSide);
+
+  if (selfId && peopleSideId && peopleSideId === selfId && companySideId) {
+    return companySide;
+  }
+  return peopleSide;
+};
+
+export const normalizeFranchiseLink = (item, companyId = '') => {
   const linked = normalizeFranchiseCandidate(
-    item?.people ?? item?.people_id ?? null,
+    resolveLinkedFranchiseParty(item, companyId),
   );
   if (!linked) {
     return null;
@@ -188,55 +228,78 @@ export const buildFranchiseSavePayload = ({
   };
 };
 
+export const extractPeopleLinkCollection = data => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.member)) return data.member;
+  if (Array.isArray(data?.['hydra:member'])) return data['hydra:member'];
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+};
+
+export const mergePeopleLinkPayloads = (...payloads) => {
+  const seen = new Set();
+  const merged = [];
+  payloads.forEach(payload => {
+    extractPeopleLinkCollection(payload).forEach(link => {
+      const key =
+        extractEntityId(link?.id || link?.['@id']) ||
+        `${extractEntityId(link?.company ?? link?.company_id)}:${extractEntityId(
+          link?.people ?? link?.people_id,
+        )}:${String(link?.linkType || '')}`;
+      if (!key || seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      merged.push(link);
+    });
+  });
+  return merged;
+};
+
 export const buildFranchiseLinksFromPeopleLinks = (
   payload,
   { companyId = '' } = {},
 ) => {
-  const extractItems = data => {
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.member)) return data.member;
-    if (Array.isArray(data?.['hydra:member'])) return data['hydra:member'];
-    if (Array.isArray(data?.items)) return data.items;
-    return [];
-  };
-
   const normalizedCompanyId = extractEntityId(companyId);
 
-  return extractItems(payload)
+  return extractPeopleLinkCollection(payload)
     .filter(link => {
-      // company/people may be object, IRI string or scalar (task-485)
       const linkCompanyId = extractEntityId(
         link?.company ?? link?.company_id,
       );
-      const linkType = normalizeFranchiseLinkType(link?.linkType);
-      const linkedPeopleId = extractEntityId(
+      const linkPeopleId = extractEntityId(
         link?.people ?? link?.people_id,
       );
-      const peopleType = String(
-        (typeof link?.people === 'object' && link?.people
-          ? link.people.peopleType
+      const linkType = normalizeFranchiseLinkType(link?.linkType);
+      const linkedRaw = resolveLinkedFranchiseParty(link, normalizedCompanyId);
+      const linkedId = extractEntityId(linkedRaw);
+      const linkedType = String(
+        (typeof linkedRaw === 'object' && linkedRaw
+          ? linkedRaw.peopleType
           : '') || '',
       ).toUpperCase();
 
-      if (!linkType || !linkedPeopleId) {
+      if (!linkType || !linkedId) {
         return false;
       }
-      if (normalizedCompanyId && linkCompanyId && linkCompanyId !== normalizedCompanyId) {
-        return false;
+      if (normalizedCompanyId) {
+        const touchesCompany =
+          linkCompanyId === normalizedCompanyId ||
+          linkPeopleId === normalizedCompanyId;
+        if ((linkCompanyId || linkPeopleId) && !touchesCompany) {
+          return false;
+        }
       }
-      // When company filter was requested but row has no company id, keep if people exists
-      // (API already filtered by company query param).
-      // PJ only when type known
-      if (peopleType && peopleType !== 'J') {
+      if (linkedType && linkedType !== 'J') {
         return false;
       }
       return true;
     })
     .map(link => {
-      const peopleRaw = link?.people;
+      const peopleRaw = resolveLinkedFranchiseParty(link, normalizedCompanyId);
       let people = peopleRaw;
       if (typeof peopleRaw !== 'object' || peopleRaw == null) {
-        const id = extractEntityId(peopleRaw ?? link?.people_id);
+        const id = extractEntityId(peopleRaw);
         people = id
           ? { id, '@id': `/people/${id}`, name: `ID ${id}`, peopleType: 'J' }
           : {};

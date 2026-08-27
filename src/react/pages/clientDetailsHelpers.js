@@ -28,7 +28,19 @@ export const normalizeCollection = payload => {
 export const PERSON_PHOTO_MEDIA_TYPES = ['avatar'];
 export const COMPANY_ICON_MEDIA_TYPES = ['icon'];
 
-export const extractId = value => String(value || '').replace(/\D/g, '');
+export const extractId = value => {
+  if (value == null || value === '') {
+    return '';
+  }
+  if (typeof value === 'object') {
+    return extractId(value.id ?? value['@id'] ?? '');
+  }
+  const asString = String(value).trim();
+  if (asString === '[object Object]') {
+    return '';
+  }
+  return asString.replace(/\D/g, '');
+};
 
 export const resolveRouteClientSeed = routeParams => {
   const client = routeParams?.client || routeParams?.people || null;
