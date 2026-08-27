@@ -34,8 +34,61 @@ describe('employeeContacts', () => {
     ).toEqual({
       company: '29',
       people: '31',
-      linkType: 'sellers-client',
+      linkType: ['sellers-client'],
     })
+  })
+
+  it('accepts linkTypes allowlist and itemsPerPage for contact reads (#636)', () => {
+    expect(
+      buildPeopleLinkReadParams({
+        companyId: 3,
+        linkTypes: ['employee', 'owner', 'director', 'manager', 'courier'],
+        itemsPerPage: 100,
+      }),
+    ).toEqual({
+      company: '3',
+      linkType: ['employee', 'owner', 'director', 'manager', 'courier'],
+      itemsPerPage: 100,
+    })
+  })
+
+  it('maps employee contacts when people is a plain IRI string (#636)', () => {
+    expect(
+      buildEmployeeContactsFromPeopleLinks(
+        {
+          member: [
+            {
+              id: 3229,
+              linkType: 'employee',
+              company: '/people/3',
+              people: '/people/105789',
+            },
+            {
+              id: 7,
+              linkType: 'owner',
+              company: {id: 3},
+              people: {
+                id: 7,
+                name: 'Owner',
+                peopleType: 'F',
+              },
+            },
+          ],
+        },
+        {parentPeopleId: '3'},
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        id: '105789',
+        linkType: 'employee',
+        peopleLink: expect.objectContaining({id: 3229}),
+      }),
+      expect.objectContaining({
+        id: '7',
+        linkType: 'owner',
+        name: 'Owner',
+      }),
+    ])
   })
 
   it('rejects links returned outside the requested relationship scope', () => {
