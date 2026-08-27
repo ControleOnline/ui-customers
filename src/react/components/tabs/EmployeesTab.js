@@ -14,7 +14,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
@@ -131,18 +131,21 @@ const EmployeesTab = ({
     setError('');
 
     try {
-      // Company contacts are stored in people_links; filtering /people can miss valid links.
-      // Some backends reject array filters for linkType in this endpoint, so we fetch by company
-      // and keep only the supported contact roles in the client.
+      // Company contacts live in people_links. Request contact roles + a high
+      // itemsPerPage so large companies are not truncated to the first API page
+      // (app-community#636 — employee missing while owners still listed).
+      const allowedLinkTypes = LINK_TYPE_OPTIONS.map(option => option.value);
       const response = await getPeopleLinks(
         buildPeopleLinkReadParams({
           companyId: parentPeopleId,
+          linkTypes: allowedLinkTypes,
+          itemsPerPage: 100,
         }),
       );
 
       const normalized = buildEmployeeContactsFromPeopleLinks(response, {
         parentPeopleId,
-        allowedLinkTypes: LINK_TYPE_OPTIONS.map(option => option.value),
+        allowedLinkTypes,
       });
       // Avatares só a partir de peopleMedia no payload de people_links (#380).
       // Sem chamadas a /people_media nesta lista.
@@ -168,9 +171,11 @@ const EmployeesTab = ({
     }
   }, [getPeopleLinks, txt_message_loadError, parentPeopleId]);
 
-  useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchEmployees();
+    }, [fetchEmployees]),
+  );
 
   useEffect(() => {
     setLinkTypeOptions(
