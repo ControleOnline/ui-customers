@@ -40,6 +40,15 @@ describe('employeesTabHelpers', () => {
   it('extractId and LINK_TYPE_OPTIONS', () => {
     expect(extractId('/people/3')).toBe('3');
     expect(LINK_TYPE_OPTIONS.some(o => o.value === 'employee')).toBe(true);
+    expect(LINK_TYPE_OPTIONS.map(o => o.value)).toEqual([
+      'employee',
+      'owner',
+      'director',
+      'manager',
+      'salesman',
+      'after-sales',
+      'courier',
+    ]);
   });
 
   it('buildEmployeeDetailNavParams opens employee detail on general tab', () => {

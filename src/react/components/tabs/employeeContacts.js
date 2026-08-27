@@ -1,10 +1,6 @@
-const EMPLOYEE_CONTACT_LINK_TYPES = [
-  'employee',
-  'owner',
-  'director',
-  'manager',
-  'courier',
-];
+import {HUMAN_COMPANY_LINK_TYPES} from '../../utils/humanCompanyLinkTypes';
+
+const EMPLOYEE_CONTACT_LINK_TYPES = HUMAN_COMPANY_LINK_TYPES;
 
 const extractId = value => {
   if (value == null || value === '') {
