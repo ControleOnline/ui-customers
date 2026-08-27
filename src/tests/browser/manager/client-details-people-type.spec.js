@@ -3,9 +3,49 @@
  * flowchartIds: [1]
  * app-community#625 — persist People.peopleType F/J on client-details.
  */
+const fs = require('fs');
+const path = require('path');
 const {expect, test} = require('playwright/test');
 const {API_ORIGIN} = require('../../../../../../../src/tests/browser/apiOrigin');
 const {version: appVersion} = require('../../../../../../../package.json');
+
+const FLOW_ID = 'outros';
+const FLOWCHART_IDS = [1];
+const FLOWCHART_LINKS = FLOWCHART_IDS.map(
+  id => `https://admin.controleonline.com/admin/flowcharts/${id}`,
+);
+
+const evidenceSteps = [];
+
+const writeEvidence = async (page, outputDir, stepId, title) => {
+  fs.mkdirSync(outputDir, {recursive: true});
+  const fileName = `${stepId}.png`;
+  const filePath = path.join(outputDir, fileName);
+  await page.screenshot({path: filePath, fullPage: true});
+  evidenceSteps.push({
+    id: stepId,
+    title,
+    screenshot: fileName,
+    url: page.url(),
+  });
+  return filePath;
+};
+
+const writeManifest = outputDir => {
+  const manifest = {
+    fluxo: FLOW_ID,
+    flowchartIds: FLOWCHART_IDS,
+    flowchartLinks: FLOWCHART_LINKS,
+    title: 'client-details peopleType F/J persist without invented contrato',
+    issue: 'ControleOnline/app-community#625',
+    steps: evidenceSteps,
+  };
+  fs.writeFileSync(
+    path.join(outputDir, 'manifest.json'),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+  );
+  return manifest;
+};
 
 const CORS_HEADERS = {
   'access-control-allow-origin': '*',
@@ -227,8 +267,12 @@ const mockClientDetailsPeopleTypeApi = async page => {
 test.describe('client details peopleType browser smoke', () => {
   test('selects PJ and persists peopleType without inventing contrato', async ({
     page,
-  }) => {
+  }, testInfo) => {
     const api = await mockClientDetailsPeopleTypeApi(page);
+    const outputDir = path.join(
+      testInfo.outputDir,
+      'client-details-people-type',
+    );
 
     await page.goto(
       '/client-details?clientId=30&contextKey=contacts&parentCompanyId=29&initialTab=general',
@@ -237,15 +281,33 @@ test.describe('client details peopleType browser smoke', () => {
     await expect(page.getByText('Dados Cadastrais', {exact: true})).toBeVisible({
       timeout: 15000,
     });
+    await writeEvidence(
+      page,
+      outputDir,
+      '01-client-details-dados-cadastrais',
+      'Abrir client-details na aba Dados Cadastrais',
+    );
 
     const typePicker = page.getByLabel('Tipo de colaborador');
     await expect(typePicker).toBeVisible();
     await expect(typePicker).toHaveValue('F');
     await expect(page.getByText('Pessoa Física')).toBeVisible();
     await expect(page.getByText('contrato', {exact: true})).toHaveCount(0);
+    await writeEvidence(
+      page,
+      outputDir,
+      '02-tipo-pf-sem-contrato',
+      'Tipo PF visível; opção inventada contrato ausente',
+    );
 
     await typePicker.selectOption('J');
     await expect(typePicker).toHaveValue('J');
+    await writeEvidence(
+      page,
+      outputDir,
+      '03-tipo-pj-selecionado',
+      'Selecionar Pessoa Jurídica no picker F|J',
+    );
 
     await page.getByText(/Save Changes|Salvar alterações/i).click();
 
@@ -255,5 +317,29 @@ test.describe('client details peopleType browser smoke', () => {
     expect(lastWrite.body.peopleType).not.toBe('contrato');
 
     await expect(typePicker).toHaveValue('J');
+    await writeEvidence(
+      page,
+      outputDir,
+      '04-pj-persistido-sem-f5',
+      'Após Salvar, tipo permanece J sem F5 (PUT peopleType=J)',
+    );
+
+    const manifest = writeManifest(outputDir);
+    expect(manifest.fluxo).toBe(FLOW_ID);
+    expect(manifest.flowchartIds).toEqual(FLOWCHART_IDS);
+    expect(manifest.steps).toHaveLength(4);
+    await testInfo.attach('smoke-manifest', {
+      body: Buffer.from(JSON.stringify(manifest, null, 2)),
+      contentType: 'application/json',
+    });
+    for (const step of evidenceSteps) {
+      const pngPath = path.join(outputDir, step.screenshot);
+      if (fs.existsSync(pngPath)) {
+        await testInfo.attach(step.id, {
+          path: pngPath,
+          contentType: 'image/png',
+        });
+      }
+    }
   });
 });
