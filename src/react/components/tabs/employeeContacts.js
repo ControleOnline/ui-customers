@@ -3,6 +3,8 @@ const EMPLOYEE_CONTACT_LINK_TYPES = [
   'owner',
   'director',
   'manager',
+  'salesman',
+  'after-sales',
   'courier',
 ];
 
@@ -179,6 +181,19 @@ export const buildEmployeeContactsFromPeopleLinks = (
         return null;
       }
 
+      if (
+        person &&
+        typeof person === 'object' &&
+        (person?.deleted === true || person?.deleted === 1 || person?.deleted === '1')
+      ) {
+        return null;
+      }
+
+      const enableRaw = link?.enable ?? link?.enabled;
+      if (enableRaw === 0 || enableRaw === false || enableRaw === '0') {
+        return null;
+      }
+
       const base =
         person && typeof person === 'object'
           ? {...person}
@@ -190,6 +205,7 @@ export const buildEmployeeContactsFromPeopleLinks = (
         id: base.id != null && base.id !== '' ? base.id : personId,
         linkType: normalizedLinkType,
         peopleLink: link,
+        peopleLinkId: extractId(link?.id || link?.['@id']),
       };
     })
     .filter(Boolean);

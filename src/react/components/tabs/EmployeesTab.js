@@ -17,7 +17,6 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useStore, useStores } from '@store';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
-import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import {
   uppercaseText,
@@ -57,18 +56,15 @@ import {
 import {
   extractId,
   normalizeIdentityValue,
-  normalizeCollection,
   extractPeopleMediaUrl,
   formatDateInput,
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
-  resolveEmployeeLinkType,
-  buildEmployeeDetailNavParams,
   resolveEmployeeContactLinkType,
-  formatEmployeeContactTitle,
-  formatEmployeeContactMeta,
   buildEmployeeCreatePayload,
 } from './employeesTabHelpers';
+import EmployeeContactRow from './EmployeeContactRow';
+import {useEmployeeUnlink} from './useEmployeeUnlink';
 
 
 export {
@@ -89,7 +85,7 @@ const EmployeesTab = ({
   txt_message_createSuccess = global.t?.t('people','message','createSuccess'),
 }) => {
   const navigation = useNavigation();
-  const { showError, showSuccess } = useMessage();
+  const { showDialog, showError, showSuccess } = useMessage();
 
   const [employees, setEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -114,11 +110,22 @@ const EmployeesTab = ({
   const peopleActions = peopleStore.actions || {};
   const peopleLinkStore = useStore('people_link');
   const getPeopleLinks = peopleLinkStore?.actions?.getItems;
+  const removePeople = peopleActions?.remove;
+  const removePeopleLink = peopleLinkStore?.actions?.remove;
 
   const parentPeopleId = useMemo(
     () => extractId(client?.id || client?.['@id']),
     [client?.id, client?.['@id']],
   );
+
+  const {handleRemoveEmployee} = useEmployeeUnlink({
+    removePeople,
+    removePeopleLink,
+    showDialog,
+    showError,
+    showSuccess,
+    setEmployees,
+  });
 
   const fetchEmployees = useCallback(async () => {
     if (!parentPeopleId) {
@@ -279,57 +286,20 @@ const EmployeesTab = ({
             <Text style={customStyles.txt_title_emptyText}>{txt_title_emptyText}</Text>
           ) : (
             employees.map(item => (
-              <TouchableOpacity
+              <EmployeeContactRow
                 key={String(
                   item?.peopleLink?.id ||
                     item?.peopleLink?.['@id'] ||
                     item?.id ||
                     item?.['@id'],
                 )}
-                style={[
-                  customStyles.listItem,
-                  customStyles.listItemWithEndAction,
-                ]}
-                activeOpacity={0.8}
-                onPress={() => {
-                  const params = buildEmployeeDetailNavParams({
-                    employee: item,
-                    parentPeopleId,
-                  });
-                  if (!params) {
-                    return;
-                  }
-
-                  peopleActions?.setItem?.(item);
-                  navigation.push('ClientDetails', params);
-                }}>
-                <View style={customStyles.itemContent}>
-                  <PeopleAvatar
-                    people={item}
-                    size={40}
-                    backgroundColor={customStyles.listAvatarBrand.backgroundColor}
-                    borderColor={customStyles.listAvatarBrand.borderColor}
-                    borderWidth={2}
-                    textColor={customStyles.listAvatarText.color}
-                    style={customStyles.listAvatar}
-                  />
-                  <View>
-                    <Text style={customStyles.itemText}>
-                      {formatEmployeeContactTitle(item)}
-                    </Text>
-                    <Text style={customStyles.itemSubtext}>
-                      {formatEmployeeContactMeta(item)}
-                    </Text>
-                  </View>
-                </View>
-                <View style={customStyles.iconButtonGhost}>
-                  <FeatherIcon
-                    name="edit-2"
-                    size={16}
-                    color={customStyles.iconButtonGhostIcon.color}
-                  />
-                </View>
-              </TouchableOpacity>
+                item={item}
+                parentPeopleId={parentPeopleId}
+                customStyles={customStyles}
+                peopleActions={peopleActions}
+                navigation={navigation}
+                onRemove={handleRemoveEmployee}
+              />
             ))
           )}
         </View>
