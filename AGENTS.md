@@ -1,4 +1,3 @@
-
 ## Ponto de entrada
 
 - A documentação funcional e de regras deste modulo vive na **wiki do proprio repositório** e na wiki principal do app.
@@ -22,18 +21,22 @@ Sempre comece pela **Home** da wiki e siga as categorias abaixo.
 | Página | O que documenta |
 | --- | --- |
 | [Cliente × Vendedor — vínculo e permissões](https://github.com/ControleOnline/ui-customers/wiki/Cliente-Vendedor-Vinculo-e-Permissoes) | Aba Vendedores no detalhe; corte MANAGER vs CRM/outros |
+| [Client Details — criar usuário (UsersTab)](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-Criar-Usuario) | Modal/aba de criação de usuário de acesso |
+| [Client Details — aba Colaboradores (EmployeesTab) e refresh](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-EmployeesTab-Refresh) | Lista de colaboradores e invalidação ao reganho de foco |
+| [Client Details — preservação de capitalização (nome/alias)](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-People-Name-Case) | Nome/alias sem forçar CAIXA ALTA (UI + backend getters) |
 | Página canônica do fluxo (CRM) | https://github.com/ControleOnline/ui-crm/wiki/Cliente-Vendedor-Vinculo-e-Permissoes |
 
-Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md`
+Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md` (e demais páginas em `docs/technical/` quando espelhadas).
 
 ### Visão deste módulo
 
 `ui-customers` é o **detalhe e cadastro de pessoas/clientes** reutilizado por várias visões do app (`CRM`, `MANAGER`, `POS`, etc.).
 
-- Dono da tela `ClientDetails` e abas (geral, contatos, documentos, **vendedores**, etc.).
+- Dono da tela `ClientDetails` e abas (geral, contatos, documentos, **vendedores**, **colaboradores**, etc.).
 - No fluxo comercial, recebe handoff do `ui-crm`.
 - Gestão administrativa de vendedores e comissões: apenas quando `APP_TYPE=MANAGER`.
 - Fora de `MANAGER` (ex.: CRM): pode identificar o vendedor, sem expor comissão nem CRUD administrativo.
+- Campos nominais (`name` / `alias`) preservam a capitalização digitada pelo usuário (sem `toUpperCase` forçado).
 
 ## Regras específicas
 
@@ -44,5 +47,5 @@ Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.
 | Módulo | Papel | Entrada da documentação |
 | --- | --- | --- |
 | `ui-crm` | Entrada comercial / handoff | https://github.com/ControleOnline/ui-crm/wiki |
-| `api-platform-people` | Backend `people_link` / SalesmanService | https://github.com/ControleOnline/api-platform-people/wiki |
+| `api-platform-people` | Backend `people` / `people_link` / getters de name-alias | https://github.com/ControleOnline/api-platform-people/wiki |
 | `app-community` | Home do app e mapa de submódulos | https://github.com/ControleOnline/app-community/wiki |
