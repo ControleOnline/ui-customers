@@ -151,9 +151,11 @@ const EmployeesTab = ({
     }
   }, [getPeopleLinks, txt_message_loadError, parentPeopleId]);
 
-  useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchEmployees();
+    }, [fetchEmployees]),
+  );
 
   useEffect(() => {
     setLinkTypeOptions(
