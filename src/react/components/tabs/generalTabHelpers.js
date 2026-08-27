@@ -3,6 +3,11 @@
  * Extracted to keep GeneralTab.js under the absolute 500-line limit.
  */
 
+import {
+  LINK_TYPE_OPTIONS,
+  normalizeHumanCompanyLinkType,
+} from './humanCompanyLinkCatalog';
+
 const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
 const normalizeIdentityValue = value => normalizeText(value);
 const extractId = value => String(value || '').replace(/\D/g, '');
@@ -81,20 +86,7 @@ const parseBrDateToYmd = value => {
     .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 };
 
-const LINK_TYPE_OPTIONS = [
-  { value: 'employee', translationKey: 'employee' },
-  { value: 'owner', translationKey: 'owner' },
-  { value: 'director', translationKey: 'director' },
-  { value: 'manager', translationKey: 'manager' },
-  { value: 'courier', translationKey: 'courier' },
-];
-
-const normalizeLinkType = value => {
-  const normalized = String(value || '').trim().toLowerCase();
-  return ['employee', 'owner', 'director', 'manager', 'courier'].includes(normalized)
-    ? normalized
-    : 'employee';
-};
+const normalizeLinkType = value => normalizeHumanCompanyLinkType(value);
 
 const toPeopleIri = value => {
   const directIri = String(value?.['@id'] || '').trim();
