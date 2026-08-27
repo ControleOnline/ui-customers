@@ -124,6 +124,10 @@ const toPeopleIri = value => {
   return id ? `/people/${id}` : '';
 };
 
+/** Prefer client.linkType (post-save) over static route seed (#446). */
+const resolveSeededLinkType = (clientLinkType, routeLinkType) =>
+  normalizeLinkType(clientLinkType || routeLinkType);
+
 export {
   normalizeText,
   normalizeIdentityValue,
@@ -134,6 +138,7 @@ export {
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
   normalizeLinkType,
+  resolveSeededLinkType,
   PEOPLE_TYPE_OPTIONS,
   normalizePeopleType,
   toPeopleIri,
