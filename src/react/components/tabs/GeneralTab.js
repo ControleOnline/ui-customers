@@ -29,11 +29,13 @@ import {
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
   normalizeLinkType,
+  resolveSeededLinkType,
   PEOPLE_TYPE_OPTIONS,
   normalizePeopleType,
   toPeopleIri,
 } from './generalTabHelpers';
 import FranchiseCommissionSection from './FranchiseCommissionSection';
+import useGeneralTabPeopleLink from './useGeneralTabPeopleLink';
 const GeneralTab = ({
   client,
   customStyles,
@@ -53,7 +55,6 @@ const GeneralTab = ({
   const peopleLinkActions = peopleLinkStore?.actions || {};
   const [isSavingRegistration, setIsSavingRegistration] = useState(false);
   const [isSavingLinkType, setIsSavingLinkType] = useState(false);
-  const [peopleLinkId, setPeopleLinkId] = useState('');
   const [linkTypeOptions, setLinkTypeOptions] = useState(
     LINK_TYPE_OPTIONS.map(option => ({
       value: option.value,
@@ -84,6 +85,15 @@ const GeneralTab = ({
     String(registrationForm.peopleType || '').toUpperCase() === 'F' &&
     String(parentCompanyIri || '').startsWith('/people/') &&
     String(contactPeopleIri || '').startsWith('/people/');
+  const {peopleLinkId, setPeopleLinkId} = useGeneralTabPeopleLink({
+    canEditLinkType,
+    getItems: peopleLinkActions?.getItems,
+    contactPeopleIri,
+    parentCompanyIri,
+    clientLinkType: client?.linkType,
+    setRegistrationForm,
+    setOriginalRegistrationForm,
+  });
 
   useEffect(() => {
     const initial = {
@@ -92,12 +102,22 @@ const GeneralTab = ({
       dateBr: formatYmdToBr(client?.foundationDate),
       enable: normalizeEnable(client?.enable ?? client?.enabled),
       peopleType: normalizePeopleType(client?.peopleType || 'J'),
-      linkType: normalizeLinkType(initialContactLinkType),
+      linkType: resolveSeededLinkType(client?.linkType, initialContactLinkType),
     };
 
     setRegistrationForm(initial);
     setOriginalRegistrationForm(initial);
-  }, [client?.id, client?.name, client?.alias, client?.foundationDate, client?.enable, client?.enabled, client?.peopleType, initialContactLinkType]);
+  }, [
+    client?.id,
+    client?.name,
+    client?.alias,
+    client?.foundationDate,
+    client?.enable,
+    client?.enabled,
+    client?.peopleType,
+    client?.linkType,
+    initialContactLinkType,
+  ]);
 
   useEffect(() => {
     setLinkTypeOptions(
@@ -107,38 +127,6 @@ const GeneralTab = ({
       })),
     );
   }, []);
-
-  useEffect(() => {
-    if (!canEditLinkType || !peopleLinkActions?.getItems) {
-      return;
-    }
-
-    let cancelled = false;
-
-    peopleLinkActions
-      .getItems({
-        people: extractId(contactPeopleIri),
-        company: extractId(parentCompanyIri),
-      })
-      .then(items => {
-        if (cancelled || !Array.isArray(items) || items.length === 0) {
-          return;
-        }
-
-        const link = items[0];
-        const nextLinkType = normalizeLinkType(link?.linkType);
-        const nextLinkId = String(link?.id || link?.['@id'] || '').replace(/\D/g, '');
-
-        setPeopleLinkId(nextLinkId);
-        setRegistrationForm(prev => ({ ...prev, linkType: nextLinkType }));
-        setOriginalRegistrationForm(prev => ({ ...prev, linkType: nextLinkType }));
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [canEditLinkType, contactPeopleIri, parentCompanyIri, peopleLinkActions]);
 
   const isPessoaFisica = normalizePeopleType(registrationForm.peopleType) === 'F';
   const isAvatarUploadDisabled = isSavingClientAvatar;

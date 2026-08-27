@@ -5,6 +5,7 @@ import {
   normalizeEnable,
   normalizeIdentityValue,
   normalizeLinkType,
+  resolveSeededLinkType,
   normalizePeopleType,
   PEOPLE_TYPE_OPTIONS,
   formatYmdToBr,
@@ -140,6 +141,15 @@ describe('generalTabHelpers', () => {
           originalLinkType: 'employee',
         }),
       ).toBe(false);
+    });
+  });
+
+
+  describe('resolveSeededLinkType', () => {
+    it('prefers client.linkType over route seed after save', () => {
+      expect(resolveSeededLinkType('courier', 'owner')).toBe('courier');
+      expect(resolveSeededLinkType('', 'owner')).toBe('owner');
+      expect(resolveSeededLinkType(undefined, 'manager')).toBe('manager');
     });
   });
 
