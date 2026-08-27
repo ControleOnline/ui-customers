@@ -388,7 +388,7 @@ const ClientDetails = ({ route, navigation }) => {
           <PeopleAvatar
             people={client}
             imageUrl={clientAvatarImageUrl}
-            name={normalizeText(client.name)}
+            name={String(client?.name || '').replace(/\s+/g, ' ').trim()}
             size={64}
             backgroundColor={themeColors.buttonBackground}
             borderColor={themeColors.buttonText}
@@ -399,7 +399,7 @@ const ClientDetails = ({ route, navigation }) => {
           />
         </View>
         <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">
-          {normalizeText(client.name)}
+          {String(client?.name || '').replace(/\s+/g, ' ').trim()}
         </Text>
 
         <Text style={styles.profileId}>{`ID: ${client.id}`}</Text>

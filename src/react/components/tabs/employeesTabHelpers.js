@@ -1,12 +1,10 @@
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import {
-  normalizeText as entityNormalizeText,
-} from '@controleonline/ui-common/src/react/utils/entityDisplay';
+  } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { normalizeEmployeeLinkType } from './employeeContacts';
 
 export const extractId = value => String(value || '').replace(/\D/g, '');
-export const normalizeIdentityValue = value =>
-  entityNormalizeText(value).replace(/\s+/g, ' ').trim();
+export const normalizeIdentityValue = value => String(value);
 
 export const normalizeCollection = payload => {
   if (Array.isArray(payload)) return payload;
@@ -214,8 +212,8 @@ export const resolveEmployeeContactLinkType = employee =>
   ).trim();
 
 export const formatEmployeeContactTitle = employee => {
-  const name = normalizeIdentityValue(employee?.name) || '-';
-  const alias = normalizeIdentityValue(employee?.alias);
+  const name = String(employee?.name || '').replace(/\s+/g, ' ').trim() || '-';
+  const alias = String(employee?.alias || '').replace(/\s+/g, ' ').trim();
 
   return alias ? `${name} / ${alias}` : name;
 };
