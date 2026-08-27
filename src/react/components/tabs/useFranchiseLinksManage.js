@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   buildAvailableFranchiseOptions,
-  buildFranchiseLinkReadParams,
+  buildFranchiseLinkReadQueries,
   buildFranchiseSavePayload,
   canManageFranchiseLinks,
+  mergePeopleLinkPayloads,
   normalizeFranchiseLink,
   toPeopleIri,
+  buildFranchiseLinksFromPeopleLinks,
 } from './franchiseLinksTab.helpers';
 import { extractId } from './salesmanTabHelpers';
-import { buildFranchiseLinksFromPeopleLinks } from './franchiseLinksTab.helpers';
 import { normalizeCollection } from './salesmanTabMedia';
 
 /**
@@ -47,10 +48,10 @@ export function useFranchiseLinksManage({
   useEffect(() => {
     setLinkedNormalized(
       (Array.isArray(links) ? links : [])
-        .map(item => normalizeFranchiseLink(item))
+        .map(item => normalizeFranchiseLink(item, clientId))
         .filter(Boolean),
     );
-  }, [links]);
+  }, [links, clientId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,10 +116,13 @@ export function useFranchiseLinksManage({
     if (!getPeopleLinks || !clientId) {
       return;
     }
-    const response = await getPeopleLinks(buildFranchiseLinkReadParams(clientId));
-    const next = buildFranchiseLinksFromPeopleLinks(response, {
-      companyId: clientId,
-    });
+    const payloads = await Promise.all(
+      buildFranchiseLinkReadQueries(clientId).map(params => getPeopleLinks(params)),
+    );
+    const next = buildFranchiseLinksFromPeopleLinks(
+      mergePeopleLinkPayloads(...payloads),
+      { companyId: clientId },
+    );
     setLinks(next);
   }, [getPeopleLinks, clientId, setLinks]);
 

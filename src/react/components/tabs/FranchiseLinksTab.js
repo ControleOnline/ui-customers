@@ -16,9 +16,11 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '@controleonline/../../src/styles/colors';
 
 import {
-  buildFranchiseLinkReadParams,
+  buildFranchiseLinkReadQueries,
   buildFranchiseLinksFromPeopleLinks,
+  extractEntityId,
   franchiseLinkTypeLabel,
+  mergePeopleLinkPayloads,
   normalizeFranchiseLink,
 } from './franchiseLinksTab.helpers';
 import { extractId } from './salesmanTabHelpers';
@@ -46,15 +48,23 @@ const FranchiseLinksTab = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const clientId = extractId(client?.id || client?.['@id']);
+  const clientId = extractEntityId(client) || extractId(client?.id || client?.['@id']);
   const appType = useMemo(() => resolveAppType(), []);
 
   useEffect(() => {
     let cancelled = false;
 
-    if (!clientId || !getPeopleLinks) {
+    if (!clientId) {
       setLinks([]);
-      setError('');
+      setError(errorText || 'Não foi possível identificar a empresa para listar franquias.');
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (!getPeopleLinks) {
+      setLinks([]);
+      setError(errorText || 'Não foi possível carregar os vínculos.');
       return () => {
         cancelled = true;
       };
@@ -63,14 +73,16 @@ const FranchiseLinksTab = ({
     setIsLoading(true);
     setError('');
 
-    getPeopleLinks(buildFranchiseLinkReadParams(clientId))
-      .then(items => {
+    const queries = buildFranchiseLinkReadQueries(clientId);
+    Promise.all(queries.map(params => getPeopleLinks(params)))
+      .then(payloads => {
         if (cancelled) {
           return;
         }
-        const next = buildFranchiseLinksFromPeopleLinks(items, {
-          companyId: clientId,
-        });
+        const next = buildFranchiseLinksFromPeopleLinks(
+          mergePeopleLinkPayloads(...payloads),
+          { companyId: clientId },
+        );
         setLinks(next);
       })
       .catch(() => {
