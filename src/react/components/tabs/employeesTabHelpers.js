@@ -240,9 +240,6 @@ export const buildEmployeeCreatePayload = ({
     peopleType: normalizePeopleType(peopleType),
     company: `/people/${parentPeopleId}`,
     linkType: normalizeEmployeeLinkType(linkType),
-    // Contatos must be active: people_links list filters people.enable = true
-    // (PeopleActiveConstraint). Default API enable=0 hid new collaborators (#687).
-    enable: true,
     'extra-data': {},
   };
 
