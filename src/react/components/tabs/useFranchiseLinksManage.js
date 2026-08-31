@@ -4,7 +4,6 @@ import {
   buildFranchiseLinkReadQueries,
   buildFranchiseSavePayload,
   canManageFranchiseLinks,
-  mergePeopleLinkPayloads,
   normalizeFranchiseLink,
   toPeopleIri,
   buildFranchiseLinksFromPeopleLinks,
@@ -116,13 +115,14 @@ export function useFranchiseLinksManage({
     if (!getPeopleLinks || !clientId) {
       return;
     }
-    const payloads = await Promise.all(
-      buildFranchiseLinkReadQueries(clientId).map(params => getPeopleLinks(params)),
-    );
-    const next = buildFranchiseLinksFromPeopleLinks(
-      mergePeopleLinkPayloads(...payloads),
-      { companyId: clientId },
-    );
+    const [params] = buildFranchiseLinkReadQueries(clientId);
+    if (!params) {
+      return;
+    }
+    const payload = await getPeopleLinks(params);
+    const next = buildFranchiseLinksFromPeopleLinks(payload, {
+      companyId: clientId,
+    });
     setLinks(next);
   }, [getPeopleLinks, clientId, setLinks]);
 

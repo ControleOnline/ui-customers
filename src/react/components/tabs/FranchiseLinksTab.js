@@ -20,7 +20,6 @@ import {
   buildFranchiseLinksFromPeopleLinks,
   extractEntityId,
   franchiseLinkTypeLabel,
-  mergePeopleLinkPayloads,
   normalizeFranchiseLink,
 } from './franchiseLinksTab.helpers';
 import { extractId } from './salesmanTabHelpers';
@@ -73,16 +72,23 @@ const FranchiseLinksTab = ({
     setIsLoading(true);
     setError('');
 
-    const queries = buildFranchiseLinkReadQueries(clientId);
-    Promise.all(queries.map(params => getPeopleLinks(params)))
-      .then(payloads => {
+    const [params] = buildFranchiseLinkReadQueries(clientId);
+    if (!params) {
+      setLinks([]);
+      setIsLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    getPeopleLinks(params)
+      .then(payload => {
         if (cancelled) {
           return;
         }
-        const next = buildFranchiseLinksFromPeopleLinks(
-          mergePeopleLinkPayloads(...payloads),
-          { companyId: clientId },
-        );
+        const next = buildFranchiseLinksFromPeopleLinks(payload, {
+          companyId: clientId,
+        });
         setLinks(next);
       })
       .catch(() => {

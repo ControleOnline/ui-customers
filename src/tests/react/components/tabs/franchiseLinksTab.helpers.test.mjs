@@ -27,8 +27,9 @@ assert.deepEqual(buildFranchiseLinkReadParamsByPeople('/people/11'), {
   enable: true,
   itemsPerPage: 100,
 });
-assert.equal(buildFranchiseLinkReadQueries(5).length, 2);
-assert.equal(buildFranchiseLinkReadQueries(5)[1].people, '5');
+assert.equal(buildFranchiseLinkReadQueries(5).length, 1);
+assert.equal(buildFranchiseLinkReadQueries(5)[0].company, '5');
+assert.equal(buildFranchiseLinkReadQueries(5)[0].people, undefined);
 assert.equal(extractEntityId({ id: { '@id': '/people/5' } }), '5');
 assert.equal(extractEntityId('[object Object]'), '');
 
@@ -176,7 +177,7 @@ assert.equal(stagingLike.length, 2);
 assert.equal(extractEntityId(stagingLike[0].people), '51');
 assert.equal(extractEntityId(stagingLike[1].people), '52');
 
-// task-641: viewed company on the people side — list the other PJ (company).
+// Canonical rule: company_id must be the franchisor. Inverted rows are ignored.
 const inverted = buildFranchiseLinksFromPeopleLinks(
   [
     {
@@ -196,10 +197,7 @@ const inverted = buildFranchiseLinksFromPeopleLinks(
   ],
   { companyId: 5 },
 );
-assert.equal(inverted.length, 2);
-assert.equal(extractEntityId(inverted[0].people), '81');
-assert.equal(inverted[0].people.name, 'Franquia A');
-assert.equal(extractEntityId(inverted[1].people), '82');
+assert.equal(inverted.length, 0);
 
 const merged = mergePeopleLinkPayloads(
   { member: [{ id: 1, linkType: 'franchisee', company: 5, people: 51 }] },

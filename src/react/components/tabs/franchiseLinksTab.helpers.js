@@ -19,8 +19,11 @@ export const FRANCHISE_LINK_TYPES_UI = ['franchisee', 'filial'];
 
 /**
  * Read params for franchise links.
- * Query BOTH sides (company=id and people=id): associations in the DB may
- * store the viewed company as company OR as people.
+ * Canonical rule (only):
+ *   company_id = franqueadora (PJ vista)
+ *   people_id  = franquia (outra PJ)
+ *   link_type  = franchisee
+ * One query only — never invert sides.
  */
 export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => {
   const company = extractEntityId(companyId);
@@ -32,6 +35,7 @@ export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => {
   };
 };
 
+/** @deprecated inverted side is not a valid franchise model; kept for test import stability */
 export const buildFranchiseLinkReadParamsByPeople = (
   peopleId,
   itemsPerPage = 100,
@@ -50,10 +54,7 @@ export const buildFranchiseLinkReadQueries = (companyId, itemsPerPage = 100) => 
   if (!id) {
     return [];
   }
-  return [
-    buildFranchiseLinkReadParams(id, itemsPerPage),
-    buildFranchiseLinkReadParamsByPeople(id, itemsPerPage),
-  ];
+  return [buildFranchiseLinkReadParams(id, itemsPerPage)];
 };
 
 export const extractEntityId = value => {
@@ -144,16 +145,10 @@ export const normalizeFranchiseCandidate = item => {
 };
 
 export const resolveLinkedFranchiseParty = (item, companyId = '') => {
-  const selfId = extractEntityId(companyId);
-  const companySide = item?.company ?? item?.company_id ?? null;
-  const peopleSide = item?.people ?? item?.people_id ?? null;
-  const companySideId = extractEntityId(companySide);
-  const peopleSideId = extractEntityId(peopleSide);
-
-  if (selfId && peopleSideId && peopleSideId === selfId && companySideId) {
-    return companySide;
-  }
-  return peopleSide;
+  // Canonical: people_id is always the franchise (other PJ).
+  // companyId is only used by callers for filtering, not for side inversion.
+  void companyId;
+  return item?.people ?? item?.people_id ?? null;
 };
 
 export const normalizeFranchiseLink = (item, companyId = '') => {
@@ -282,15 +277,17 @@ export const buildFranchiseLinksFromPeopleLinks = (
       if (!linkType || !linkedId) {
         return false;
       }
+      // Only rows where company_id is the franchisor being viewed.
       if (normalizedCompanyId) {
-        const touchesCompany =
-          linkCompanyId === normalizedCompanyId ||
-          linkPeopleId === normalizedCompanyId;
-        if ((linkCompanyId || linkPeopleId) && !touchesCompany) {
+        if (linkCompanyId !== normalizedCompanyId) {
           return false;
         }
       }
       if (linkedType && linkedType !== 'J') {
+        return false;
+      }
+      // Franchise must not be the same id as the franchisor.
+      if (normalizedCompanyId && linkedId === normalizedCompanyId) {
         return false;
       }
       return true;
