@@ -36,9 +36,12 @@ import {
   inlineStyle_424_16,
   inlineStyle_433_16,
   inlineStyle_446_18,
-  inlineStyle_460_12,
-  inlineStyle_472_14,
-  inlineStyle_480_20,
+  modalFooterRow,
+  modalCancelButton,
+  modalCancelButtonText,
+  modalSaveButton,
+  modalSaveButtonDisabled,
+  modalSaveButtonText,
 } from './EmployeesTab.styles';
 
 /**
@@ -66,7 +69,8 @@ const EmployeeCreateFormFields = ({
       </View>
 
       <ScrollView
-        style={inlineStyle_321_12}
+        style={[inlineStyle_321_12, { flexGrow: 1, flexShrink: 1 }]}
+        contentContainerStyle={{ paddingBottom: 8 }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag">
         <View style={inlineStyle_324_18}>
@@ -170,21 +174,21 @@ const EmployeeCreateFormFields = ({
         </View>
       </ScrollView>
 
-      <View style={inlineStyle_446_18}>
+      <View style={modalFooterRow}>
         <TouchableOpacity
           onPress={onClose}
           disabled={isSaving}
-          style={inlineStyle_460_12}>
-          <Text style={inlineStyle_472_14}>Cancelar</Text>
+          style={modalCancelButton}>
+          <Text style={modalCancelButtonText}>Cancelar</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={onSave}
           disabled={isSaving}
-          style={inlineStyle_480_20}>
+          style={[modalSaveButton, isSaving && modalSaveButtonDisabled]}>
           {isSaving ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={{ color: '#fff', fontWeight: '600' }}>Salvar</Text>
+            <Text style={modalSaveButtonText}>Salvar</Text>
           )}
         </TouchableOpacity>
       </View>

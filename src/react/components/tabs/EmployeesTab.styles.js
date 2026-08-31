@@ -13,6 +13,8 @@ export const inlineStyle_281_10 = {
   borderTopRightRadius: 24,
   maxHeight: '85%',
   width: '100%',
+  flexDirection: 'column',
+  overflow: 'hidden',
   shadowColor: '#000',
 
   shadowOffset: {
@@ -169,4 +171,51 @@ export const inlineStyle_480_20 = {
   fontSize: 16,
   fontWeight: '600',
   color: '#6c757d',
+};
+
+/** Footer row for create-collaborator modal (app-community#686) */
+export const modalFooterRow = {
+  flexDirection: 'row',
+  padding: 20,
+  gap: 12,
+  borderTopWidth: 1,
+  borderTopColor: '#e9ecef',
+  flexShrink: 0,
+};
+
+export const modalCancelButton = {
+  flex: 1,
+  paddingVertical: 14,
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: '#6c757d',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+export const modalCancelButtonText = {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#6c757d',
+};
+
+export const modalSaveButton = {
+  flex: 1,
+  flexDirection: 'row',
+  paddingVertical: 14,
+  borderRadius: 12,
+  backgroundColor: '#4F46E5',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+};
+
+export const modalSaveButtonDisabled = {
+  opacity: 0.6,
+};
+
+export const modalSaveButtonText = {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#fff',
 };
