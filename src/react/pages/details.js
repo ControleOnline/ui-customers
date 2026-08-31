@@ -344,6 +344,19 @@ const ClientDetails = ({ route, navigation }) => {
     setActiveTab(index);
   };
 
+  // MUST stay above early return — React #310 (hooks order) on my-company-details
+  const handleSoftDelete = useCallback(() => {
+    if (isRemoving) return;
+    confirmPeopleSoftDelete({
+      Alert,
+      clientId,
+      removePeople,
+      navigation,
+      setIsRemoving,
+      isEmployeeContext: Boolean(parentCompanyId),
+    });
+  }, [clientId, isRemoving, navigation, removePeople, parentCompanyId]);
+
   if (isLoadingClient || !client) {
     return <ClientDetailsSkeleton tabs={tabs} />;
   }
@@ -367,19 +380,6 @@ const ClientDetails = ({ route, navigation }) => {
     navigation,
     handleClientMediaChanged,
   });
-
-
-  const handleSoftDelete = useCallback(() => {
-    if (isRemoving) return;
-    confirmPeopleSoftDelete({
-      Alert,
-      clientId,
-      removePeople,
-      navigation,
-      setIsRemoving,
-      isEmployeeContext: Boolean(parentCompanyId),
-    });
-  }, [clientId, isRemoving, navigation, removePeople, parentCompanyId]);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>

@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   ScrollView,
   Text,
   TextInput,
@@ -44,8 +45,10 @@ import {
   modalSaveButtonText,
 } from './EmployeesTab.styles';
 
+const SCROLL_MAX_HEIGHT = Math.min(420, Math.round(Dimensions.get('window').height * 0.45));
+
 /**
- * Create-collaborator form fields for EmployeesTab modal (app-community#625).
+ * Create-collaborator form fields for EmployeesTab modal (app-community#625 / #686).
  */
 const EmployeeCreateFormFields = ({
   formData,
@@ -69,10 +72,11 @@ const EmployeeCreateFormFields = ({
       </View>
 
       <ScrollView
-        style={[inlineStyle_321_12, { flexGrow: 1, flexShrink: 1 }]}
+        style={[inlineStyle_321_12, { maxHeight: SCROLL_MAX_HEIGHT }]}
         contentContainerStyle={{ paddingBottom: 8 }}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag">
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator>
         <View style={inlineStyle_324_18}>
           <Text style={inlineStyle_326_16}>
             {isPJ ? 'Razão Social *' : 'Nome *'}

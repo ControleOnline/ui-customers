@@ -14,7 +14,6 @@ export const inlineStyle_281_10 = {
   maxHeight: '85%',
   width: '100%',
   flexDirection: 'column',
-  overflow: 'hidden',
   shadowColor: '#000',
 
   shadowOffset: {
