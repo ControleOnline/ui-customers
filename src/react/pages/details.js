@@ -306,8 +306,10 @@ const ClientDetails = ({ route, navigation }) => {
   }, []);
 
   const persistClientData = async partialData => {
+    // Prefer route clientId (Contatos edit) over store seed that may carry
+    // people_link shape and wrong @id — app-community#688.
     const clientId = extractId(
-      client?.id || client?.['@id'],
+      route?.params?.clientId || client?.id || client?.['@id'],
     );
 
     if (!clientId || !savePeople) {
@@ -320,7 +322,7 @@ const ClientDetails = ({ route, navigation }) => {
     };
 
     const saved = await savePeople(payload);
-    setClient(prev => ({ ...(prev || {}), ...(saved || {}), ...partialData }));
+    setClient(prev => ({ ...(prev || {}), ...(saved || {}), ...partialData, id: clientId }));
 
     return saved;
   };
