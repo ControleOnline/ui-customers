@@ -197,12 +197,18 @@ const GeneralTab = ({
 
       if (linkTypeChanged && peopleLinkActions?.save) {
         setIsSavingLinkType(true);
-        const savedLink = await peopleLinkActions.save({
-          ...(peopleLinkId ? { id: peopleLinkId } : {}),
-          company: parentCompanyIri,
-          people: contactPeopleIri,
-          linkType: normalizeLinkType(registrationForm.linkType),
-        });
+        const savedLink = await peopleLinkActions.save(
+          peopleLinkId
+            ? {
+                id: peopleLinkId,
+                linkType: normalizeLinkType(registrationForm.linkType),
+              }
+            : {
+                company: parentCompanyIri,
+                people: contactPeopleIri,
+                linkType: normalizeLinkType(registrationForm.linkType),
+              },
+        );
 
         const nextLinkId = String(savedLink?.id || savedLink?.['@id'] || '').replace(/\D/g, '');
         if (nextLinkId) {

@@ -314,16 +314,14 @@ const ClientDetails = ({ route, navigation }) => {
   }, []);
 
   const persistClientData = async partialData => {
-    const clientId = extractId(
-      client?.id || client?.['@id'],
-    );
+    const persistedId = extractId(clientId || client?.id || client?.['@id']);
 
-    if (!clientId || !savePeople) {
+    if (!persistedId || !savePeople) {
       throw new Error('Nao foi possivel identificar o cliente para salvar.');
     }
 
     const payload = {
-      id: clientId,
+      id: persistedId,
       ...partialData,
     };
 
