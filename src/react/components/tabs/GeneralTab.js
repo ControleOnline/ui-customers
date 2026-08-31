@@ -188,12 +188,19 @@ const GeneralTab = ({
 
       if (linkTypeChanged && peopleLinkActions?.save) {
         setIsSavingLinkType(true);
-        const savedLink = await peopleLinkActions.save({
-          ...(peopleLinkId ? { id: peopleLinkId } : {}),
-          company: parentCompanyIri,
-          people: contactPeopleIri,
-          linkType: normalizeLinkType(registrationForm.linkType),
-        });
+        // On update send only id + linkType — avoid denormalizing people IRI
+        // which triggered "Item not found for /people/{id}" (#688).
+        const linkPayload = peopleLinkId
+          ? {
+              id: peopleLinkId,
+              linkType: normalizeLinkType(registrationForm.linkType),
+            }
+          : {
+              company: parentCompanyIri,
+              people: contactPeopleIri,
+              linkType: normalizeLinkType(registrationForm.linkType),
+            };
+        const savedLink = await peopleLinkActions.save(linkPayload);
 
         const nextLinkId = String(savedLink?.id || savedLink?.['@id'] || '').replace(/\D/g, '');
         if (nextLinkId) {
@@ -239,8 +246,17 @@ const GeneralTab = ({
       setRegistrationForm(updated);
       setOriginalRegistrationForm(updated);
       showSuccess?.(global.t?.t('users','success','registrationUpdated'));
-    } catch {
-      showError?.(global.t?.t('users','error','registrationUpdateFailed'));
+    } catch (error) {
+      const apiMessage =
+        error?.response?.data?.detail ||
+        error?.response?.data?.description ||
+        error?.message ||
+        '';
+      showError?.(
+        apiMessage
+          ? `${global.t?.t('users','error','registrationUpdateFailed') || 'Registration Update Failed'}\n${apiMessage}`
+          : global.t?.t('users','error','registrationUpdateFailed'),
+      );
     } finally {
       setIsSavingLinkType(false);
       setIsSavingRegistration(false);
