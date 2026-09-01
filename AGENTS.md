@@ -1,4 +1,3 @@
-
 ## Ponto de entrada
 
 - A documentação funcional e de regras deste modulo vive na **wiki do proprio repositório** e na wiki principal do app.
@@ -25,9 +24,11 @@ Sempre comece pela **Home** da wiki e siga as categorias abaixo.
 | [Client Details — aba Franquia/Filial (PJ → PJ)](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-Franquia-Filial) | Vínculos franchisee/filial no detalhe de PJ; CRUD só MANAGER |
 | [Client Details — preservação de capitalização (nome/alias)](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-People-Name-Case) | Nome/alias de pessoa/colaborador sem forçar CAIXA ALTA (UI + API) |
 | [Client Details — aba Mídias e gerenciador de avatar](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-Media-Avatar) | Aba Mídias / `people_media`: listar todas as imagens e escolher avatar |
+| [Client Details — criar usuário (UsersTab)](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-Criar-Usuario) | Aba Usuários; POST /users com people IRI |
+| [Client Details — aba Colaboradores (EmployeesTab) e refresh](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-EmployeesTab-Refresh) | Lista people_links; useFocusEffect após edit (#375) |
 | Página canônica do fluxo (CRM) | https://github.com/ControleOnline/ui-crm/wiki/Cliente-Vendedor-Vinculo-e-Permissoes |
 
-Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md`, `docs/technical/Client-Details-Franquia-Filial.md`, `docs/technical/Client-Details-People-Name-Case.md`, `docs/technical/Client-Details-Media-Avatar.md`
+Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md`, `docs/technical/Client-Details-Franquia-Filial.md`, `docs/technical/Client-Details-People-Name-Case.md`, `docs/technical/Client-Details-Media-Avatar.md`, `docs/technical/Client-Details-EmployeesTab-Refresh.md`
 
 ### Visão deste módulo
 
