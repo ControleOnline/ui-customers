@@ -21,9 +21,9 @@ test('company details exposes the fiscal tab for legal entities', () => {
   assert.match(details, /<FiscalTab \{\.\.\.tabProps\} navigation=\{navigation\} \/>/);
 });
 
-test('fiscal tab reuses the shared integration page with the edited company id', () => {
-  assert.match(fiscalTab, /IntegrationConfigPage/);
-  assert.match(fiscalTab, /providerKey: 'receita-federal'/);
-  assert.match(fiscalTab, /companyId: client\?\.id/);
-  assert.match(fiscalTab, /embedded/);
+test('company fiscal tab delegates the complete fiscal settings to ui-accounting', () => {
+  assert.match(fiscalTab, /@controleonline\/ui-accounting\/src\/react\/components\/fiscal\/FiscalCompanyConfig/);
+  assert.match(fiscalTab, /<FiscalCompanyConfig company=\{client\} navigation=\{navigation\} \/>/);
+  assert.doesNotMatch(fiscalTab, /IntegrationConfigPage/);
+  assert.doesNotMatch(fiscalTab, /providerKey: 'receita-federal'/);
 });
