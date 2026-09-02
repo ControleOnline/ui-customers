@@ -21,9 +21,9 @@ test('company details exposes the fiscal tab for legal entities', () => {
   assert.match(details, /<FiscalTab \{\.\.\.tabProps\} navigation=\{navigation\} \/>/);
 });
 
-test('fiscal tab delegates CTe fiscal settings to ui-accounting', () => {
-  assert.match(fiscalTab, /@controleonline\/ui-accounting\/src\/react\/components\/fiscal\/CteFiscalConfig/);
-  assert.match(fiscalTab, /<CteFiscalConfig company=\{client\} navigation=\{navigation\} \/>/);
+test('company fiscal tab delegates the complete fiscal settings to ui-accounting', () => {
+  assert.match(fiscalTab, /@controleonline\/ui-accounting\/src\/react\/components\/fiscal\/FiscalCompanyConfig/);
+  assert.match(fiscalTab, /<FiscalCompanyConfig company=\{client\} navigation=\{navigation\} \/>/);
   assert.doesNotMatch(fiscalTab, /IntegrationConfigPage/);
   assert.doesNotMatch(fiscalTab, /providerKey: 'receita-federal'/);
 });

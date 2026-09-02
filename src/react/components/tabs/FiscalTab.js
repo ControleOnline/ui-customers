@@ -1,6 +1,6 @@
 import React from 'react';
-import CteFiscalConfig from '@controleonline/ui-accounting/src/react/components/fiscal/CteFiscalConfig';
+import FiscalCompanyConfig from '@controleonline/ui-accounting/src/react/components/fiscal/FiscalCompanyConfig';
 
 export default function FiscalTab({ client, navigation }) {
-  return <CteFiscalConfig company={client} navigation={navigation} />;
+  return <FiscalCompanyConfig company={client} navigation={navigation} />;
 }
