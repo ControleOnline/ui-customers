@@ -35,9 +35,47 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isRefreshingApiKey, setIsRefreshingApiKey] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
   const usersStore = useStores(state => state.users) || {};
   const actions = usersStore.actions || {};
+
+  useEffect(() => {
+    const peopleIri = toPeopleIri(client?.id || client?.['@id']);
+    if (!peopleIri || typeof actions.getItems !== 'function') {
+      return undefined;
+    }
+
+    let mounted = true;
+    setIsLoadingUsers(true);
+
+    actions
+      .getItems({
+        people: peopleIri,
+        itemsPerPage: 100,
+        __storeMeta: {
+          dedupeKey: `client-details-users-${peopleIri}`,
+          skipSystemError: true,
+        },
+      })
+      .then(response => {
+        if (!mounted) return;
+        const entries = Array.isArray(response)
+          ? response
+          : response?.member || response?.['hydra:member'] || [];
+        setUsers(entries.map(normalizeUserItem).filter(Boolean));
+      })
+      .catch(() => {
+        // Preserve embedded users when the scoped refresh is unavailable.
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingUsers(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [actions.getItems, client?.id, client?.['@id']]);
 
   useEffect(() => {
     const sourceUsers = Array.isArray(client?.user)
@@ -314,7 +352,9 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
               </TouchableOpacity>
             )}
           </View>
-          {users.length === 0 ? (
+          {isLoadingUsers ? (
+            <Text style={customStyles.emptyText}>Carregando usuários...</Text>
+          ) : users.length === 0 ? (
             <Text style={customStyles.emptyText}>
               Nenhum usuário cadastrado
             </Text>
