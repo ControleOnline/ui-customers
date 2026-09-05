@@ -3,6 +3,7 @@ import People from '@controleonline/ui-people/src/react/pages/People';
 import {
   normalizePeopleContextType,
 } from '@controleonline/ui-people/src/react/utils/peopleContext';
+import { normalizeEntityId } from '@controleonline/ui-people/src/react/utils/peopleLinkFilters';
 
 const normalizePeopleType = value =>
   String(value ?? '')
