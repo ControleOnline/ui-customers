@@ -44,6 +44,12 @@ export const buildEmployeesContext = routeParams => {
     searchPlaceholder:
       routeParams?.searchPlaceholder || global.t?.t('people', 'label', defaultContext),
     modalTitleByType,
+     detailsRouteName: 'EmployeeDetails',
+     useStoreExternalFilter: true,
+     detailsRouteParams: (person, selectedLinkType) => ({
+       employeeId: normalizeEntityId(person?.id ?? person?.['@id']),
+       contextKey: selectedLinkType === 'all' ? '' : String(selectedLinkType || ''),
+     }),
     typeSelectorLabel:
       routeParams?.typeSelectorLabel || global.t?.t('people', 'label', 'contactRole'),
   };
