@@ -6,6 +6,7 @@ Trilhas de origem:
 
 - [app-community#369](https://github.com/ControleOnline/app-community/issues/369) — criar usuário com `people` em IRI
 - [app-community#759](https://github.com/ControleOnline/app-community/issues/759) — ao abrir a aba, disparar leitura dos usuários da pessoa (antes nenhum GET era feito)
+- [ui-customers#2](https://github.com/ControleOnline/ui-customers/pull/2) / [app-community#95](https://github.com/ControleOnline/app-community/issues/95) — restaurar gestão de usuários e API key no detalhe da pessoa (lista via store `users`, ver/renovar/copiar chave, criar/trocar senha/remover alinhados ao legado `ui-users`)
 
 ## Como este módulo se encaixa
 
@@ -118,6 +119,26 @@ Após sucesso, o usuário criado/atualizado entra na listagem local da aba (norm
 
 O vínculo com a pessoa na **escrita** é o campo `people` no payload (IRI). Na **leitura**, o filtro `people` limita a coleção à pessoa do detalhe. Payload de escrita com id nu (sem `/people/`) quebra a deserialização/associação e pode se manifestar como erro genérico de autenticação no cliente — por isso o frontend **obrigatoriamente** normaliza para IRI.
 
+
+### API key, senha e remoção (contrato legado restaurado)
+
+O fluxo da aba **não** é só criar usuário. O contrato alinhado ao legado (`ui-users`: `List.vue`, `CreateUser.vue`, `ChangePassword.vue`, `ApiKey.vue`) e restaurado em `ui-customers#2` / `app-community#95` é:
+
+| Ação na UI | Contrato backend | Observação |
+| --- | --- | --- |
+| Listar usuários da pessoa | `GET /users` (store `users`, filtro `people`) | Não confiar só no payload embutido `client.user` — recarregar da coleção |
+| Criar usuário | `POST /users` | `people` em IRI; ver seção de criação |
+| Trocar senha | `PUT /users/{id}/change-password` | Mesmo escopo `ROLE_HUMAN` |
+| Ver / renovar API key | `GET /users/{id}` + `PUT /users/{id}/change-api-key` | Modal `UserApiKeyModal`: visualizar, refresh e copiar |
+| Remover usuário | `DELETE /users/{id}` | Sem editor separado de permissões nesta tela |
+
+Regras:
+
+- A lista visível deve ser hidratada pelo store `users` (normalização em `userManagement` / `usersTabHelpers`), não apenas pelo snapshot da pessoa.
+- A tela **não** expõe CRUD de papéis/permissões do usuário: `User::getRoles()` no backend devolve `ROLE_CLIENT` e **não** há endpoint de mutação de permissão neste contrato.
+- Copiar a API key é ação de UI (clipboard); renovar chama `change-api-key` e substitui o valor exibido.
+- Helpers e tab devem permanecer ≤ 500 linhas (`UsersTab`, `userManagement.js` / `usersTabHelpers.js`).
+
 ## Modularização (UI)
 
 | Arquivo | Papel |
@@ -156,6 +177,8 @@ Evidência de aceite do #759: ao acionar a aba, deve haver requisição observá
 | App home | https://github.com/ControleOnline/app-community/wiki |
 | Issue listagem (#759) | https://github.com/ControleOnline/app-community/issues/759 |
 | Issue criação (#369) | https://github.com/ControleOnline/app-community/issues/369 |
+| PR módulo UsersTab/API key (#2) | https://github.com/ControleOnline/ui-customers/pull/2 |
+| Issue agregadora (#95) | https://github.com/ControleOnline/app-community/issues/95 |
 | Visões do app | https://github.com/ControleOnline/app-community/blob/master/MODOS_OPERACAO.md |
 
 Cópia versionada no Git: `docs/technical/Client-Details-Criar-Usuario.md`
