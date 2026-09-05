@@ -24,9 +24,9 @@ describe('employees page context', () => {
   it('exposes courier alongside the default employee roles', () => {
     const context = buildEmployeesContext({})
 
-    expect(context.context).toEqual(['employee', 'owner', 'courier'])
-    expect(context.defaultContext).toBe('employee')
-    expect(context.selectedContext).toBe('employee')
+    expect(context.context).toEqual(['all', 'employee', 'owner', 'courier'])
+    expect(context.defaultContext).toBe('all')
+    expect(context.selectedContext).toBe('all')
     expect(context.defaultPeopleType).toBe('J')
     expect(context.modalTitleByType.courier).toBe('Cadastro de Entregador')
   })

@@ -18,13 +18,13 @@ export const buildEmployeesContext = routeParams => {
       ? [routeParams.context]
       : normalizedSelectedContext
         ? [normalizedSelectedContext]
-        : ['employee', 'owner', 'courier'];
+        : ['all', 'employee', 'owner', 'courier'];
 
   const defaultContext =
     normalizedDefaultContext ||
     normalizedSelectedContext ||
     normalizePeopleContextType(normalizedContext[0]) ||
-    'employee';
+    'all';
 
   const modalTitleByType = {
     employee: 'Cadastro de Funcionario',
