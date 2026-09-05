@@ -26,9 +26,10 @@ Sempre comece pela **Home** da wiki e siga as categorias abaixo.
 | [Client Details — aba Mídias e gerenciador de avatar](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-Media-Avatar) | Aba Mídias / `people_media`: listar todas as imagens e escolher avatar |
 | [Client Details — criar usuário (UsersTab)](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-Criar-Usuario) | Aba Usuários; POST /users com people IRI |
 | [Client Details — aba Colaboradores (EmployeesTab) e refresh](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-EmployeesTab-Refresh) | Lista people_links; useFocusEffect após edit (#375) |
+| [Client Details — abas e navegação (sem Categories)](https://github.com/ControleOnline/ui-customers/wiki/Client-Details-Abas-Navegacao) | Barra de abas PF/PJ; Categories ausente; classificação em GeneralTab (#758) |
 | Página canônica do fluxo (CRM) | https://github.com/ControleOnline/ui-crm/wiki/Cliente-Vendedor-Vinculo-e-Permissoes |
 
-Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md`, `docs/technical/Client-Details-Franquia-Filial.md`, `docs/technical/Client-Details-People-Name-Case.md`, `docs/technical/Client-Details-Media-Avatar.md`, `docs/technical/Client-Details-EmployeesTab-Refresh.md`
+Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.md`, `docs/technical/Client-Details-Franquia-Filial.md`, `docs/technical/Client-Details-People-Name-Case.md`, `docs/technical/Client-Details-Media-Avatar.md`, `docs/technical/Client-Details-EmployeesTab-Refresh.md, `docs/technical/Client-Details-Abas-Navegacao.md`
 
 ### Visão deste módulo
 
