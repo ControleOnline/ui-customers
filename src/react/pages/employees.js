@@ -3,6 +3,7 @@ import People from '@controleonline/ui-people/src/react/pages/People';
 import {
   normalizePeopleContextType,
 } from '@controleonline/ui-people/src/react/utils/peopleContext';
+import { normalizeEntityId } from '@controleonline/ui-people/src/react/utils/peopleLinkFilters';
 
 const normalizePeopleType = value =>
   String(value ?? '')
@@ -44,6 +45,11 @@ export const buildEmployeesContext = routeParams => {
     searchPlaceholder:
       routeParams?.searchPlaceholder || global.t?.t('people', 'label', defaultContext),
     modalTitleByType,
+    detailsRouteName: 'EmployeeDetails',
+    detailsRouteParams: (person, selectedLinkType) => ({
+      employeeId: normalizeEntityId(person?.id ?? person?.['@id']),
+      contextKey: selectedLinkType === 'all' ? '' : String(selectedLinkType || ''),
+    }),
     typeSelectorLabel:
       routeParams?.typeSelectorLabel || global.t?.t('people', 'label', 'contactRole'),
   };

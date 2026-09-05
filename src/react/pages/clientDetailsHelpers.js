@@ -43,6 +43,7 @@ export const resolveRouteClientId = routeParams => {
 
   return extractId(
     routeParams?.clientId ||
+      routeParams?.employeeId ||
       routeParams?.companyId ||
       routeParams?.id ||
       clientSeed?.id ||
