@@ -75,7 +75,6 @@ export const buildClientTabDefs = ({
   return [
     { key: 'general', label: label('general') },
     { key: 'media', label: label('media', 'Mídia') },
-    { key: 'categories', label: label('categories', 'Classificação') },
     { key: 'users', label: label('users') },
     ...(isProviderContext
       ? [{ key: 'products', label: label('products', 'Produtos') }]
