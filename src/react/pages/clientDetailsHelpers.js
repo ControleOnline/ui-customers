@@ -45,6 +45,11 @@ export const extractId = value => {
 export const resolveRouteClientSeed = routeParams => {
   const client = routeParams?.client || routeParams?.people || null;
 
+  // Web serializes objects into the query as the literal string "[object Object]".
+  if (typeof client === 'string') {
+    return null;
+  }
+
   return client && typeof client === 'object' && !Array.isArray(client)
     ? client
     : null;
@@ -53,8 +58,11 @@ export const resolveRouteClientSeed = routeParams => {
 export const resolveRouteClientId = routeParams => {
   const clientSeed = resolveRouteClientSeed(routeParams);
 
+  // companyId is a legacy/alias param used by some My Company Details deep-links
+  // (app-community#641). Prefer clientId, then companyId, then seed.
   return extractId(
     routeParams?.clientId ||
+      routeParams?.companyId ||
       routeParams?.id ||
       clientSeed?.id ||
       clientSeed?.['@id'],
