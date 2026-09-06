@@ -28,10 +28,27 @@ export const normalizeCollection = payload => {
 export const PERSON_PHOTO_MEDIA_TYPES = ['avatar'];
 export const COMPANY_ICON_MEDIA_TYPES = ['icon'];
 
-export const extractId = value => String(value || '').replace(/\D/g, '');
+export const extractId = value => {
+  if (value == null || value === '') {
+    return '';
+  }
+  if (typeof value === 'object') {
+    return extractId(value.id ?? value['@id'] ?? '');
+  }
+  const asString = String(value).trim();
+  if (asString === '[object Object]') {
+    return '';
+  }
+  return asString.replace(/\D/g, '');
+};
 
 export const resolveRouteClientSeed = routeParams => {
   const client = routeParams?.client || routeParams?.people || null;
+
+  // Web serializes objects into the query as the literal string "[object Object]".
+  if (typeof client === 'string') {
+    return null;
+  }
 
   return client && typeof client === 'object' && !Array.isArray(client)
     ? client
@@ -41,8 +58,11 @@ export const resolveRouteClientSeed = routeParams => {
 export const resolveRouteClientId = routeParams => {
   const clientSeed = resolveRouteClientSeed(routeParams);
 
+  // companyId is a legacy/alias param used by some My Company Details deep-links
+  // (app-community#641). Prefer clientId, then companyId, then seed.
   return extractId(
     routeParams?.clientId ||
+      routeParams?.companyId ||
       routeParams?.id ||
       clientSeed?.id ||
       clientSeed?.['@id'],
