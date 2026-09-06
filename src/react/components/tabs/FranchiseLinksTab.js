@@ -63,14 +63,47 @@ const FranchiseLinksTab = ({
     setIsLoading(true);
     setError('');
 
-    getPeopleLinks(buildFranchiseLinkReadParams(clientId))
-      .then(items => {
+    // Dual read: company=parent (canonical) + people=parent (inverted links).
+    const byCompany = buildFranchiseLinkReadParams(clientId);
+    const byPeople = {
+      people: clientId,
+      linkType: byCompany.linkType,
+      enable: true,
+      itemsPerPage: byCompany.itemsPerPage || 100,
+    };
+
+    Promise.all([
+      getPeopleLinks(byCompany).catch(() => []),
+      getPeopleLinks(byPeople).catch(() => []),
+    ])
+      .then(([companyPayload, peoplePayload]) => {
         if (cancelled) {
           return;
         }
-        const next = buildFranchiseLinksFromPeopleLinks(items, {
+        const fromCompany = buildFranchiseLinksFromPeopleLinks(companyPayload, {
           companyId: clientId,
         });
+        const fromPeople = buildFranchiseLinksFromPeopleLinks(peoplePayload, {
+          // inverted: do not require companyId match
+          companyId: '',
+        }).map(link => {
+          // Prefer showing the counterpart: when people=parent, linked PJ is company
+          if (!link?.people || extractId(link?.people?.id || link?.people?.['@id']) === clientId) {
+            const companyRaw = link?.company;
+            if (companyRaw && typeof companyRaw === 'object') {
+              return { ...link, people: companyRaw };
+            }
+          }
+          return link;
+        });
+        const seen = new Set();
+        const next = [];
+        for (const item of [...fromCompany, ...fromPeople]) {
+          const key = String(item?.id || item?.['@id'] || '');
+          if (key && seen.has(key)) continue;
+          if (key) seen.add(key);
+          next.push(item);
+        }
         setLinks(next);
       })
       .catch(() => {
