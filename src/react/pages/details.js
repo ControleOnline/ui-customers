@@ -1,3 +1,4 @@
+// fluxo: cliente-cadastro | etapa: client-details | wiki: https://github.com/ControleOnline/app-community/wiki/Venda-Producao
 /*
  * Contract imported from AGENTS.md
  * ## Escopo

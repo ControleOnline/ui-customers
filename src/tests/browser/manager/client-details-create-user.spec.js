@@ -1,3 +1,4 @@
+// fluxo: cliente-cadastro | etapa: user-last-step | wiki: https://github.com/ControleOnline/app-community/wiki/Venda-Producao
 const {expect, test} = require('playwright/test');
 const {API_ORIGIN} = require('../../../../../../../src/tests/browser/apiOrigin');
 const {version: appVersion} = require('../../../../../../../package.json');

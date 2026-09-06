@@ -1,3 +1,4 @@
+// fluxo: cliente-cadastro, funcionario-cadastro, fornecedor-cadastro, franquia-cadastro | etapa: context-routes | wiki: https://github.com/ControleOnline/app-community/wiki/Venda-Producao
 import Clients from '@controleonline/ui-customers/src/react/pages/clients';
 import Employees from '@controleonline/ui-customers/src/react/pages/employees';
 import Franchisees from '@controleonline/ui-customers/src/react/pages/franchisees';
@@ -92,4 +93,3 @@ const customersRoutes = [
 ];
 
 export default customersRoutes;
-

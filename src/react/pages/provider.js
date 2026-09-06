@@ -1,3 +1,4 @@
+// fluxo: fornecedor-cadastro | etapa: providers-index | wiki: https://github.com/ControleOnline/app-community/wiki/Venda-Producao
 import React from 'react';
 import People from '@controleonline/ui-people/src/react/pages/People';
 
