@@ -363,3 +363,4 @@ test.describe('manager client-details franchise/filial links', () => {
     expect(pageErrors).toEqual([]);
   });
 });
+// fluxo: franquia-cadastro | etapa: franchise-links | wiki: https://github.com/ControleOnline/app-community/wiki/Venda-Producao

@@ -316,3 +316,4 @@ test.describe('client-details franchise commission browser smoke', () => {
     await expect(page.getByTestId('edit-franchise-commission')).toHaveCount(0);
   });
 });
+// fluxo: franquia-cadastro | etapa: franchise-commission | wiki: https://github.com/ControleOnline/app-community/wiki/Venda-Producao
