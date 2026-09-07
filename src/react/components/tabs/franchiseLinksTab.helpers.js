@@ -18,11 +18,11 @@ export const FRANCHISE_LINK_TYPES = ['franchisee', 'filial'];
 export const FRANCHISE_LINK_TYPES_UI = ['franchisee', 'filial'];
 
 export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => {
-  const company = extractEntityId(companyId);
+  const id = extractEntityId(companyId);
+  // Prefer IRI — SearchFilter exact on ManyToOne is reliable with /people/{id}.
+  const company = id ? `/people/${id}` : companyId;
   return {
-    // Numeric id is accepted by PeopleLinkService::normalizeIdentifier + SearchFilter.
     company,
-    // Only valid SET values — never `filial` (task-521).
     linkType: [...FRANCHISE_LINK_TYPES],
     enable: true,
     itemsPerPage,
