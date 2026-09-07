@@ -12,19 +12,20 @@
  * Entity SET includes both franchisee and filial — query both.
  * (Older comment about filial not in SET is outdated vs current columnDefinition.)
  */
-export const FRANCHISE_LINK_TYPES = ['franchisee', 'filial'];
+export const FRANCHISE_LINK_TYPES = ['franchisee'];
 
 /** Labels / residual payloads. */
 export const FRANCHISE_LINK_TYPES_UI = ['franchisee', 'filial'];
 
 export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => {
   const id = extractEntityId(companyId);
-  // Prefer IRI — SearchFilter exact on ManyToOne is reliable with /people/{id}.
+  // Prefer IRI for SearchFilter ManyToOne.
   const company = id ? `/people/${id}` : companyId;
+  // IMPORTANT (task-641/453): do NOT send linkType[]=franchisee or enable=true.
+  // Staging API returns the franchisee rows without those filters (ASC F1/F2),
+  // but totalItems=0 when linkType[]/enable are present — filter client-side.
   return {
     company,
-    linkType: [...FRANCHISE_LINK_TYPES],
-    enable: true,
     itemsPerPage,
   };
 };
