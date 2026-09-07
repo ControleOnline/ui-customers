@@ -56,6 +56,28 @@ describe('clientDetailsHelpers', () => {
     ]);
   });
 
+  it('does not expose Categories for a person or resolve it by deep link', () => {
+    const tabs = buildClientTabDefs({
+      isPessoaJuridica: false,
+      isProviderContext: false,
+      t: { t: (_ns, _k, key) => key },
+    });
+
+    expect(tabs.map(t => t.key)).toEqual([
+      'general',
+      'media',
+      'users',
+      'contracts',
+    ]);
+    expect(
+      resolveInitialTabIndex({
+        requestedInitialTab: 'categories',
+        nextClient: { peopleType: 'F' },
+        detailContext: 'employee',
+      }),
+    ).toBe(0);
+  });
+
   it('resolveInitialTabIndex respects requested tab and defaults to 0', () => {
     expect(
       resolveInitialTabIndex({
