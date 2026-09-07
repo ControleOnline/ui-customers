@@ -3,6 +3,7 @@ import People from '@controleonline/ui-people/src/react/pages/People';
 import {
   normalizePeopleContextType,
 } from '@controleonline/ui-people/src/react/utils/peopleContext';
+import { normalizeEntityId } from '@controleonline/ui-people/src/react/utils/peopleLinkFilters';
 
 const normalizePeopleType = value =>
   String(value ?? '')
@@ -18,13 +19,13 @@ export const buildEmployeesContext = routeParams => {
       ? [routeParams.context]
       : normalizedSelectedContext
         ? [normalizedSelectedContext]
-        : ['employee', 'owner', 'courier'];
+        : ['all', 'employee', 'owner', 'courier'];
 
   const defaultContext =
     normalizedDefaultContext ||
     normalizedSelectedContext ||
     normalizePeopleContextType(normalizedContext[0]) ||
-    'employee';
+    'all';
 
   const modalTitleByType = {
     employee: 'Cadastro de Funcionario',
@@ -44,6 +45,12 @@ export const buildEmployeesContext = routeParams => {
     searchPlaceholder:
       routeParams?.searchPlaceholder || global.t?.t('people', 'label', defaultContext),
     modalTitleByType,
+     detailsRouteName: 'EmployeeDetails',
+     useStoreExternalFilter: true,
+     detailsRouteParams: (person, selectedLinkType) => ({
+       employeeId: normalizeEntityId(person?.id ?? person?.['@id']),
+       contextKey: selectedLinkType === 'all' ? '' : String(selectedLinkType || ''),
+     }),
     typeSelectorLabel:
       routeParams?.typeSelectorLabel || global.t?.t('people', 'label', 'contactRole'),
   };
