@@ -8,13 +8,13 @@
  */
 
 /**
- * Types that exist in people_link.link_type MySQL SET (api-platform-people).
- * `filial` is NOT in the SET — do not send it on GET or the IN filter can
- * empty the collection (app-community#521).
+ * Types in people_link.link_type MySQL SET (api-platform-people PeopleLink).
+ * Entity SET includes both franchisee and filial — query both.
+ * (Older comment about filial not in SET is outdated vs current columnDefinition.)
  */
-export const FRANCHISE_LINK_TYPES = ['franchisee'];
+export const FRANCHISE_LINK_TYPES = ['franchisee', 'filial'];
 
-/** UI-only labels / residual payloads may still mention filial. */
+/** Labels / residual payloads. */
 export const FRANCHISE_LINK_TYPES_UI = ['franchisee', 'filial'];
 
 export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => {
