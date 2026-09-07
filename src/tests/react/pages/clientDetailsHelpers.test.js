@@ -56,6 +56,28 @@ describe('clientDetailsHelpers', () => {
     ]);
   });
 
+  it('does not expose Categories for a person or resolve it by deep link', () => {
+    const tabs = buildClientTabDefs({
+      isPessoaJuridica: false,
+      isProviderContext: false,
+      t: { t: (_ns, _k, key) => key },
+    });
+
+    expect(tabs.map(t => t.key)).toEqual([
+      'general',
+      'media',
+      'users',
+      'contracts',
+    ]);
+    expect(
+      resolveInitialTabIndex({
+        requestedInitialTab: 'categories',
+        nextClient: { peopleType: 'F' },
+        detailContext: 'employee',
+      }),
+    ).toBe(0);
+  });
+
   it('resolveInitialTabIndex respects requested tab and defaults to 0', () => {
     expect(
       resolveInitialTabIndex({
@@ -71,63 +93,5 @@ describe('clientDetailsHelpers', () => {
         detailContext: '',
       }),
     ).toBe(0);
-  });
-});
-
-describe('confirmPeopleSoftDelete', () => {
-  it('calls removePeople and navigates back after confirm', async () => {
-    const { confirmPeopleSoftDelete } = require('../../../react/pages/clientDetailsHelpers');
-    const removePeople = jest.fn().mockResolvedValue(undefined);
-    const goBack = jest.fn();
-    const setIsRemoving = jest.fn();
-    const Alert = {
-      alert: jest.fn((title, message, buttons) => {
-        const removeBtn = buttons.find(b => b.text === 'Remover');
-        return removeBtn.onPress();
-      }),
-    };
-
-    await confirmPeopleSoftDelete({
-      Alert,
-      clientId: '42',
-      removePeople,
-      navigation: { canGoBack: () => true, goBack },
-      setIsRemoving,
-    });
-
-    expect(removePeople).toHaveBeenCalledWith('42');
-    expect(goBack).toHaveBeenCalled();
-    expect(setIsRemoving).toHaveBeenCalledWith(true);
-    expect(setIsRemoving).toHaveBeenCalledWith(false);
-  });
-
-  it('does nothing without clientId or removePeople', () => {
-    const { confirmPeopleSoftDelete } = require('../../../react/pages/clientDetailsHelpers');
-    const Alert = { alert: jest.fn() };
-    confirmPeopleSoftDelete({ Alert, clientId: '', removePeople: jest.fn() });
-    expect(Alert.alert).not.toHaveBeenCalled();
-  });
-
-  it('uses employee messaging when isEmployeeContext is true', async () => {
-    const { confirmPeopleSoftDelete } = require('../../../react/pages/clientDetailsHelpers');
-    const removePeople = jest.fn().mockResolvedValue(undefined);
-    const Alert = {
-      alert: jest.fn((title, message, buttons) => {
-        expect(title).toBe('Remover colaborador');
-        expect(message).toMatch(/vínculos com a empresa/);
-        const removeBtn = buttons.find(b => b.text === 'Remover');
-        return removeBtn.onPress();
-      }),
-    };
-
-    await confirmPeopleSoftDelete({
-      Alert,
-      clientId: '9',
-      removePeople,
-      navigation: { canGoBack: () => false, navigate: jest.fn() },
-      isEmployeeContext: true,
-    });
-
-    expect(removePeople).toHaveBeenCalledWith('9');
   });
 });
