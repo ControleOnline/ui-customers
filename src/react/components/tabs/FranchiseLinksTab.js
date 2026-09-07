@@ -63,47 +63,16 @@ const FranchiseLinksTab = ({
     setIsLoading(true);
     setError('');
 
-    // Dual read: company=parent (canonical) + people=parent (inverted links).
-    const byCompany = buildFranchiseLinkReadParams(clientId);
-    const byPeople = {
-      people: clientId,
-      linkType: byCompany.linkType,
-      enable: true,
-      itemsPerPage: byCompany.itemsPerPage || 100,
-    };
-
-    Promise.all([
-      getPeopleLinks(byCompany).catch(() => []),
-      getPeopleLinks(byPeople).catch(() => []),
-    ])
-      .then(([companyPayload, peoplePayload]) => {
+    // company only — API zeros the collection when linkType[]/enable are sent
+    // (task-641). Filter franchisee client-side via buildFranchiseLinksFromPeopleLinks.
+    getPeopleLinks(buildFranchiseLinkReadParams(clientId))
+      .then(items => {
         if (cancelled) {
           return;
         }
-        const fromCompany = buildFranchiseLinksFromPeopleLinks(companyPayload, {
+        const next = buildFranchiseLinksFromPeopleLinks(items, {
           companyId: clientId,
         });
-        const fromPeople = buildFranchiseLinksFromPeopleLinks(peoplePayload, {
-          // inverted: do not require companyId match
-          companyId: '',
-        }).map(link => {
-          // Prefer showing the counterpart: when people=parent, linked PJ is company
-          if (!link?.people || extractId(link?.people?.id || link?.people?.['@id']) === clientId) {
-            const companyRaw = link?.company;
-            if (companyRaw && typeof companyRaw === 'object') {
-              return { ...link, people: companyRaw };
-            }
-          }
-          return link;
-        });
-        const seen = new Set();
-        const next = [];
-        for (const item of [...fromCompany, ...fromPeople]) {
-          const key = String(item?.id || item?.['@id'] || '');
-          if (key && seen.has(key)) continue;
-          if (key) seen.add(key);
-          next.push(item);
-        }
         setLinks(next);
       })
       .catch(() => {
