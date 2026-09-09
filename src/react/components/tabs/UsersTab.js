@@ -345,9 +345,10 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             )}
           </View>
           {usersError ? (
-            <Text style={customStyles.emptyText}>{usersError}</Text>
-          ) : null}
-          {isLoadingUsers ? (
+            <Text testID="users-tab-error" style={customStyles.emptyText}>
+              {usersError}
+            </Text>
+          ) : isLoadingUsers ? (
             <Text testID="users-tab-loading" style={customStyles.emptyText}>
               Carregando usuários...
             </Text>
