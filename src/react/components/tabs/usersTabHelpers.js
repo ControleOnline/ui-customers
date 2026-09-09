@@ -7,6 +7,22 @@ const toPeopleIri = value => {
   return id ? `/people/${id}` : '';
 };
 
+/** Query for GET /users when opening the Users tab on client-details. */
+const buildUsersListQuery = client => {
+  const peopleIri = toPeopleIri(client?.id || client?.['@id']);
+  if (!peopleIri) {
+    return null;
+  }
+  return {
+    people: peopleIri,
+    itemsPerPage: 100,
+    __storeMeta: {
+      dedupeKey: `client-details-users-${peopleIri}`,
+      skipSystemError: true,
+    },
+  };
+};
+
 const normalizeUserItem = entry => {
   if (!entry) {
     return null;
@@ -40,6 +56,15 @@ const normalizeUserItem = entry => {
     apiKey,
     timezoneId: timezoneId || '',
   };
+};
+
+const embeddedUsersFromClient = client => {
+  const sourceUsers = Array.isArray(client?.user)
+    ? client.user
+    : client?.user
+      ? [client.user]
+      : [];
+  return sourceUsers.map(normalizeUserItem).filter(Boolean);
 };
 
 const mapUsersForClient = users =>
@@ -187,6 +212,8 @@ module.exports = {
   extractErrorMessage,
   extractId,
   toPeopleIri,
+  buildUsersListQuery,
+  embeddedUsersFromClient,
   formatApiKeyPreview,
   mapUsersForClient,
   normalizeUserItem,

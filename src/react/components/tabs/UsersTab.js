@@ -25,6 +25,8 @@ import {
   normalizeUserItem,
   toPeopleIri,
   toTimezoneIri,
+  buildUsersListQuery,
+  embeddedUsersFromClient,
 } from './usersTabHelpers';
 import UserFormModal from './UserFormModal';
 import UserApiKeyModal from './UserApiKeyModal';
@@ -46,21 +48,12 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const usersStore = useStores(state => state.users) || {};
   const actions = usersStore.actions || {};
 
-  const embeddedUsersFromClient = client => {
-    const sourceUsers = Array.isArray(client?.user)
-      ? client.user
-      : client?.user
-        ? [client.user]
-        : [];
-    return sourceUsers.map(normalizeUserItem).filter(Boolean);
-  };
-
   useEffect(() => {
-    const peopleIri = toPeopleIri(client?.id || client?.['@id']);
+    const query = buildUsersListQuery(client);
     const fallbackUsers = embeddedUsersFromClient(client);
     let mounted = true;
 
-    if (!peopleIri || typeof actions.getItems !== 'function') {
+    if (!query || typeof actions.getItems !== 'function') {
       setUsers(fallbackUsers);
       setUsersError('');
       setIsLoadingUsers(false);
@@ -71,14 +64,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     setUsersError('');
 
     actions
-      .getItems({
-        people: peopleIri,
-        itemsPerPage: 100,
-        __storeMeta: {
-          dedupeKey: `client-details-users-${peopleIri}`,
-          skipSystemError: true,
-        },
-      })
+      .getItems(query)
       .then(response => {
         if (!mounted) return;
         const entries = extractCollectionItems(response);
@@ -373,9 +359,11 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             <Text style={customStyles.emptyText}>{usersError}</Text>
           ) : null}
           {isLoadingUsers ? (
-            <Text style={customStyles.emptyText}>Carregando usuários...</Text>
+            <Text testID="users-tab-loading" style={customStyles.emptyText}>
+              Carregando usuários...
+            </Text>
           ) : users.length === 0 ? (
-            <Text style={customStyles.emptyText}>
+            <Text testID="users-tab-empty" style={customStyles.emptyText}>
               Nenhum usuário cadastrado
             </Text>
           ) : (
