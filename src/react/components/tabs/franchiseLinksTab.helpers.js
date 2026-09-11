@@ -26,11 +26,16 @@ export const FRANCHISE_LINK_TYPES_UI = ['franchisee', 'filial'];
  * One query only — never invert sides.
  */
 export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => {
-  const company = extractEntityId(companyId);
+  const id = extractEntityId(companyId);
+  // Prefer numeric id (SearchFilter accepts company=5). IRI also works.
+  const company = id || companyId;
+  // CRITICAL (app-community#790 / regression of #485/#521/#641):
+  // Staging API: enable=true (string) matches ZERO rows; enable=1 works.
+  // linkType as non-array string → 400. Combined bad filters empty the tab.
+  // Fetch by company only; filter franchisee|filial client-side in
+  // buildFranchiseLinksFromPeopleLinks / normalizeFranchiseLink.
   return {
     company,
-    linkType: [...FRANCHISE_LINK_TYPES],
-    enable: true,
     itemsPerPage,
   };
 };
@@ -43,8 +48,6 @@ export const buildFranchiseLinkReadParamsByPeople = (
   const people = extractEntityId(peopleId);
   return {
     people,
-    linkType: [...FRANCHISE_LINK_TYPES],
-    enable: true,
     itemsPerPage,
   };
 };

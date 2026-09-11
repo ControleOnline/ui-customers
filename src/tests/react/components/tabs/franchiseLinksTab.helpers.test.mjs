@@ -17,19 +17,20 @@ import {
 
 assert.deepEqual(buildFranchiseLinkReadParams('/people/11'), {
   company: '11',
-  linkType: ['franchisee'],
-  enable: true,
   itemsPerPage: 100,
 });
 assert.deepEqual(buildFranchiseLinkReadParamsByPeople('/people/11'), {
   people: '11',
-  linkType: ['franchisee'],
-  enable: true,
   itemsPerPage: 100,
 });
 assert.equal(buildFranchiseLinkReadQueries(5).length, 1);
 assert.equal(buildFranchiseLinkReadQueries(5)[0].company, '5');
 assert.equal(buildFranchiseLinkReadQueries(5)[0].people, undefined);
+assert.equal(buildFranchiseLinkReadQueries(5)[0].enable, undefined);
+assert.equal(buildFranchiseLinkReadQueries(5)[0].linkType, undefined);
+// Regression #790: enable=true string empties staging collection
+assert.equal('enable' in buildFranchiseLinkReadParams(5), false);
+assert.equal('linkType' in buildFranchiseLinkReadParams(5), false);
 assert.equal(extractEntityId({ id: { '@id': '/people/5' } }), '5');
 assert.equal(extractEntityId('[object Object]'), '');
 
