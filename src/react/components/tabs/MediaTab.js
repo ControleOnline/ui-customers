@@ -146,8 +146,8 @@ const MediaTab = ({ client, onChanged = null }) => {
             throw new Error('Arquivo sem identificador.');
           }
 
+          // POST upsert only — never pass id (PUT would 404 on private File IRI)
           return peopleActions.savePeopleMedia({
-            id: currentMedia?.id || currentMedia?.['@id'],
             people: `/people/${clientId}`,
             mediaType: mediaType?.['@id'] || `/media_types/${mediaTypeId}`,
             file: `/files/${fileId}`,
