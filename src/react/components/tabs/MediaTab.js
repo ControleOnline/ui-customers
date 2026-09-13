@@ -103,7 +103,20 @@ const MediaTab = ({ client, onChanged = null }) => {
         itemsPerPage: 100,
       });
 
-      setPeopleMedia(normalizeCollection(response));
+      const rows = normalizeCollection(response).map(item => {
+        const fileId = extractFileId(item?.file);
+        if (!fileId) return item;
+        const file =
+          item?.file && typeof item.file === 'object' && !Array.isArray(item.file)
+            ? {...item.file, id: item.file.id || fileId, '@id': item.file['@id'] || `/files/${fileId}`}
+            : {id: fileId, '@id': `/files/${fileId}`};
+        return {
+          ...item,
+          id: extractId(item) || item?.id,
+          file,
+        };
+      });
+      setPeopleMedia(rows);
     } catch (error) {
       setPeopleMedia([]);
       showError(error?.message || 'Nao foi possivel carregar as midias.');
@@ -207,6 +220,7 @@ const MediaTab = ({ client, onChanged = null }) => {
                     relationResource="people"
                     entityId={clientId}
                     companyId={clientId}
+                    company={client}
                     context="people_media"
                     libraryContexts={['people_media']}
                     attachments={currentMedia ? [currentMedia] : []}
