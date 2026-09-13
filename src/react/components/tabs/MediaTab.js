@@ -139,20 +139,8 @@ const MediaTab = ({ client, onChanged = null }) => {
       const currentMedia = mediaByTypeId[String(mediaTypeId)] || null;
 
       return {
-        // One-shot upload+attach — avoids separate /files/upload + IRI resolve race/404
-        onUploadFile: async ({file}) => {
-          if (typeof peopleActions.uploadPeopleMedia !== 'function') {
-            throw new Error('Upload de midia indisponivel.');
-          }
-          const saved = await peopleActions.uploadPeopleMedia({
-            people: `/people/${clientId}`,
-            mediaTypeId,
-            mediaType,
-            file,
-          });
-          // Return nested file so DefaultUpload can list it; association already saved
-          return saved?.file || saved;
-        },
+        // /files/upload (any image) + POST /people_media upsert (Doctrine find, no File IRI GET)
+        // Avoid /people_media/upload until staging API ships jpg support (was PNG-only).
         onAttachFile: async file => {
           const fileId = extractFileId(file);
 
@@ -235,7 +223,6 @@ const MediaTab = ({ client, onChanged = null }) => {
                     companyId={clientId}
                     company={client}
                     showAttachmentActions={false}
-                    uploadResultAlreadyAttached
                     context="people_media"
                     libraryContexts={['people_media']}
                     attachments={currentMedia ? [currentMedia] : []}
