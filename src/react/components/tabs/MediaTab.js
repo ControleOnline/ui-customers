@@ -139,6 +139,20 @@ const MediaTab = ({ client, onChanged = null }) => {
       const currentMedia = mediaByTypeId[String(mediaTypeId)] || null;
 
       return {
+        // One-shot upload+attach — avoids separate /files/upload + IRI resolve race/404
+        onUploadFile: async ({file}) => {
+          if (typeof peopleActions.uploadPeopleMedia !== 'function') {
+            throw new Error('Upload de midia indisponivel.');
+          }
+          const saved = await peopleActions.uploadPeopleMedia({
+            people: `/people/${clientId}`,
+            mediaTypeId,
+            mediaType,
+            file,
+          });
+          // Return nested file so DefaultUpload can list it; association already saved
+          return saved?.file || saved;
+        },
         onAttachFile: async file => {
           const fileId = extractFileId(file);
 
@@ -146,7 +160,6 @@ const MediaTab = ({ client, onChanged = null }) => {
             throw new Error('Arquivo sem identificador.');
           }
 
-          // POST upsert only — never pass id (PUT would 404 on private File IRI)
           return peopleActions.savePeopleMedia({
             people: `/people/${clientId}`,
             mediaType: mediaType?.['@id'] || `/media_types/${mediaTypeId}`,
@@ -222,6 +235,7 @@ const MediaTab = ({ client, onChanged = null }) => {
                     companyId={clientId}
                     company={client}
                     showAttachmentActions={false}
+                    uploadResultAlreadyAttached
                     context="people_media"
                     libraryContexts={['people_media']}
                     attachments={currentMedia ? [currentMedia] : []}
