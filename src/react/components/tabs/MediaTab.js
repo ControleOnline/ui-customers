@@ -221,6 +221,7 @@ const MediaTab = ({ client, onChanged = null }) => {
                     entityId={clientId}
                     companyId={clientId}
                     company={client}
+                    showAttachmentActions={false}
                     context="people_media"
                     libraryContexts={['people_media']}
                     attachments={currentMedia ? [currentMedia] : []}
