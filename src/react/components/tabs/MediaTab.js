@@ -223,6 +223,7 @@ const MediaTab = ({ client, onChanged = null }) => {
                     companyId={clientId}
                     company={client}
                     showAttachmentActions={false}
+                    attachOnUpload={false}
                     context="people_media"
                     libraryContexts={['people_media']}
                     attachments={currentMedia ? [currentMedia] : []}
@@ -236,8 +237,8 @@ const MediaTab = ({ client, onChanged = null }) => {
                     uploadButtonLabel="Enviar nova"
                     emptyAttachmentLabel="Nenhuma imagem vinculada."
                     emptyLibraryLabel="Nenhuma imagem encontrada."
-                    uploadSuccessMessage={`${mediaTypeLabel} atualizada com sucesso.`}
-                    attachSuccessMessage={`${mediaTypeLabel} vinculada com sucesso.`}
+                    uploadSuccessMessage={`${mediaTypeLabel}: arquivo enviado. Clique em + para usar.`}
+                    attachSuccessMessage={`${mediaTypeLabel} selecionada.`}
                     removeSuccessMessage={`${mediaTypeLabel} removida.`}
                     onChanged={async () => {
                       await loadPeopleMedia();
