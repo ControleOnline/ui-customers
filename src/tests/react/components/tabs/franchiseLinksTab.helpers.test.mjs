@@ -15,9 +15,11 @@ import {
 assert.deepEqual(buildFranchiseLinkReadParams('/people/11'), {
   company: '11',
   linkType: ['franchisee'],
-  enable: true,
   itemsPerPage: 100,
 });
+assert.equal('enable' in buildFranchiseLinkReadParams(5), false);
+assert.equal(extractEntityId({id: {'@id': '/people/5'}}), '5');
+assert.equal(extractEntityId('[object Object]'), '');
 
 assert.equal(canManageFranchiseLinks('MANAGER'), true);
 assert.equal(canManageFranchiseLinks('manager'), true);
