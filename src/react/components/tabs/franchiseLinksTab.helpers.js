@@ -19,13 +19,12 @@ export const FRANCHISE_LINK_TYPES_UI = ['franchisee', 'filial'];
 
 export const buildFranchiseLinkReadParams = (companyId, itemsPerPage = 100) => {
   const id = extractEntityId(companyId);
-  // Prefer IRI for SearchFilter ManyToOne.
-  const company = id ? `/people/${id}` : companyId;
-  // IMPORTANT (task-641/453): do NOT send linkType[]=franchisee or enable=true.
-  // Staging API returns the franchisee rows without those filters (ASC F1/F2),
-  // but totalItems=0 when linkType[]/enable are present — filter client-side.
+  const company = id || companyId;
+  // Scope the response on the server. Boolean enable=true empties the
+  // collection on the deployed API; linkType must be an array.
   return {
     company,
+    linkType: [...FRANCHISE_LINK_TYPES],
     itemsPerPage,
   };
 };
@@ -35,9 +34,7 @@ export const extractEntityId = value => {
     return '';
   }
   if (typeof value === 'object') {
-    return String(value.id || value['@id'] || '')
-      .replace(/\D/g, '')
-      .trim();
+    return extractEntityId(value.id || value['@id'] || '');
   }
   return String(value)
     .replace(/\D/g, '')
