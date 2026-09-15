@@ -312,8 +312,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  // app-community#813: preview 320x320
   mediaPreviewFrame: {
-    minHeight: 180,
+    width: 320,
+    height: 320,
+    maxWidth: 320,
+    alignSelf: 'center',
     borderRadius: 14,
     borderWidth: 1,
     overflow: 'hidden',
@@ -326,15 +330,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   mediaPreviewImage: {
-    width: '100%',
-    height: '100%',
-    minHeight: 180,
+    width: 320,
+    height: 320,
   },
   mediaEmptyState: {
+    width: 320,
+    height: 320,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    minHeight: 180,
   },
   mediaEmptyText: {
     fontSize: 13,
