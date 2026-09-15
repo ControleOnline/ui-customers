@@ -3,8 +3,9 @@
  * PF: profession, position (cargo requires people_company_id)
  * PJ: sector, activity_branch
  * Issue: ControleOnline/app-community#377
+ * Fix React #185 on add: store actions via ref (app-community#816)
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -125,8 +126,12 @@ const PeopleCategoriesPanel = ({
   const peopleType = String(client?.peopleType || 'J').toUpperCase();
   const isPF = peopleType === 'F';
   const contexts = isPF ? PF_CONTEXTS : PJ_CONTEXTS;
-  const peopleIri = useMemo(() => toPeopleIri(client), [client]);
   const peopleId = extractId(client);
+  // Primitive id only — client object identity must not re-trigger load (React #185).
+  const peopleIri = useMemo(
+    () => (peopleId != null ? `/people/${peopleId}` : null),
+    [peopleId],
+  );
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -137,17 +142,36 @@ const PeopleCategoriesPanel = ({
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
+  // Store objects / message helpers must not be effect deps (React #185 / Maximum update depth).
+  // Same pattern as Profile.js and ClassificationChips (#377).
+  const actionsRef = useRef({});
+  actionsRef.current = {
+    getPeopleCategories: peopleCategoriesStore?.actions?.getItems,
+    savePeopleCategory: peopleCategoriesStore?.actions?.save,
+    removePeopleCategory: peopleCategoriesStore?.actions?.remove,
+    getPeopleCategoriesItems: () => peopleCategoriesStore?.getters?.items,
+    getCategories: categoriesStore?.actions?.getItems,
+    saveCategory: categoriesStore?.actions?.save,
+    showError,
+    showSuccess,
+  };
+
   const loadItems = useCallback(async () => {
-    if (!peopleId || !peopleCategoriesStore?.actions?.getItems) return;
+    if (!peopleId) return;
+    const getItems = actionsRef.current.getPeopleCategories;
+    if (!getItems) return;
     setLoading(true);
     try {
-      const result = await peopleCategoriesStore.actions.getItems({
+      const result = await getItems({
         people: peopleIri,
         itemsPerPage: 100,
       });
       const list = Array.isArray(result)
         ? result
-        : result?.['hydra:member'] || result?.items || peopleCategoriesStore.getters?.items || [];
+        : result?.['hydra:member'] ||
+          result?.items ||
+          actionsRef.current.getPeopleCategoriesItems?.() ||
+          [];
       setItems(Array.isArray(list) ? list : []);
     } catch (err) {
       console.warn('[PeopleCategoriesPanel] load failed', err);
@@ -155,37 +179,39 @@ const PeopleCategoriesPanel = ({
     } finally {
       setLoading(false);
     }
-  }, [peopleId, peopleIri, peopleCategoriesStore]);
+  }, [peopleId, peopleIri]);
 
   useEffect(() => {
     loadItems();
   }, [loadItems]);
 
-  const loadCategoryOptions = useCallback(
-    async context => {
-      if (!context || !categoriesStore?.actions?.getItems) {
-        setCategoryOptions([]);
-        return;
-      }
-      setLoadingCategories(true);
-      try {
-        const result = await categoriesStore.actions.getItems({
-          context,
-          itemsPerPage: 200,
-        });
-        const list = Array.isArray(result)
-          ? result
-          : result?.['hydra:member'] || result?.items || [];
-        setCategoryOptions(Array.isArray(list) ? list : []);
-      } catch (err) {
-        console.warn('[PeopleCategoriesPanel] categories load failed', err);
-        setCategoryOptions([]);
-      } finally {
-        setLoadingCategories(false);
-      }
-    },
-    [categoriesStore],
-  );
+  const loadCategoryOptions = useCallback(async context => {
+    if (!context) {
+      setCategoryOptions([]);
+      return;
+    }
+    const getCategories = actionsRef.current.getCategories;
+    if (!getCategories) {
+      setCategoryOptions([]);
+      return;
+    }
+    setLoadingCategories(true);
+    try {
+      const result = await getCategories({
+        context,
+        itemsPerPage: 200,
+      });
+      const list = Array.isArray(result)
+        ? result
+        : result?.['hydra:member'] || result?.items || [];
+      setCategoryOptions(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.warn('[PeopleCategoriesPanel] categories load failed', err);
+      setCategoryOptions([]);
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (form.context) {
@@ -249,9 +275,13 @@ const PeopleCategoriesPanel = ({
     setSaving(true);
     try {
       let categoryIri = form.categoryId ? `/categories/${form.categoryId}` : null;
+      const saveCategory = actionsRef.current.saveCategory;
+      const savePeopleCategory = actionsRef.current.savePeopleCategory;
+      const showErr = actionsRef.current.showError;
+      const showOk = actionsRef.current.showSuccess;
 
-      if (!categoryIri && form.categoryName && categoriesStore?.actions?.save) {
-        const created = await categoriesStore.actions.save({
+      if (!categoryIri && form.categoryName && saveCategory) {
+        const created = await saveCategory({
           name: form.categoryName.trim(),
           context: form.context,
         });
@@ -260,7 +290,7 @@ const PeopleCategoriesPanel = ({
       }
 
       if (!categoryIri) {
-        showError?.('Categoria obrigatória');
+        showErr?.('Categoria obrigatória');
         setSaving(false);
         return;
       }
@@ -280,40 +310,43 @@ const PeopleCategoriesPanel = ({
         }
       }
 
-      if (editingItem?.id && peopleCategoriesStore?.actions?.save) {
-        await peopleCategoriesStore.actions.save({
+      if (!savePeopleCategory) {
+        showErr?.('Store people_categories indisponível');
+        setSaving(false);
+        return;
+      }
+
+      if (editingItem?.id) {
+        await savePeopleCategory({
           ...payload,
           id: editingItem.id,
         });
-        showSuccess?.('Categoria atualizada');
-      } else if (peopleCategoriesStore?.actions?.save) {
-        await peopleCategoriesStore.actions.save(payload);
-        showSuccess?.('Categoria adicionada');
+        showOk?.('Categoria atualizada');
       } else {
-        showError?.('Store people_categories indisponível');
-        setSaving(false);
-        return;
+        await savePeopleCategory(payload);
+        showOk?.('Categoria adicionada');
       }
 
       closeModal();
       await loadItems();
     } catch (err) {
       console.error('[PeopleCategoriesPanel] save failed', err);
-      showError?.(err?.message || 'Falha ao salvar categoria');
+      actionsRef.current.showError?.(err?.message || 'Falha ao salvar categoria');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async item => {
-    if (!item?.id || !peopleCategoriesStore?.actions?.remove) return;
+    const remove = actionsRef.current.removePeopleCategory;
+    if (!item?.id || !remove) return;
     setSaving(true);
     try {
-      await peopleCategoriesStore.actions.remove(item.id);
-      showSuccess?.('Categoria removida');
+      await remove(item.id);
+      actionsRef.current.showSuccess?.('Categoria removida');
       await loadItems();
     } catch (err) {
-      showError?.(err?.message || 'Falha ao remover');
+      actionsRef.current.showError?.(err?.message || 'Falha ao remover');
     } finally {
       setSaving(false);
     }
