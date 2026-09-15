@@ -8,7 +8,6 @@ import {
 import { useStore } from '@store';
 import DefaultUpload from '@controleonline/ui-default/src/react/components/upload/DefaultUpload';
 import DefaultFile from '@controleonline/ui-default/src/react/components/files/DefaultFile';
-import {extractFileId} from '@controleonline/ui-default/src/react/components/upload/fileUpload';
 import { extractFileId } from '@controleonline/ui-default/src/react/components/upload/fileUpload';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
