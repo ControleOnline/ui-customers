@@ -7,6 +7,8 @@ import {
 } from 'react-native';
 import { useStore } from '@store';
 import DefaultUpload from '@controleonline/ui-default/src/react/components/upload/DefaultUpload';
+import DefaultFile from '@controleonline/ui-default/src/react/components/files/DefaultFile';
+import {extractFileId} from '@controleonline/ui-default/src/react/components/upload/fileUpload';
 import { extractFileId } from '@controleonline/ui-default/src/react/components/upload/fileUpload';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
@@ -214,6 +216,46 @@ const MediaTab = ({ client, onChanged = null }) => {
                     },
                   ]}
                 >
+                  <View
+                    style={[
+                      styles.mediaPreviewFrame,
+                      styles.mediaPreviewTransparencyGrid,
+                      {
+                        borderColor: withOpacity(palette.primary || '#2563EB', 0.14),
+                      },
+                    ]}>
+                    {(() => {
+                      const rawFile = currentMedia?.file;
+                      const fileId = extractFileId(rawFile);
+                      const file =
+                        rawFile && typeof rawFile === 'object' && !Array.isArray(rawFile)
+                          ? rawFile
+                          : fileId
+                            ? {id: fileId, '@id': `/files/${fileId}`}
+                            : null;
+                      if (!file) {
+                        return (
+                          <View style={styles.mediaEmptyState}>
+                            <Text
+                              style={[
+                                styles.mediaEmptyText,
+                                {color: palette.textSecondary || '#64748B'},
+                              ]}>
+                              Sem imagem
+                            </Text>
+                          </View>
+                        );
+                      }
+                      return (
+                        <DefaultFile
+                          file={file}
+                          company={client}
+                          resizeMode="cover"
+                          style={styles.mediaPreviewImage}
+                        />
+                      );
+                    })()}
+                  </View>
                   <DefaultUpload
                     relationStoreName="people"
                     relationField="people"
