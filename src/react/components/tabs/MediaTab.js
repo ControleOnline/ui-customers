@@ -7,6 +7,8 @@ import {
 } from 'react-native';
 import { useStore } from '@store';
 import DefaultUpload from '@controleonline/ui-default/src/react/components/upload/DefaultUpload';
+import DefaultFile from '@controleonline/ui-default/src/react/components/files/DefaultFile';
+import {extractFileId} from '@controleonline/ui-default/src/react/components/upload/fileUpload';
 import { extractFileId } from '@controleonline/ui-default/src/react/components/upload/fileUpload';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
@@ -103,7 +105,20 @@ const MediaTab = ({ client, onChanged = null }) => {
         itemsPerPage: 100,
       });
 
-      setPeopleMedia(normalizeCollection(response));
+      const rows = normalizeCollection(response).map(item => {
+        const fileId = extractFileId(item?.file);
+        if (!fileId) return item;
+        const file =
+          item?.file && typeof item.file === 'object' && !Array.isArray(item.file)
+            ? {...item.file, id: item.file.id || fileId, '@id': item.file['@id'] || `/files/${fileId}`}
+            : {id: fileId, '@id': `/files/${fileId}`};
+        return {
+          ...item,
+          id: extractId(item) || item?.id,
+          file,
+        };
+      });
+      setPeopleMedia(rows);
     } catch (error) {
       setPeopleMedia([]);
       showError(error?.message || 'Nao foi possivel carregar as midias.');
@@ -141,14 +156,7 @@ const MediaTab = ({ client, onChanged = null }) => {
           });
         },
         onRemoveAttachment: async relation => {
-          // Prefer explicit people_media id; fall back so extractId in deletePeopleMedia
-          // can resolve numeric id / IRI / nested mediaId (API often returns numeric id).
-          const mediaId =
-            relation?.id ??
-            relation?.['@id'] ??
-            relation?.mediaId ??
-            relation;
-          await peopleActions.deletePeopleMedia({ mediaId });
+          await peopleActions.deletePeopleMedia({mediaId: relation?.id || relation?.['@id']});
         },
       };
     },
@@ -208,15 +216,56 @@ const MediaTab = ({ client, onChanged = null }) => {
                     },
                   ]}
                 >
+                  <View
+                    style={[
+                      styles.mediaPreviewFrame,
+                      styles.mediaPreviewTransparencyGrid,
+                      {
+                        borderColor: withOpacity(palette.primary || '#2563EB', 0.14),
+                      },
+                    ]}>
+                    {(() => {
+                      const rawFile = currentMedia?.file;
+                      const fileId = extractFileId(rawFile);
+                      const file =
+                        rawFile && typeof rawFile === 'object' && !Array.isArray(rawFile)
+                          ? rawFile
+                          : fileId
+                            ? {id: fileId, '@id': `/files/${fileId}`}
+                            : null;
+                      if (!file) {
+                        return (
+                          <View style={styles.mediaEmptyState}>
+                            <Text
+                              style={[
+                                styles.mediaEmptyText,
+                                {color: palette.textSecondary || '#64748B'},
+                              ]}>
+                              Sem imagem
+                            </Text>
+                          </View>
+                        );
+                      }
+                      return (
+                        <DefaultFile
+                          file={file}
+                          company={client}
+                          resizeMode="cover"
+                          style={styles.mediaPreviewImage}
+                        />
+                      );
+                    })()}
+                  </View>
                   <DefaultUpload
                     relationStoreName="people"
                     relationField="people"
                     relationResource="people"
                     entityId={clientId}
                     companyId={clientId}
+                    company={client}
+                    showAttachmentActions={false}
                     context="people_media"
                     libraryContexts={['people_media']}
-                    additionalLibraryFiles={peopleMedia}
                     attachments={currentMedia ? [currentMedia] : []}
                     acceptedTypes={COMPANY_MEDIA_ACCEPT_ATTRIBUTE}
                     fileType="image"
