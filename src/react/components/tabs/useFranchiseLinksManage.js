@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   buildAvailableFranchiseOptions,
-  buildFranchiseLinkReadQueries,
+  buildFranchiseLinkReadParams,
   buildFranchiseSavePayload,
   canManageFranchiseLinks,
   normalizeFranchiseLink,
   toPeopleIri,
-  buildFranchiseLinksFromPeopleLinks,
 } from './franchiseLinksTab.helpers';
 import { extractId } from './salesmanTabHelpers';
+import { buildFranchiseLinksFromPeopleLinks } from './franchiseLinksTab.helpers';
 import { normalizeCollection } from './salesmanTabMedia';
 
 /**
@@ -47,10 +47,10 @@ export function useFranchiseLinksManage({
   useEffect(() => {
     setLinkedNormalized(
       (Array.isArray(links) ? links : [])
-        .map(item => normalizeFranchiseLink(item, clientId))
+        .map(item => normalizeFranchiseLink(item))
         .filter(Boolean),
     );
-  }, [links, clientId]);
+  }, [links]);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,12 +115,8 @@ export function useFranchiseLinksManage({
     if (!getPeopleLinks || !clientId) {
       return;
     }
-    const [params] = buildFranchiseLinkReadQueries(clientId);
-    if (!params) {
-      return;
-    }
-    const payload = await getPeopleLinks(params);
-    const next = buildFranchiseLinksFromPeopleLinks(payload, {
+    const response = await getPeopleLinks(buildFranchiseLinkReadParams(clientId));
+    const next = buildFranchiseLinksFromPeopleLinks(response, {
       companyId: clientId,
     });
     setLinks(next);

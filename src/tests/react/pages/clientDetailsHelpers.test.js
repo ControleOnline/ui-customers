@@ -39,6 +39,7 @@ describe('clientDetailsHelpers', () => {
     expect(resolveRouteClientSeed({ client })).toBe(client);
     expect(resolveRouteClientId({ client })).toBe('9');
     expect(resolveRouteClientId({ clientId: '11', client })).toBe('11');
+    expect(resolveRouteClientId({ companyId: '12', client })).toBe('12');
   });
 
   it('buildClientTabDefs includes media and contacts for PJ', () => {

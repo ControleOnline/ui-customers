@@ -17,24 +17,36 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Alert,
-  ActivityIndicator,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { normalizeText } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
 import { useStore, useStores } from '@store';
 import { createDetailsStyles } from '../styles/details';
+import GeneralTab from '../components/tabs/GeneralTab';
+import UsersTab from '../components/tabs/UsersTab';
+import SalesmanTab from '../components/tabs/SalesmanTab';
+import EmployeesTab from '../components/tabs/EmployeesTab';
+import ContractsTab from '../components/tabs/ContractsTab';
+import ProductsTab from '../components/tabs/ProductsTab';
+import MediaTab from '../components/tabs/MediaTab';
+import FiscalTab from '../components/tabs/FiscalTab';
+import FranchiseLinksTab from '../components/tabs/FranchiseLinksTab';
 import {
   buildEmployeeContactsFromPeopleLinks,
   buildPeopleLinkReadParams,
 } from '../components/tabs/employeeContacts';
 import styles from './details.page.styles';
 
+import {
+  inlineStyle_299_16,
+  inlineStyle_317_16,
+  inlineStyle_334_16,
+  inlineStyle_342_16,
+} from './details.styles';
+
 import ClientDetailsSkeleton from './ClientDetailsSkeleton';
-import { renderClientDetailsTabContent } from './clientDetailsTabContent';
 import {
   resolveContextKey,
   normalizeCollection,
@@ -45,7 +57,6 @@ import {
   resolveInitialTabIndex,
   resolveRouteClientId,
   resolveRouteClientSeed,
-  confirmPeopleSoftDelete,
 } from './clientDetailsHelpers';
 
 const ClientDetails = ({ route, navigation }) => {
@@ -64,9 +75,6 @@ const ClientDetails = ({ route, navigation }) => {
   const getPeopleItems = peopleActions?.getItems;
   const getPeopleLinks = peopleLinkStore?.actions?.getItems;
   const savePeople = peopleActions?.save;
-  const removePeople = peopleActions?.remove;
-  const [isRemoving, setIsRemoving] = useState(false);
-
   const detailsStyles = useMemo(() => createDetailsStyles(themeColors), [themeColors]);
 
   const parentCompanyId = extractId(routeParams?.parentCompanyId);
@@ -306,10 +314,8 @@ const ClientDetails = ({ route, navigation }) => {
   }, []);
 
   const persistClientData = async partialData => {
-    // Prefer route clientId (Contatos edit) over store seed that may carry
-    // people_link shape and wrong @id — app-community#688.
     const clientId = extractId(
-      route?.params?.clientId || client?.id || client?.['@id'],
+      client?.id || client?.['@id'],
     );
 
     if (!clientId || !savePeople) {
@@ -322,7 +328,7 @@ const ClientDetails = ({ route, navigation }) => {
     };
 
     const saved = await savePeople(payload);
-    setClient(prev => ({ ...(prev || {}), ...(saved || {}), ...partialData, id: clientId }));
+    setClient(prev => ({ ...(prev || {}), ...(saved || {}), ...partialData }));
 
     return saved;
   };
@@ -346,19 +352,6 @@ const ClientDetails = ({ route, navigation }) => {
     setActiveTab(index);
   };
 
-  // MUST stay above early return — React #310 (hooks order) on my-company-details
-  const handleSoftDelete = useCallback(() => {
-    if (isRemoving) return;
-    confirmPeopleSoftDelete({
-      Alert,
-      clientId,
-      removePeople,
-      navigation,
-      setIsRemoving,
-      isEmployeeContext: Boolean(parentCompanyId),
-    });
-  }, [clientId, isRemoving, navigation, removePeople, parentCompanyId]);
-
   if (isLoadingClient || !client) {
     return <ClientDetailsSkeleton tabs={tabs} />;
   }
@@ -375,13 +368,116 @@ const ClientDetails = ({ route, navigation }) => {
     isSavingClientAvatar: false,
   };
   const activeTabKey = tabs[activeTab]?.key || 'general';
-  const activeTabContent = renderClientDetailsTabContent({
-    activeTabKey,
-    tabProps,
-    isPessoaJuridica,
-    navigation,
-    handleClientMediaChanged,
-  });
+  const activeTabContent = (() => {
+    if (activeTabKey === 'general') {
+      return <GeneralTab {...tabProps} />;
+    }
+
+    if (activeTabKey === 'fiscal') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={styles.tabScrollContent}
+          showsVerticalScrollIndicator={false}>
+          <FiscalTab {...tabProps} navigation={navigation} />
+        </ScrollView>
+      );
+    }
+
+    if (activeTabKey === 'media') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_342_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          <MediaTab client={client} onChanged={handleClientMediaChanged} />
+        </ScrollView>
+      );
+    }
+
+
+    if (activeTabKey === 'sellers' || activeTabKey === 'users') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_299_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          {isPessoaJuridica ? (
+            <SalesmanTab
+              {...tabProps}
+              title="Vendedores"
+              linkType="sellers-client"
+              emptyText="Nenhum vendedor vinculado"
+              errorText="Nao foi possivel carregar os vendedores vinculados."
+            />
+          ) : (
+            <UsersTab {...tabProps} />
+          )}
+        </ScrollView>
+      );
+    }
+
+    if (activeTabKey === 'franchise') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_299_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          <FranchiseLinksTab
+            {...tabProps}
+            emptyText="Nenhuma franquia ou filial vinculada"
+            errorText="Não foi possível carregar os vínculos de franquia/filial."
+          />
+        </ScrollView>
+      );
+    }
+
+    if (activeTabKey === 'contacts') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_317_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          <EmployeesTab
+            {...tabProps}
+            title="Contatos"
+            emptyText="Nenhum contato vinculado"
+            errorText="Nao foi possivel carregar os contatos vinculados."
+            createTitle="Adicionar Contato"
+            requiredErrorText="Nome e apelido do contato sao obrigatorios."
+            createSuccessText="Contato cadastrado com sucesso."
+            createErrorText="Nao foi possivel cadastrar o contato."
+          />
+        </ScrollView>
+      );
+    }
+
+    if (activeTabKey === 'products') {
+      return (
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={inlineStyle_334_16}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
+          <ProductsTab {...tabProps} />
+        </ScrollView>
+      );
+    }
+
+    return (
+      <ScrollView
+        style={styles.tabScroll}
+        contentContainerStyle={inlineStyle_342_16}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}>
+        <ContractsTab {...tabProps} />
+      </ScrollView>
+    );
+  })();
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -405,21 +501,6 @@ const ClientDetails = ({ route, navigation }) => {
         </Text>
 
         <Text style={styles.profileId}>{`ID: ${client.id}`}</Text>
-        {clientId && !client?.deleted ? (
-          <TouchableOpacity
-            style={styles.removeButton}
-            onPress={handleSoftDelete}
-            disabled={isRemoving}
-            accessibilityRole="button"
-            accessibilityLabel="Remover pessoa"
-          >
-            {isRemoving ? (
-              <ActivityIndicator size="small" color="#B91C1C" />
-            ) : (
-              <Text style={styles.removeButtonText}>Remover</Text>
-            )}
-          </TouchableOpacity>
-        ) : null}
       </View>
       <View style={styles.tabsHeader}>
         {tabs.map(tab => (

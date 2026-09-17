@@ -16,9 +16,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '@controleonline/../../src/styles/colors';
 
 import {
-  buildFranchiseLinkReadQueries,
+  buildFranchiseLinkReadParams,
   buildFranchiseLinksFromPeopleLinks,
-  extractEntityId,
   franchiseLinkTypeLabel,
   normalizeFranchiseLink,
 } from './franchiseLinksTab.helpers';
@@ -47,23 +46,15 @@ const FranchiseLinksTab = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const clientId = extractEntityId(client) || extractId(client?.id || client?.['@id']);
+  const clientId = extractId(client?.id || client?.['@id']);
   const appType = useMemo(() => resolveAppType(), []);
 
   useEffect(() => {
     let cancelled = false;
 
-    if (!clientId) {
+    if (!clientId || !getPeopleLinks) {
       setLinks([]);
-      setError(errorText || 'Não foi possível identificar a empresa para listar franquias.');
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (!getPeopleLinks) {
-      setLinks([]);
-      setError(errorText || 'Não foi possível carregar os vínculos.');
+      setError('');
       return () => {
         cancelled = true;
       };
@@ -72,21 +63,14 @@ const FranchiseLinksTab = ({
     setIsLoading(true);
     setError('');
 
-    const [params] = buildFranchiseLinkReadQueries(clientId);
-    if (!params) {
-      setLinks([]);
-      setIsLoading(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    getPeopleLinks(params)
-      .then(payload => {
+    // company only — API zeros the collection when linkType[]/enable are sent
+    // (task-641). Filter franchisee client-side via buildFranchiseLinksFromPeopleLinks.
+    getPeopleLinks(buildFranchiseLinkReadParams(clientId))
+      .then(items => {
         if (cancelled) {
           return;
         }
-        const next = buildFranchiseLinksFromPeopleLinks(payload, {
+        const next = buildFranchiseLinksFromPeopleLinks(items, {
           companyId: clientId,
         });
         setLinks(next);
