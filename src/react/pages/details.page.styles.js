@@ -1,3 +1,4 @@
+import { COMPANY_DETAILS_TAB_LAYOUT } from './companyDetailsPresentation';
 import { StyleSheet } from 'react-native';
 import { colors } from '@controleonline/../../src/styles/colors';
 
@@ -29,13 +30,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   tabsHeader: {
-    flexDirection: 'row',
+    ...COMPANY_DETAILS_TAB_LAYOUT.header,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
+  tabsHeaderContent: {
+    ...COMPANY_DETAILS_TAB_LAYOUT.content,
+  },
   tabButton: {
-    flex: 1,
+    ...COMPANY_DETAILS_TAB_LAYOUT.button,
     alignItems: 'center',
     paddingVertical: 16,
     position: 'relative',
