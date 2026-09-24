@@ -14,12 +14,15 @@ import {useMessage} from '@controleonline/ui-common/src/react/components/Message
 
 import {
   copyTextToClipboard,
+  extractCollectionItems,
   extractErrorMessage,
   extractId,
   mapUsersForClient,
   normalizeUserItem,
   toPeopleIri,
   toTimezoneIri,
+  buildUsersListQuery,
+  embeddedUsersFromClient,
 } from './usersTabHelpers';
 import UserFormModal from './UserFormModal';
 import UserApiKeyModal from './UserApiKeyModal';
@@ -35,22 +38,49 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isRefreshingApiKey, setIsRefreshingApiKey] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [usersError, setUsersError] = useState('');
 
   const usersStore = useStores(state => state.users) || {};
   const actions = usersStore.actions || {};
 
   useEffect(() => {
-    const sourceUsers = Array.isArray(client?.user)
-      ? client.user
-      : client?.user
-        ? [client.user]
-        : [];
-    const rawUsers = sourceUsers
-      .map(normalizeUserItem)
-      .filter(Boolean);
+    const query = buildUsersListQuery(client);
+    const fallbackUsers = embeddedUsersFromClient(client);
+    let mounted = true;
 
-    setUsers(rawUsers);
-  }, [client]);
+    if (!query || typeof actions.getItems !== 'function') {
+      setUsers(fallbackUsers);
+      setUsersError('');
+      setIsLoadingUsers(false);
+      return undefined;
+    }
+
+    setIsLoadingUsers(true);
+    setUsersError('');
+
+    actions
+      .getItems(query)
+      .then(response => {
+        if (!mounted) return;
+        const entries = extractCollectionItems(response);
+        setUsers(entries.map(normalizeUserItem).filter(Boolean));
+      })
+      .catch(error => {
+        if (!mounted) return;
+        setUsersError(
+          extractErrorMessage(error) || 'Falha ao carregar usuários. Tente novamente.',
+        );
+        setUsers(fallbackUsers);
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingUsers(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [actions.getItems, client?.id, client?.['@id']]);
 
   const syncUsers = nextUsers => {
     setUsers(nextUsers);
@@ -314,8 +344,15 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
               </TouchableOpacity>
             )}
           </View>
-          {users.length === 0 ? (
-            <Text style={customStyles.emptyText}>
+          {usersError ? (
+            <Text style={customStyles.emptyText}>{usersError}</Text>
+          ) : null}
+          {isLoadingUsers ? (
+            <Text testID="users-tab-loading" style={customStyles.emptyText}>
+              Carregando usuários...
+            </Text>
+          ) : users.length === 0 ? (
+            <Text testID="users-tab-empty" style={customStyles.emptyText}>
               Nenhum usuário cadastrado
             </Text>
           ) : (
