@@ -37,16 +37,13 @@ export const removeEmployeeFromCompany = async ({
   removePeople,
   removePeopleLink,
 }) => {
-  // Company Contatos: unlink people_links first. DELETE /people/{id} 404s when
-  // the item provider path is filtered (#694) and would soft-delete the person
-  // globally instead of only the company link.
-  if (linkId && typeof removePeopleLink === 'function') {
-    await removePeopleLink(linkId);
-    return {mode: 'link', peopleId, linkId};
-  }
   if (peopleId && typeof removePeople === 'function') {
     await removePeople(peopleId);
     return {mode: 'people', peopleId, linkId};
+  }
+  if (linkId && typeof removePeopleLink === 'function') {
+    await removePeopleLink(linkId);
+    return {mode: 'link', peopleId, linkId};
   }
   const error = new Error(
     'Não foi possível remover o colaborador (ação indisponível).',
