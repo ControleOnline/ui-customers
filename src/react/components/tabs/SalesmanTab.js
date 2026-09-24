@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+/* The repository flat config does not count JSX identifiers as variable usage. */
+/* eslint-disable no-unused-vars */
 import {
   ActivityIndicator,
   Text,
@@ -21,9 +23,7 @@ import {
   buildCommissionSavePayload,
   canEditSalesmanCommission,
   extractId,
-  formatCommissionSubtitle,
   indexDefaultSalesmanLinksByPeopleId,
-  resolveEffectiveCommission,
   shouldDisplayCommission,
 } from './salesmanTabHelpers';
 import { inlineStyle_46_16 } from './SalesmanTab.styles';
@@ -33,11 +33,11 @@ import { useSalesmanManage } from './useSalesmanManage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '@controleonline/../../src/styles/colors';
 import SalesmanCommissionBlock from './SalesmanCommissionBlock';
+/* eslint-enable no-unused-vars */
 
 import {
   COMPANY_ICON_MEDIA_TYPES,
   fetchPeopleMediaUrls,
-  normalizeCollection,
 } from './salesmanTabMedia';
 
 import { resolveAppType, resolveSessionUser } from './salesmanTabSession';
