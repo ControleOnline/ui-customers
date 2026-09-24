@@ -502,23 +502,19 @@ const ClientDetails = ({ route, navigation }) => {
 
         <Text style={styles.profileId}>{`ID: ${client.id}`}</Text>
       </View>
-      <View style={styles.tabsHeader}>
-        {tabs.map(tab => (
+      <ScrollView horizontal style={styles.tabsHeader} contentContainerStyle={styles.tabsHeaderContent} showsHorizontalScrollIndicator={false}>
+        {tabs.map((tab, index) => (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.tabButton, activeTab === tabs.findIndex(item => item.key === tab.key) && styles.tabButtonActive]}
-            onPress={() => handleTabPress(tabs.findIndex(item => item.key === tab.key))}>
-            <Text
-              style={[
-                styles.tabButtonText,
-                activeTab === tabs.findIndex(item => item.key === tab.key) && styles.tabButtonTextActive,
-              ]}>
+            style={[styles.tabButton, activeTab === index && styles.tabButtonActive]}
+            onPress={() => handleTabPress(index)}>
+            <Text style={[styles.tabButtonText, activeTab === index && styles.tabButtonTextActive]}>
               {tab.label}
             </Text>
-            {activeTab === tabs.findIndex(item => item.key === tab.key) && <View style={styles.activeIndicator} />}
+            {activeTab === index && <View style={styles.activeIndicator} />}
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
       <View style={styles.contentContainer}>
         {activeTabContent}
       </View>

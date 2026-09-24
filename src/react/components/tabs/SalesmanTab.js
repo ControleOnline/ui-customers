@@ -309,8 +309,10 @@ const SalesmanTab = ({
             <TouchableOpacity
               onPress={() => openManageModal(null)}
               accessibilityLabel="Vincular vendedor"
-              testID="salesman-manage-add-btn">
-              <Icon name="add" size={24} color={colors.primary} />
+              testID="salesman-manage-add-btn"
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Icon name="add" size={20} color={colors.primary} />
+              <Text style={customStyles.itemText}>Vincular vendedor</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -324,7 +326,14 @@ const SalesmanTab = ({
         ) : error ? (
           <Text style={customStyles.emptyText}>{errorText}</Text>
         ) : !clients || clients?.length === 0 ? (
-          <Text style={customStyles.emptyText}>{emptyText}</Text>
+          <View>
+            <Text style={customStyles.emptyText}>{emptyText}</Text>
+            {!canManage && (
+              <Text style={customStyles.itemSubtext}>
+                Peça a um administrador para vincular um vendedor.
+              </Text>
+            )}
+          </View>
         ) : (
           clients.map(item => {
             const linkId = extractId(item?.id || item?.['@id']);

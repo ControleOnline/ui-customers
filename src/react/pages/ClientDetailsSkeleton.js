@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from './details.page.styles';
 
@@ -24,11 +24,11 @@ const ClientDetailsSkeleton = ({ tabs = [] }) => (
       <View style={[styles.skeletonLine, { width: 90, height: 12 }]} />
     </View>
 
-    <View style={styles.tabsHeader}>
+    <ScrollView horizontal style={styles.tabsHeader} contentContainerStyle={styles.tabsHeaderContent} showsHorizontalScrollIndicator={false}>
       {tabs.map(tab => (
         <View key={`skeleton-${tab.key}`} style={styles.skeletonTab} />
       ))}
-    </View>
+    </ScrollView>
 
     <View style={styles.skeletonContent}>
       <View style={styles.skeletonCard}>

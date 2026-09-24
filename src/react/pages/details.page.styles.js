@@ -29,14 +29,20 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   tabsHeader: {
-    flexDirection: 'row',
+    flexGrow: 0,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
+  tabsHeaderContent: {
+    flexDirection: 'row',
+    minWidth: '100%',
+  },
   tabButton: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
     alignItems: 'center',
+    paddingHorizontal: 10,
     paddingVertical: 16,
     position: 'relative',
   },
