@@ -33,6 +33,7 @@ import { useSalesmanManage } from './useSalesmanManage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '@controleonline/../../src/styles/colors';
 import SalesmanCommissionBlock from './SalesmanCommissionBlock';
+import { getSellersEmptyStatePresentation } from '../../pages/companyDetailsPresentation';
 
 import {
   COMPANY_ICON_MEDIA_TYPES,
@@ -283,6 +284,8 @@ const SalesmanTab = ({
     }
   };
 
+  const emptyStatePresentation = getSellersEmptyStatePresentation(canManage);
+
   const renderCommissionBlock = item => (
     <SalesmanCommissionBlock
       item={item}
@@ -312,7 +315,7 @@ const SalesmanTab = ({
               testID="salesman-manage-add-btn"
               style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Icon name="add" size={20} color={colors.primary} />
-              <Text style={customStyles.itemText}>Vincular vendedor</Text>
+              <Text style={customStyles.itemText}>{emptyStatePresentation.actionLabel}</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -328,11 +331,11 @@ const SalesmanTab = ({
         ) : !clients || clients?.length === 0 ? (
           <View>
             <Text style={customStyles.emptyText}>{emptyText}</Text>
-            {!canManage && (
+            {emptyStatePresentation.guidance ? (
               <Text style={customStyles.itemSubtext}>
-                Peça a um administrador para vincular um vendedor.
+                {emptyStatePresentation.guidance}
               </Text>
-            )}
+            ) : null}
           </View>
         ) : (
           clients.map(item => {
