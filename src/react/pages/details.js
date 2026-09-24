@@ -38,6 +38,7 @@ import {
   buildPeopleLinkReadParams,
 } from '../components/tabs/employeeContacts';
 import styles from './details.page.styles';
+import { COMPANY_DETAILS_TAB_SCROLL_PROPS } from './companyDetailsPresentation';
 
 import {
   inlineStyle_299_16,
@@ -502,7 +503,7 @@ const ClientDetails = ({ route, navigation }) => {
 
         <Text style={styles.profileId}>{`ID: ${client.id}`}</Text>
       </View>
-      <ScrollView horizontal style={styles.tabsHeader} contentContainerStyle={styles.tabsHeaderContent} showsHorizontalScrollIndicator={false}>
+      <ScrollView {...COMPANY_DETAILS_TAB_SCROLL_PROPS} style={styles.tabsHeader} contentContainerStyle={styles.tabsHeaderContent}>
         {tabs.map((tab, index) => (
           <TouchableOpacity
             key={tab.key}
