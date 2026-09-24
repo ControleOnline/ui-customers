@@ -3,9 +3,8 @@
  * PF: profession, position (cargo requires people_company_id)
  * PJ: sector, activity_branch
  * Issue: ControleOnline/app-community#377
- * Fix React #185 on add: store actions via ref (app-community#816)
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -120,24 +119,14 @@ const PeopleCategoriesPanel = ({
   const { showError, showSuccess } = useMessage();
   const themeStore = useStore('theme');
   const themeColors = themeStore?.getters?.colors || {};
-  // Primitive theme tokens — object identity of getters.colors must not churn styles every render.
-  const themePrimary = themeColors?.primary || '#3B82F6';
-  const themeText = themeColors?.text || '#1E293B';
-  const themeTextSecondary = themeColors?.textSecondary || '#64748B';
-  const themeSurface = themeColors?.surface || '#fff';
-  const themeBorder = themeColors?.border || '#E2E8F0';
   const categoriesStore = useStore('categories');
   const peopleCategoriesStore = useStore('people_categories');
 
   const peopleType = String(client?.peopleType || 'J').toUpperCase();
   const isPF = peopleType === 'F';
   const contexts = isPF ? PF_CONTEXTS : PJ_CONTEXTS;
+  const peopleIri = useMemo(() => toPeopleIri(client), [client]);
   const peopleId = extractId(client);
-  // Primitive id only — client object identity must not re-trigger load (React #185).
-  const peopleIri = useMemo(
-    () => (peopleId != null ? `/people/${peopleId}` : null),
-    [peopleId],
-  );
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -148,125 +137,72 @@ const PeopleCategoriesPanel = ({
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
-  // Store objects / message helpers must not be effect deps (React #185 / Maximum update depth).
-  // Same pattern as Profile.js and ClassificationChips (#377).
-  const actionsRef = useRef({});
-  actionsRef.current = {
-    getPeopleCategories: peopleCategoriesStore?.actions?.getItems,
-    savePeopleCategory: peopleCategoriesStore?.actions?.save,
-    removePeopleCategory: peopleCategoriesStore?.actions?.remove,
-    getPeopleCategoriesItems: () => peopleCategoriesStore?.getters?.items,
-    getCategories: categoriesStore?.actions?.getItems,
-    saveCategory: categoriesStore?.actions?.save,
-    showError,
-    showSuccess,
-  };
-
-  const itemsLoadGenRef = useRef(0);
-
   const loadItems = useCallback(async () => {
-    if (!peopleId) return;
-    const getItems = actionsRef.current.getPeopleCategories;
-    if (!getItems) return;
-    const gen = ++itemsLoadGenRef.current;
+    if (!peopleId || !peopleCategoriesStore?.actions?.getItems) return;
     setLoading(true);
     try {
-      const result = await getItems({
+      const result = await peopleCategoriesStore.actions.getItems({
         people: peopleIri,
         itemsPerPage: 100,
       });
-      if (gen !== itemsLoadGenRef.current) return;
       const list = Array.isArray(result)
         ? result
-        : result?.['hydra:member'] ||
-          result?.items ||
-          actionsRef.current.getPeopleCategoriesItems?.() ||
-          [];
+        : result?.['hydra:member'] || result?.items || peopleCategoriesStore.getters?.items || [];
       setItems(Array.isArray(list) ? list : []);
     } catch (err) {
-      if (gen !== itemsLoadGenRef.current) return;
       console.warn('[PeopleCategoriesPanel] load failed', err);
       setItems([]);
     } finally {
-      if (gen === itemsLoadGenRef.current) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
-  }, [peopleId, peopleIri]);
+  }, [peopleId, peopleIri, peopleCategoriesStore]);
 
   useEffect(() => {
     loadItems();
   }, [loadItems]);
 
-  // Guard concurrent category fetches (store isLoading re-renders must not re-enter).
-  const categoryLoadGenRef = useRef(0);
-  const lastCategoryContextRef = useRef('');
-
-  const loadCategoryOptions = useCallback(async context => {
-    if (!context) {
-      setCategoryOptions([]);
-      lastCategoryContextRef.current = '';
-      return;
-    }
-    // Skip if we already loaded this context and still have options in flight/done
-    if (lastCategoryContextRef.current === context) {
-      return;
-    }
-    const getCategories = actionsRef.current.getCategories;
-    if (!getCategories) {
-      setCategoryOptions([]);
-      return;
-    }
-    const gen = ++categoryLoadGenRef.current;
-    lastCategoryContextRef.current = context;
-    setLoadingCategories(true);
-    try {
-      const result = await getCategories({
-        context,
-        itemsPerPage: 200,
-      });
-      if (gen !== categoryLoadGenRef.current) return;
-      const list = Array.isArray(result)
-        ? result
-        : result?.['hydra:member'] || result?.items || [];
-      setCategoryOptions(Array.isArray(list) ? list : []);
-    } catch (err) {
-      if (gen !== categoryLoadGenRef.current) return;
-      console.warn('[PeopleCategoriesPanel] categories load failed', err);
-      setCategoryOptions([]);
-    } finally {
-      if (gen === categoryLoadGenRef.current) {
+  const loadCategoryOptions = useCallback(
+    async context => {
+      if (!context || !categoriesStore?.actions?.getItems) {
+        setCategoryOptions([]);
+        return;
+      }
+      setLoadingCategories(true);
+      try {
+        const result = await categoriesStore.actions.getItems({
+          context,
+          itemsPerPage: 200,
+        });
+        const list = Array.isArray(result)
+          ? result
+          : result?.['hydra:member'] || result?.items || [];
+        setCategoryOptions(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.warn('[PeopleCategoriesPanel] categories load failed', err);
+        setCategoryOptions([]);
+      } finally {
         setLoadingCategories(false);
       }
-    }
-  }, []);
+    },
+    [categoriesStore],
+  );
 
-  // Only fetch catalog when modal is open — avoids mount/parent churn loops.
   useEffect(() => {
-    if (!modalVisible) {
-      lastCategoryContextRef.current = '';
-      return;
-    }
     if (form.context) {
       loadCategoryOptions(form.context);
     } else {
       setCategoryOptions([]);
-      lastCategoryContextRef.current = '';
     }
-  }, [modalVisible, form.context, loadCategoryOptions]);
+  }, [form.context, loadCategoryOptions]);
 
   const openCreate = () => {
     setEditingItem(null);
-    lastCategoryContextRef.current = '';
-    categoryLoadGenRef.current += 1;
     const defaultContext = contexts[0]?.value || '';
     setForm({
       ...emptyForm(),
       context: defaultContext,
       startDateBr: formatDateBr(new Date().toISOString().slice(0, 10)),
     });
-    setCategoryOptions([]);
-    setLoadingCategories(false);
     setModalVisible(true);
   };
 
@@ -286,13 +222,9 @@ const PeopleCategoriesPanel = ({
   };
 
   const closeModal = () => {
-    categoryLoadGenRef.current += 1;
-    lastCategoryContextRef.current = '';
     setModalVisible(false);
     setEditingItem(null);
     setForm(emptyForm());
-    setCategoryOptions([]);
-    setLoadingCategories(false);
   };
 
   const handleSave = async () => {
@@ -317,13 +249,9 @@ const PeopleCategoriesPanel = ({
     setSaving(true);
     try {
       let categoryIri = form.categoryId ? `/categories/${form.categoryId}` : null;
-      const saveCategory = actionsRef.current.saveCategory;
-      const savePeopleCategory = actionsRef.current.savePeopleCategory;
-      const showErr = actionsRef.current.showError;
-      const showOk = actionsRef.current.showSuccess;
 
-      if (!categoryIri && form.categoryName && saveCategory) {
-        const created = await saveCategory({
+      if (!categoryIri && form.categoryName && categoriesStore?.actions?.save) {
+        const created = await categoriesStore.actions.save({
           name: form.categoryName.trim(),
           context: form.context,
         });
@@ -332,7 +260,7 @@ const PeopleCategoriesPanel = ({
       }
 
       if (!categoryIri) {
-        showErr?.('Categoria obrigatória');
+        showError?.('Categoria obrigatória');
         setSaving(false);
         return;
       }
@@ -352,43 +280,40 @@ const PeopleCategoriesPanel = ({
         }
       }
 
-      if (!savePeopleCategory) {
-        showErr?.('Store people_categories indisponível');
-        setSaving(false);
-        return;
-      }
-
-      if (editingItem?.id) {
-        await savePeopleCategory({
+      if (editingItem?.id && peopleCategoriesStore?.actions?.save) {
+        await peopleCategoriesStore.actions.save({
           ...payload,
           id: editingItem.id,
         });
-        showOk?.('Categoria atualizada');
+        showSuccess?.('Categoria atualizada');
+      } else if (peopleCategoriesStore?.actions?.save) {
+        await peopleCategoriesStore.actions.save(payload);
+        showSuccess?.('Categoria adicionada');
       } else {
-        await savePeopleCategory(payload);
-        showOk?.('Categoria adicionada');
+        showError?.('Store people_categories indisponível');
+        setSaving(false);
+        return;
       }
 
       closeModal();
       await loadItems();
     } catch (err) {
       console.error('[PeopleCategoriesPanel] save failed', err);
-      actionsRef.current.showError?.(err?.message || 'Falha ao salvar categoria');
+      showError?.(err?.message || 'Falha ao salvar categoria');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async item => {
-    const remove = actionsRef.current.removePeopleCategory;
-    if (!item?.id || !remove) return;
+    if (!item?.id || !peopleCategoriesStore?.actions?.remove) return;
     setSaving(true);
     try {
-      await remove(item.id);
-      actionsRef.current.showSuccess?.('Categoria removida');
+      await peopleCategoriesStore.actions.remove(item.id);
+      showSuccess?.('Categoria removida');
       await loadItems();
     } catch (err) {
-      actionsRef.current.showError?.(err?.message || 'Falha ao remover');
+      showError?.(err?.message || 'Falha ao remover');
     } finally {
       setSaving(false);
     }
@@ -406,7 +331,7 @@ const PeopleCategoriesPanel = ({
       title: {
         fontSize: 15,
         fontWeight: '600',
-        color: themeText,
+        color: themeColors?.text || '#1E293B',
       },
       badgesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
       badge: {
@@ -421,7 +346,7 @@ const PeopleCategoriesPanel = ({
       badgeText: { color: '#fff', fontSize: 12, fontWeight: '600', maxWidth: 160 },
       badgeMeta: { color: 'rgba(255,255,255,0.85)', fontSize: 10, marginLeft: 6 },
       empty: {
-        color: themeTextSecondary,
+        color: themeColors?.textSecondary || '#64748B',
         fontSize: 13,
         fontStyle: 'italic',
       },
@@ -431,7 +356,7 @@ const PeopleCategoriesPanel = ({
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 8,
-        backgroundColor: themePrimary,
+        backgroundColor: themeColors?.primary || '#3B82F6',
       },
       addBtnText: { color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 },
       modalOverlay: {
@@ -441,7 +366,7 @@ const PeopleCategoriesPanel = ({
         padding: 20,
       },
       modalCard: {
-        backgroundColor: themeSurface,
+        backgroundColor: themeColors?.surface || '#fff',
         borderRadius: 12,
         padding: 16,
         maxHeight: '85%',
@@ -449,23 +374,23 @@ const PeopleCategoriesPanel = ({
       modalTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: themeText,
+        color: themeColors?.text || '#1E293B',
         marginBottom: 12,
       },
       fieldLabel: {
         fontSize: 12,
         fontWeight: '600',
-        color: themeTextSecondary,
+        color: themeColors?.textSecondary || '#64748B',
         marginBottom: 4,
         marginTop: 10,
       },
       input: {
         borderWidth: 1,
-        borderColor: themeBorder,
+        borderColor: themeColors?.border || '#E2E8F0',
         borderRadius: 8,
         paddingHorizontal: 10,
         paddingVertical: Platform.OS === 'ios' ? 10 : 6,
-        color: themeText,
+        color: themeColors?.text || '#1E293B',
         fontSize: 14,
       },
       actionsRow: {
@@ -479,17 +404,17 @@ const PeopleCategoriesPanel = ({
         paddingVertical: 10,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: themeBorder,
+        borderColor: themeColors?.border || '#E2E8F0',
       },
       btnPrimary: {
         paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: 8,
-        backgroundColor: themePrimary,
+        backgroundColor: themeColors?.primary || '#3B82F6',
       },
       btnText: { fontSize: 13, fontWeight: '600' },
     }),
-    [themePrimary, themeText, themeTextSecondary, themeSurface, themeBorder],
+    [themeColors],
   );
 
   if (!peopleId) return null;
@@ -507,7 +432,7 @@ const PeopleCategoriesPanel = ({
       </View>
 
       {loading ? (
-        <ActivityIndicator size="small" color={themePrimary} />
+        <ActivityIndicator size="small" color={themeColors?.primary} />
       ) : items.length === 0 ? (
         <Text style={styles.empty}>Nenhuma categoria associada</Text>
       ) : (
@@ -553,19 +478,14 @@ const PeopleCategoriesPanel = ({
               <View style={styles.input}>
                 <Picker
                   selectedValue={form.context}
-                  onValueChange={value => {
-                    // RN-web Picker often re-fires on reconcile; keep same prev to avoid #185.
-                    setForm(prev => {
-                      if (String(prev.context) === String(value)) return prev;
-                      lastCategoryContextRef.current = '';
-                      return {
-                        ...prev,
-                        context: value,
-                        categoryId: '',
-                        categoryName: '',
-                      };
-                    });
-                  }}
+                  onValueChange={value =>
+                    setForm(prev => ({
+                      ...prev,
+                      context: value,
+                      categoryId: '',
+                      categoryName: '',
+                    }))
+                  }
                 >
                   {contexts.map(c => (
                     <Picker.Item key={c.value} label={c.label} value={c.value} />
@@ -584,14 +504,11 @@ const PeopleCategoriesPanel = ({
                       const opt = categoryOptions.find(
                         o => String(extractId(o)) === String(value),
                       );
-                      setForm(prev => {
-                        if (String(prev.categoryId) === String(value)) return prev;
-                        return {
-                          ...prev,
-                          categoryId: value,
-                          categoryName: opt?.name || prev.categoryName,
-                        };
-                      });
+                      setForm(prev => ({
+                        ...prev,
+                        categoryId: value,
+                        categoryName: opt?.name || prev.categoryName,
+                      }));
                     }}
                   >
                     <Picker.Item label="— selecione —" value="" />
@@ -615,7 +532,7 @@ const PeopleCategoriesPanel = ({
                   onChangeText={text =>
                     setForm(prev => ({ ...prev, categoryName: text, categoryId: '' }))
                   }
-                  placeholderTextColor={themeTextSecondary}
+                  placeholderTextColor={themeColors?.textSecondary}
                 />
               )}
 
@@ -625,7 +542,7 @@ const PeopleCategoriesPanel = ({
                 value={form.startDateBr}
                 onChangeText={text => setForm(prev => ({ ...prev, startDateBr: text }))}
                 placeholder="01/01/2024"
-                placeholderTextColor={themeTextSecondary}
+                placeholderTextColor={themeColors?.textSecondary}
               />
 
               <Text style={styles.fieldLabel}>Data fim (opcional)</Text>
@@ -634,7 +551,7 @@ const PeopleCategoriesPanel = ({
                 value={form.endDateBr}
                 onChangeText={text => setForm(prev => ({ ...prev, endDateBr: text }))}
                 placeholder="vazio = atual"
-                placeholderTextColor={themeTextSecondary}
+                placeholderTextColor={themeColors?.textSecondary}
               />
 
               {form.context === 'position' && (
@@ -651,7 +568,7 @@ const PeopleCategoriesPanel = ({
                         ? `Padrão: ${extractId(parentCompanyIri)}`
                         : 'ID da empresa'
                     }
-                    placeholderTextColor={themeTextSecondary}
+                    placeholderTextColor={themeColors?.textSecondary}
                     keyboardType="numeric"
                   />
                 </>
@@ -659,7 +576,7 @@ const PeopleCategoriesPanel = ({
 
               <View style={styles.actionsRow}>
                 <TouchableOpacity style={styles.btnSecondary} onPress={closeModal}>
-                  <Text style={[styles.btnText, { color: themeText }]}>Cancelar</Text>
+                  <Text style={[styles.btnText, { color: themeColors?.text }]}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.btnPrimary}
