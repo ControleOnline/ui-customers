@@ -16,9 +16,9 @@ describe('employeeUnlink', () => {
     ).toEqual({peopleId: '80', linkId: '201'});
   });
 
-  it('prefers people.remove and falls back to people_link.remove', async () => {
-    const removePeople = jest.fn().mockResolvedValue(null);
-    const removePeopleLink = jest.fn();
+  it('prefers people_link.remove and falls back to people.remove', async () => {
+    const removePeople = jest.fn();
+    const removePeopleLink = jest.fn().mockResolvedValue(null);
     await expect(
       removeEmployeeFromCompany({
         peopleId: '80',
@@ -26,18 +26,18 @@ describe('employeeUnlink', () => {
         removePeople,
         removePeopleLink,
       }),
-    ).resolves.toEqual({mode: 'people', peopleId: '80', linkId: '201'});
-    expect(removePeople).toHaveBeenCalledWith('80');
-    expect(removePeopleLink).not.toHaveBeenCalled();
+    ).resolves.toEqual({mode: 'link', peopleId: '80', linkId: '201'});
+    expect(removePeopleLink).toHaveBeenCalledWith('201');
+    expect(removePeople).not.toHaveBeenCalled();
 
     await expect(
       removeEmployeeFromCompany({
-        peopleId: '',
-        linkId: '201',
-        removePeople: undefined,
-        removePeopleLink: jest.fn().mockResolvedValue(null),
+        peopleId: '80',
+        linkId: '',
+        removePeople: jest.fn().mockResolvedValue(null),
+        removePeopleLink: undefined,
       }),
-    ).resolves.toMatchObject({mode: 'link', linkId: '201'});
+    ).resolves.toMatchObject({mode: 'people', peopleId: '80'});
   });
 
   it('filters the local list after unlink', () => {

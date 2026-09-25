@@ -28,6 +28,20 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '500',
   },
+  removeButton: {
+    marginTop: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
+  },
+  removeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#B91C1C',
+  },
   tabsHeader: {
     flexDirection: 'row',
     backgroundColor: '#fff',

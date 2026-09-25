@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { useStore } from '@store';
 import DefaultUpload from '@controleonline/ui-default/src/react/components/upload/DefaultUpload';
+import DefaultFile from '@controleonline/ui-default/src/react/components/files/DefaultFile';
 import { extractFileId } from '@controleonline/ui-default/src/react/components/upload/fileUpload';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
@@ -214,6 +215,46 @@ const MediaTab = ({ client, onChanged = null }) => {
                     },
                   ]}
                 >
+                  <View
+                    style={[
+                      styles.mediaPreviewFrame,
+                      styles.mediaPreviewTransparencyGrid,
+                      {
+                        borderColor: withOpacity(palette.primary || '#2563EB', 0.14),
+                      },
+                    ]}>
+                    {(() => {
+                      const rawFile = currentMedia?.file;
+                      const fileId = extractFileId(rawFile);
+                      const file =
+                        rawFile && typeof rawFile === 'object' && !Array.isArray(rawFile)
+                          ? rawFile
+                          : fileId
+                            ? {id: fileId, '@id': `/files/${fileId}`}
+                            : null;
+                      if (!file) {
+                        return (
+                          <View style={styles.mediaEmptyState}>
+                            <Text
+                              style={[
+                                styles.mediaEmptyText,
+                                {color: palette.textSecondary || '#64748B'},
+                              ]}>
+                              Sem imagem
+                            </Text>
+                          </View>
+                        );
+                      }
+                      return (
+                        <DefaultFile
+                          file={file}
+                          company={client}
+                          resizeMode="cover"
+                          style={styles.mediaPreviewImage}
+                        />
+                      );
+                    })()}
+                  </View>
                   <DefaultUpload
                     relationStoreName="people"
                     relationField="people"
@@ -319,8 +360,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  // app-community#813: preview 320x320
   mediaPreviewFrame: {
-    minHeight: 180,
+    width: 320,
+    height: 320,
+    maxWidth: 320,
+    alignSelf: 'center',
     borderRadius: 14,
     borderWidth: 1,
     overflow: 'hidden',
@@ -333,15 +378,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   mediaPreviewImage: {
-    width: '100%',
-    height: '100%',
-    minHeight: 180,
+    width: 320,
+    height: 320,
   },
   mediaEmptyState: {
+    width: 320,
+    height: 320,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    minHeight: 180,
   },
   mediaEmptyText: {
     fontSize: 13,

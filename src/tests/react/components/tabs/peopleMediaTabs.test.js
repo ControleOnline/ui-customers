@@ -270,7 +270,7 @@ describe('people media tabs', () => {
       },
     };
 
-    expect(formatEmployeeContactTitle(contact)).toBe('MARIA SILVA / MARI');
+    expect(formatEmployeeContactTitle(contact)).toBe('Maria Silva / Mari');
     expect(formatEmployeeContactMeta(contact)).toBe('ID: 77 / owner');
   });
 
