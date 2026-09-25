@@ -51,6 +51,13 @@ describe('usersTabHelpers', () => {
     expect(item.username).toBe('alice');
   });
 
+  test('mapUsersForClient does not persist API credentials from a read payload', () => {
+    const {mapUsersForClient} = require('../../../../react/components/tabs/usersTabHelpers');
+    expect(mapUsersForClient([{id: 10, username: 'alice', apiKey: 'secret'}])).toEqual([
+      {id: '10', '@id': '10', username: 'alice', role: 'Usuario', timezoneId: ''},
+    ]);
+  });
+
   test('extractCollectionItems supports hydra and member', () => {
     expect(extractCollectionItems({'hydra:member': [{id: 1}]}).length).toBe(1);
     expect(extractCollectionItems({member: [{id: 2}]}).length).toBe(1);

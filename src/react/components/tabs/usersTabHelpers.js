@@ -73,7 +73,6 @@ const mapUsersForClient = users =>
     '@id': extractId(user?.id) || user?.id,
     username: user?.username || user?.name || '',
     role: user?.role || 'Usuario',
-    apiKey: user?.apiKey || '',
     timezoneId: user?.timezoneId || '',
   }));
 
