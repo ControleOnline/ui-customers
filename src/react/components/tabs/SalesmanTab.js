@@ -33,6 +33,7 @@ import { useSalesmanManage } from './useSalesmanManage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '@controleonline/../../src/styles/colors';
 import SalesmanCommissionBlock from './SalesmanCommissionBlock';
+import { getSellersEmptyStatePresentation } from '../../pages/companyDetailsPresentation';
 
 import {
   COMPANY_ICON_MEDIA_TYPES,
@@ -73,7 +74,7 @@ const SalesmanTab = ({
   const currentCompanyId = extractId(
     peopleGetters?.currentCompany?.id ||
       peopleGetters?.currentCompany?.['@id'] ||
-      peopleGetters?.defaultCompany?.id,
+      peopleGetters?.mainCompany?.id,
   );
 
   const appType = useMemo(() => resolveAppType(), []);
@@ -283,6 +284,8 @@ const SalesmanTab = ({
     }
   };
 
+  const emptyStatePresentation = getSellersEmptyStatePresentation(canManage);
+
   const renderCommissionBlock = item => (
     <SalesmanCommissionBlock
       item={item}
@@ -309,8 +312,10 @@ const SalesmanTab = ({
             <TouchableOpacity
               onPress={() => openManageModal(null)}
               accessibilityLabel="Vincular vendedor"
-              testID="salesman-manage-add-btn">
-              <Icon name="add" size={24} color={colors.primary} />
+              testID="salesman-manage-add-btn"
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Icon name="add" size={20} color={colors.primary} />
+              <Text style={customStyles.itemText}>{emptyStatePresentation.actionLabel}</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -324,7 +329,14 @@ const SalesmanTab = ({
         ) : error ? (
           <Text style={customStyles.emptyText}>{errorText}</Text>
         ) : !clients || clients?.length === 0 ? (
-          <Text style={customStyles.emptyText}>{emptyText}</Text>
+          <View>
+            <Text style={customStyles.emptyText}>{emptyText}</Text>
+            {emptyStatePresentation.guidance ? (
+              <Text style={customStyles.itemSubtext}>
+                {emptyStatePresentation.guidance}
+              </Text>
+            ) : null}
+          </View>
         ) : (
           clients.map(item => {
             const linkId = extractId(item?.id || item?.['@id']);

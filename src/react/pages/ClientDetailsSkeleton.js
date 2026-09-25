@@ -1,7 +1,8 @@
 import React from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from './details.page.styles';
+import { COMPANY_DETAILS_TAB_SCROLL_PROPS } from './companyDetailsPresentation';
 
 /**
  * Loading skeleton for ClientDetails — extracted to keep details.js under 500 lines.
@@ -24,11 +25,11 @@ const ClientDetailsSkeleton = ({ tabs = [] }) => (
       <View style={[styles.skeletonLine, { width: 90, height: 12 }]} />
     </View>
 
-    <View style={styles.tabsHeader}>
+    <ScrollView {...COMPANY_DETAILS_TAB_SCROLL_PROPS} style={styles.tabsHeader} contentContainerStyle={styles.tabsHeaderContent}>
       {tabs.map(tab => (
         <View key={`skeleton-${tab.key}`} style={styles.skeletonTab} />
       ))}
-    </View>
+    </ScrollView>
 
     <View style={styles.skeletonContent}>
       <View style={styles.skeletonCard}>
