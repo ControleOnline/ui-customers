@@ -70,8 +70,6 @@ export const createGeneralTabStyles = themeColors =>
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: themeColors.buttonBackground,
-      borderWidth: 1,
-      borderColor: themeColors.buttonBorder || themeColors.buttonBackground,
     },
     uploadImageButton: {
       height: 42,
@@ -90,9 +88,7 @@ export const createGeneralTabStyles = themeColors =>
       fontWeight: '700',
     },
     saveButtonDisabled: {
-      backgroundColor: themeColors.buttonBackgroundSecondary,
-      borderWidth: 1,
-      borderColor: themeColors.buttonBorderSecondary,
+      backgroundColor: themeColors.buttonDisabledBackground,
     },
     saveButtonText: {
       color: themeColors.buttonText,
@@ -100,6 +96,6 @@ export const createGeneralTabStyles = themeColors =>
       fontWeight: '700',
     },
     saveButtonTextDisabled: {
-      color: themeColors.buttonTextSecondary,
+      color: themeColors.buttonDisabledText,
     },
   });

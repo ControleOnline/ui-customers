@@ -1,4 +1,3 @@
-const { mapPasswordErrorMessage } = require('@controleonline/ui-common/src/react/utils/passwordPolicy');
 const extractId = value => String(value || '').replace(/\D/g, '');
 
 /** API Platform expects people as IRI (e.g. /people/106218), not a bare id. */
@@ -22,6 +21,7 @@ const buildUsersListQuery = client => {
     },
   };
 };
+
 
 const normalizeUserItem = entry => {
   if (!entry) {
@@ -109,36 +109,35 @@ const copyTextToClipboard = async text => {
 };
 
 const extractErrorMessage = error => {
-  let message = '';
   if (Array.isArray(error?.violations) && error.violations.length) {
-    message = error.violations
+    return error.violations
       .map(item => item?.message || item)
       .filter(Boolean)
       .join('\n');
-  } else if (Array.isArray(error?.message)) {
-    message = error.message
+  }
+
+  if (Array.isArray(error?.message)) {
+    return error.message
       .map(item => item?.message || item)
       .filter(Boolean)
       .join(', ');
-  } else {
-    const status = error?.response?.status || error?.status;
-    if (status === 401) {
-      message =
-        'Autenticação necessária. Faça login novamente e tente criar o usuário.';
-    } else if (error?.response?.data?.message) {
-      message = String(error.response.data.message);
-    } else {
-      message =
-        error?.message ||
-        error?.error ||
-        (typeof error === 'string' ? error : '');
-      if (/authentication required/i.test(String(message))) {
-        message =
-          'Autenticação necessária. Faça login novamente e tente criar o usuário.';
-      }
-    }
   }
-  return mapPasswordErrorMessage(message || '');
+
+  const status = error?.response?.status || error?.status;
+  if (status === 401) {
+    return 'Autenticação necessária. Faça login novamente e tente criar o usuário.';
+  }
+
+  if (error?.response?.data?.message) {
+    return String(error.response.data.message);
+  }
+
+  const msg = error?.message || error?.error || (typeof error === 'string' ? error : '');
+  if (/authentication required/i.test(String(msg))) {
+    return 'Autenticação necessária. Faça login novamente e tente criar o usuário.';
+  }
+
+  return msg;
 };
 
 const apiKeyModalStyles = {

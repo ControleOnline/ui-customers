@@ -2,7 +2,6 @@ import { resolveFileImageUrl } from '@controleonline/ui-common/src/react/utils/f
 import {
   } from '@controleonline/ui-common/src/react/utils/entityDisplay';
 import { normalizeEmployeeLinkType } from './employeeContacts';
-import { HUMAN_COMPANY_LINK_TYPE_OPTIONS } from '../../utils/humanCompanyLinkTypes';
 
 export const extractId = value => String(value || '').replace(/\D/g, '');
 export const normalizeIdentityValue = value => String(value);
@@ -140,29 +139,13 @@ export const parseBrDateToYmd = value => {
     .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 };
 
-export const LINK_TYPE_OPTIONS = HUMAN_COMPANY_LINK_TYPE_OPTIONS;
-
-/** Canonical People.peopleType values from API (enum F|J). Do not invent types. */
-export const PEOPLE_TYPE_OPTIONS = [
-  { value: 'F', label: 'Pessoa Física' },
-  { value: 'J', label: 'Pessoa Jurídica' },
+export const LINK_TYPE_OPTIONS = [
+  { value: 'employee', translationKey: 'employee' },
+  { value: 'owner', translationKey: 'owner' },
+  { value: 'director', translationKey: 'director' },
+  { value: 'manager', translationKey: 'manager' },
+  { value: 'courier', translationKey: 'courier' },
 ];
-
-export const normalizePeopleType = value => {
-  const normalized = String(value || '')
-    .trim()
-    .toUpperCase();
-  if (normalized === 'J' || normalized === 'JURIDICA' || normalized === 'PJ') {
-    return 'J';
-  }
-  return 'F';
-};
-
-export const formatPeopleTypeLabel = value => {
-  const type = normalizePeopleType(value);
-  const option = PEOPLE_TYPE_OPTIONS.find(item => item.value === type);
-  return option?.label || type;
-};
 
 export const resolveEmployeeLinkType = employee =>
   normalizeEmployeeLinkType(
@@ -216,14 +199,8 @@ export const formatEmployeeContactTitle = employee => {
 export const formatEmployeeContactMeta = employee => {
   const id = extractId(employee?.id || employee?.['@id']) || '-';
   const linkType = resolveEmployeeContactLinkType(employee);
-  const peopleType = formatPeopleTypeLabel(
-    employee?.peopleType || employee?.people?.peopleType,
-  );
-  const parts = [`ID: ${id}`, peopleType];
-  if (linkType) {
-    parts.push(linkType);
-  }
-  return parts.join(' / ');
+
+  return linkType ? `ID: ${id} / ${linkType}` : `ID: ${id}`;
 };
 
 export const buildEmployeeCreatePayload = ({
@@ -232,12 +209,11 @@ export const buildEmployeeCreatePayload = ({
   foundationDate,
   linkType,
   parentPeopleId,
-  peopleType,
 }) => {
   const payload = {
     name,
     alias,
-    peopleType: normalizePeopleType(peopleType),
+    peopleType: 'F',
     company: `/people/${parentPeopleId}`,
     linkType: normalizeEmployeeLinkType(linkType),
     'extra-data': {},
