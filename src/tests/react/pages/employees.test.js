@@ -31,6 +31,7 @@ describe('employees page context', () => {
     expect(context.modalTitleByType.courier).toBe('Cadastro de Entregador')
     expect(context.peopleType).toBe('F')
     expect(context.anyLinkType).toBe(true)
+    expect(context.listSource).toBe('company-links')
   })
 
   it('keeps courier as the default physical-person role when selected directly', () => {

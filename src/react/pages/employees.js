@@ -51,6 +51,9 @@ export const buildEmployeesContext = routeParams => {
      // whatever the link type, until a concrete link type is picked in the filter.
      peopleType: 'F',
      anyLinkType: true,
+     // List people_link rows where company_id = currentCompany (same source as
+     // My Company Details), not the global /people visibility wall.
+     listSource: 'company-links',
      detailsRouteParams: (person, selectedLinkType) => ({
        employeeId: normalizeEntityId(person?.id ?? person?.['@id']),
        contextKey: selectedLinkType === 'all' ? '' : String(selectedLinkType || ''),
