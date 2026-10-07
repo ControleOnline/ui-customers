@@ -48,3 +48,4 @@ Cópia versionada no Git: `docs/technical/Cliente-Vendedor-Vinculo-e-Permissoes.
 | `ui-crm` | Entrada comercial / handoff | https://github.com/ControleOnline/ui-crm/wiki |
 | `api-platform-people` | Backend `people_link` / SalesmanService | https://github.com/ControleOnline/api-platform-people/wiki |
 | `app-community` | Home do app e mapa de submódulos | https://github.com/ControleOnline/app-community/wiki |
+| employees-index colaborador PF | https://github.com/ControleOnline/ui-people/wiki/People-List-LinkType-Filters-Employees-Index |
