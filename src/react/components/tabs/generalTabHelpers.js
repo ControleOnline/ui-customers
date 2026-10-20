@@ -3,11 +3,6 @@
  * Extracted to keep GeneralTab.js under the absolute 500-line limit.
  */
 
-import {
-  HUMAN_COMPANY_LINK_TYPES,
-  HUMAN_COMPANY_LINK_TYPE_OPTIONS,
-} from '../../utils/humanCompanyLinkTypes';
-
 const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
 const normalizeIdentityValue = value => normalizeText(value);
 const extractId = value => String(value || '').replace(/\D/g, '');
@@ -86,29 +81,19 @@ const parseBrDateToYmd = value => {
     .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 };
 
-const LINK_TYPE_OPTIONS = HUMAN_COMPANY_LINK_TYPE_OPTIONS;
+const LINK_TYPE_OPTIONS = [
+  { value: 'employee', translationKey: 'employee' },
+  { value: 'owner', translationKey: 'owner' },
+  { value: 'director', translationKey: 'director' },
+  { value: 'manager', translationKey: 'manager' },
+  { value: 'courier', translationKey: 'courier' },
+];
 
 const normalizeLinkType = value => {
   const normalized = String(value || '').trim().toLowerCase();
-  return HUMAN_COMPANY_LINK_TYPES.includes(normalized)
+  return ['employee', 'owner', 'director', 'manager', 'courier'].includes(normalized)
     ? normalized
     : 'employee';
-};
-
-/** Canonical People.peopleType: F (PF) | J (PJ). API enum — do not invent values. */
-const PEOPLE_TYPE_OPTIONS = [
-  { value: 'F', label: 'Pessoa Física' },
-  { value: 'J', label: 'Pessoa Jurídica' },
-];
-
-const normalizePeopleType = value => {
-  const normalized = String(value || '')
-    .trim()
-    .toUpperCase();
-  if (normalized === 'J' || normalized === 'JURIDICA' || normalized === 'PJ') {
-    return 'J';
-  }
-  return 'F';
 };
 
 const toPeopleIri = value => {
@@ -121,10 +106,6 @@ const toPeopleIri = value => {
   return id ? `/people/${id}` : '';
 };
 
-/** Prefer client.linkType (post-save) over static route seed (#446). */
-const resolveSeededLinkType = (clientLinkType, routeLinkType) =>
-  normalizeLinkType(clientLinkType || routeLinkType);
-
 export {
   normalizeText,
   normalizeIdentityValue,
@@ -135,8 +116,5 @@ export {
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
   normalizeLinkType,
-  resolveSeededLinkType,
-  PEOPLE_TYPE_OPTIONS,
-  normalizePeopleType,
   toPeopleIri,
 };

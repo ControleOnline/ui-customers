@@ -29,13 +29,10 @@ import {
   parseBrDateToYmd,
   LINK_TYPE_OPTIONS,
   normalizeLinkType,
-  resolveSeededLinkType,
-  PEOPLE_TYPE_OPTIONS,
-  normalizePeopleType,
   toPeopleIri,
 } from './generalTabHelpers';
 import FranchiseCommissionSection from './FranchiseCommissionSection';
-import useGeneralTabPeopleLink from './useGeneralTabPeopleLink';
+
 const GeneralTab = ({
   client,
   customStyles,
@@ -55,6 +52,7 @@ const GeneralTab = ({
   const peopleLinkActions = peopleLinkStore?.actions || {};
   const [isSavingRegistration, setIsSavingRegistration] = useState(false);
   const [isSavingLinkType, setIsSavingLinkType] = useState(false);
+  const [peopleLinkId, setPeopleLinkId] = useState('');
   const [linkTypeOptions, setLinkTypeOptions] = useState(
     LINK_TYPE_OPTIONS.map(option => ({
       value: option.value,
@@ -85,15 +83,6 @@ const GeneralTab = ({
     String(registrationForm.peopleType || '').toUpperCase() === 'F' &&
     String(parentCompanyIri || '').startsWith('/people/') &&
     String(contactPeopleIri || '').startsWith('/people/');
-  const {peopleLinkId, setPeopleLinkId} = useGeneralTabPeopleLink({
-    canEditLinkType,
-    getItems: peopleLinkActions?.getItems,
-    contactPeopleIri,
-    parentCompanyIri,
-    clientLinkType: client?.linkType,
-    setRegistrationForm,
-    setOriginalRegistrationForm,
-  });
 
   useEffect(() => {
     const initial = {
@@ -101,23 +90,13 @@ const GeneralTab = ({
       alias: normalizeIdentityValue(client?.alias),
       dateBr: formatYmdToBr(client?.foundationDate),
       enable: normalizeEnable(client?.enable ?? client?.enabled),
-      peopleType: normalizePeopleType(client?.peopleType || 'J'),
-      linkType: resolveSeededLinkType(client?.linkType, initialContactLinkType),
+      peopleType: String(client?.peopleType || 'J').toUpperCase(),
+      linkType: normalizeLinkType(initialContactLinkType),
     };
 
     setRegistrationForm(initial);
     setOriginalRegistrationForm(initial);
-  }, [
-    client?.id,
-    client?.name,
-    client?.alias,
-    client?.foundationDate,
-    client?.enable,
-    client?.enabled,
-    client?.peopleType,
-    client?.linkType,
-    initialContactLinkType,
-  ]);
+  }, [client?.id, client?.name, client?.alias, client?.foundationDate, client?.enable, client?.enabled, client?.peopleType, initialContactLinkType]);
 
   useEffect(() => {
     setLinkTypeOptions(
@@ -128,7 +107,39 @@ const GeneralTab = ({
     );
   }, []);
 
-  const isPessoaFisica = normalizePeopleType(registrationForm.peopleType) === 'F';
+  useEffect(() => {
+    if (!canEditLinkType || !peopleLinkActions?.getItems) {
+      return;
+    }
+
+    let cancelled = false;
+
+    peopleLinkActions
+      .getItems({
+        people: extractId(contactPeopleIri),
+        company: extractId(parentCompanyIri),
+      })
+      .then(items => {
+        if (cancelled || !Array.isArray(items) || items.length === 0) {
+          return;
+        }
+
+        const link = items[0];
+        const nextLinkType = normalizeLinkType(link?.linkType);
+        const nextLinkId = String(link?.id || link?.['@id'] || '').replace(/\D/g, '');
+
+        setPeopleLinkId(nextLinkId);
+        setRegistrationForm(prev => ({ ...prev, linkType: nextLinkType }));
+        setOriginalRegistrationForm(prev => ({ ...prev, linkType: nextLinkType }));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canEditLinkType, contactPeopleIri, parentCompanyIri, peopleLinkActions]);
+
+  const isPessoaFisica = registrationForm.peopleType === 'F';
   const isAvatarUploadDisabled = isSavingClientAvatar;
   const avatarUploadLabel = isPessoaFisica ? 'subir avatar' : 'subir ícone';
   const nameLabel = isPessoaFisica ? global.t?.t('users','label','name') : global.t?.t('users','label','companyName');
@@ -141,8 +152,6 @@ const GeneralTab = ({
       normalizeIdentityValue(registrationForm.alias) !== normalizeIdentityValue(originalRegistrationForm.alias) ||
       String(registrationForm.dateBr || '') !== String(originalRegistrationForm.dateBr || '') ||
       Boolean(registrationForm.enable) !== Boolean(originalRegistrationForm.enable) ||
-      normalizePeopleType(registrationForm.peopleType) !==
-        normalizePeopleType(originalRegistrationForm.peopleType) ||
       (canEditLinkType &&
         normalizeLinkType(registrationForm.linkType) !==
           normalizeLinkType(originalRegistrationForm.linkType))
@@ -188,19 +197,12 @@ const GeneralTab = ({
 
       if (linkTypeChanged && peopleLinkActions?.save) {
         setIsSavingLinkType(true);
-        // On update send only id + linkType — avoid denormalizing people IRI
-        // which triggered "Item not found for /people/{id}" (#688).
-        const linkPayload = peopleLinkId
-          ? {
-              id: peopleLinkId,
-              linkType: normalizeLinkType(registrationForm.linkType),
-            }
-          : {
-              company: parentCompanyIri,
-              people: contactPeopleIri,
-              linkType: normalizeLinkType(registrationForm.linkType),
-            };
-        const savedLink = await peopleLinkActions.save(linkPayload);
+        const savedLink = await peopleLinkActions.save({
+          ...(peopleLinkId ? { id: peopleLinkId } : {}),
+          company: parentCompanyIri,
+          people: contactPeopleIri,
+          linkType: normalizeLinkType(registrationForm.linkType),
+        });
 
         const nextLinkId = String(savedLink?.id || savedLink?.['@id'] || '').replace(/\D/g, '');
         if (nextLinkId) {
@@ -208,12 +210,10 @@ const GeneralTab = ({
         }
       }
 
-      const peopleType = normalizePeopleType(registrationForm.peopleType);
       const payload = {
         name,
         alias,
         enable: Boolean(registrationForm.enable),
-        peopleType,
       };
 
       if (foundationDate) {
@@ -225,7 +225,6 @@ const GeneralTab = ({
       onUpdateClient?.('name', name);
       onUpdateClient?.('alias', alias);
       onUpdateClient?.('enable', Boolean(registrationForm.enable));
-      onUpdateClient?.('peopleType', peopleType);
       if (canEditLinkType) {
         onUpdateClient?.('linkType', normalizeLinkType(registrationForm.linkType));
       }
@@ -238,7 +237,6 @@ const GeneralTab = ({
         name,
         alias,
         enable: Boolean(registrationForm.enable),
-        peopleType,
         dateBr: foundationDate ? formatYmdToBr(foundationDate) : registrationForm.dateBr,
         linkType: normalizeLinkType(registrationForm.linkType),
       };
@@ -246,17 +244,8 @@ const GeneralTab = ({
       setRegistrationForm(updated);
       setOriginalRegistrationForm(updated);
       showSuccess?.(global.t?.t('users','success','registrationUpdated'));
-    } catch (error) {
-      const apiMessage =
-        error?.response?.data?.detail ||
-        error?.response?.data?.description ||
-        error?.message ||
-        '';
-      showError?.(
-        apiMessage
-          ? `${global.t?.t('users','error','registrationUpdateFailed') || 'Registration Update Failed'}\n${apiMessage}`
-          : global.t?.t('users','error','registrationUpdateFailed'),
-      );
+    } catch {
+      showError?.(global.t?.t('users','error','registrationUpdateFailed'));
     } finally {
       setIsSavingLinkType(false);
       setIsSavingRegistration(false);
@@ -386,33 +375,6 @@ const GeneralTab = ({
             />
           </View>
         </View>
-
-        {isEditing && (
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Tipo</Text>
-            <View style={styles.inputRow}>
-              <Picker
-                selectedValue={normalizePeopleType(registrationForm.peopleType)}
-                onValueChange={value =>
-                  setRegistrationForm(prev => ({
-                    ...prev,
-                    peopleType: normalizePeopleType(value),
-                  }))
-                }
-                mode={pickerMode}
-                accessibilityLabel="Tipo de colaborador"
-                style={styles.inputRowField}>
-                {PEOPLE_TYPE_OPTIONS.map(option => (
-                  <Picker.Item
-                    key={option.value}
-                    label={option.label}
-                    value={option.value}
-                  />
-                ))}
-              </Picker>
-            </View>
-          </View>
-        )}
 
         {canEditLinkType && (
           <View style={styles.fieldGroup}>

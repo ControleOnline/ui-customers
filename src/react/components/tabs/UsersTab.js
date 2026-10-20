@@ -10,10 +10,6 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useStores } from '@store';
 import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
-import {
-  mapPasswordErrorMessage,
-  validatePasswordClient,
-} from '@controleonline/ui-common/src/react/utils/passwordPolicy';
 
 
 import {
@@ -120,17 +116,13 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
 
   const handleSave = async () => {
     if (!editingItem) {
-      if (!formData.username) {
-        showError('Nome de usuário e senha são obrigatórios.');
+      if (formData.password !== formData.confirmPassword) {
+        showError('As senhas não coincidem.');
         return;
       }
 
-      const createPasswordError = validatePasswordClient(
-        formData.password,
-        formData.confirmPassword,
-      );
-      if (createPasswordError) {
-        showError(createPasswordError);
+      if (!formData.username || !formData.password) {
+        showError('Nome de usuário e senha são obrigatórios.');
         return;
       }
 
@@ -167,20 +159,20 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
         showSuccess('Usuário criado com sucesso!');
         closeModal();
       } catch (error) {
-        showError(
-          mapPasswordErrorMessage(
-            extractErrorMessage(error) || 'Falha ao criar usuário. Tente novamente.',
-          ),
-        );
+        showError(extractErrorMessage(error) || 'Falha ao criar usuário. Tente novamente.');
       }
     } else {
       try {
-        const changePasswordError = validatePasswordClient(
-          formData.password,
-          formData.confirmPassword,
-        );
-        if (changePasswordError) {
-          showError(changePasswordError);
+        if (!String(formData.password || '').trim()) {
+          showError('Nova senha é obrigatória.');
+          return;
+        }
+
+        if (
+          formData.password &&
+          formData.password !== formData.confirmPassword
+        ) {
+          showError('As senhas não coincidem.');
           return;
         }
 
@@ -208,7 +200,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
         showSuccess('Senha do usuário atualizada com sucesso!');
         closeModal();
       } catch (error) {
-        showError(mapPasswordErrorMessage(extractErrorMessage(error) || 'Falha ao atualizar usuário. Tente novamente.'));
+        showError(extractErrorMessage(error) || 'Falha ao atualizar usuário. Tente novamente.');
       }
     }
   };
@@ -229,7 +221,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
 
       showSuccess('Chave de API copiada com sucesso!');
     } catch (error) {
-      showError(mapPasswordErrorMessage(extractErrorMessage(error) || 'Nao foi possivel copiar a chave de API.'));
+      showError(extractErrorMessage(error) || 'Nao foi possivel copiar a chave de API.');
     }
   };
 
@@ -303,7 +295,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
           syncUsers(updatedUsers);
           showSuccess('Usuário removido com sucesso!');
         } catch (error) {
-          showError(mapPasswordErrorMessage(extractErrorMessage(error) || 'Falha ao remover usuário. Tente novamente.'));
+          showError(extractErrorMessage(error) || 'Falha ao remover usuário. Tente novamente.');
         }
       },
     });
@@ -343,10 +335,7 @@ const UsersTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
             {isEditing && (
               <TouchableOpacity
                 onPress={() => openModal()}
-                style={customStyles.iconButtonPrimary}
-                accessibilityLabel="Adicionar usuário"
-                accessibilityRole="button"
-                testID="users-tab-add-user">
+                style={customStyles.iconButtonPrimary}>
                 <FeatherIcon
                   name="plus"
                   size={16}
