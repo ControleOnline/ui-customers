@@ -14,7 +14,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { resolveFileDownloadUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
-import { colors } from '@controleonline/../../src/styles/colors';
+import { colors } from '@controleonline/ui-layout/src/styles/colors';
 import DefaultUpload from '@controleonline/ui-default/src/react/components/upload/DefaultUpload';
 import {
   extractId,
