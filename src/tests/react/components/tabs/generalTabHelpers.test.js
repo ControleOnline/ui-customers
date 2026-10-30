@@ -3,7 +3,11 @@
  */
 import {
   normalizeEnable,
+  normalizeIdentityValue,
   normalizeLinkType,
+  resolveSeededLinkType,
+  normalizePeopleType,
+  PEOPLE_TYPE_OPTIONS,
   formatYmdToBr,
   parseBrDateToYmd,
   formatDateInput,
@@ -13,6 +17,16 @@ import {
 } from '../../../components/tabs/generalTabHelpers';
 
 describe('generalTabHelpers', () => {
+  describe('normalizeIdentityValue', () => {
+    it('preserves mixed case typed by the user', () => {
+      expect(normalizeIdentityValue('Cláudia Silva')).toBe('Cláudia Silva');
+      expect(normalizeIdentityValue('  ACME Ltda  ')).toBe('ACME Ltda');
+      expect(normalizeIdentityValue('kibelicia comida árabe')).toBe('kibelicia comida árabe');
+    });
+    it('collapses internal whitespace without changing case', () => {
+      expect(normalizeIdentityValue('Ana   Maria')).toBe('Ana Maria');
+    });
+  });
   describe('normalizeEnable', () => {
     it('accepts boolean true/false', () => {
       expect(normalizeEnable(true)).toBe(true);
@@ -49,6 +63,8 @@ describe('generalTabHelpers', () => {
     it('is case-insensitive', () => {
       expect(normalizeLinkType('OWNER')).toBe('owner');
       expect(normalizeLinkType(' Manager ')).toBe('manager');
+      expect(normalizeLinkType('SALESMAN')).toBe('salesman');
+      expect(normalizeLinkType(' After-Sales ')).toBe('after-sales');
     });
   });
 
@@ -125,6 +141,25 @@ describe('generalTabHelpers', () => {
           originalLinkType: 'employee',
         }),
       ).toBe(false);
+    });
+  });
+
+
+  describe('resolveSeededLinkType', () => {
+    it('prefers client.linkType over route seed after save', () => {
+      expect(resolveSeededLinkType('courier', 'owner')).toBe('courier');
+      expect(resolveSeededLinkType('', 'owner')).toBe('owner');
+      expect(resolveSeededLinkType(undefined, 'manager')).toBe('manager');
+    });
+  });
+
+  describe('normalizePeopleType', () => {
+    it('maps only F and J from API enum', () => {
+      expect(normalizePeopleType('F')).toBe('F');
+      expect(normalizePeopleType('J')).toBe('J');
+      expect(normalizePeopleType('juridica')).toBe('J');
+      expect(normalizePeopleType('contrato')).toBe('F');
+      expect(PEOPLE_TYPE_OPTIONS.map(o => o.value)).toEqual(['F', 'J']);
     });
   });
 });

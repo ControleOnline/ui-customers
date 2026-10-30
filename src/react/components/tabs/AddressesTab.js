@@ -17,123 +17,15 @@ import {
   buildNavigationMapQuery,
   buildWazeNavigationUrl,
 } from '@controleonline/ui-common/src/react/utils/mapNavigation';
-
-const extractId = value => String(value || '').replace(/\D/g, '');
-const normalizeId = value => extractId(value) || value || Date.now();
-
-const toPeopleIri = person => {
-  const rawIri = String(person?.['@id'] || '').trim();
-  if (rawIri.startsWith('/people/')) {
-    return rawIri;
-  }
-
-  const nestedIri = String(person?.people?.['@id'] || person?.people || '').trim();
-  if (nestedIri.startsWith('/people/')) {
-    return nestedIri;
-  }
-
-  const id = extractId(person?.id || person?.people?.id || rawIri || nestedIri);
-  return id ? `/people/${id}` : '';
-};
-
-const normalizeString = value => {
-  const text = String(value || '').trim();
-  return text.length > 0 ? text : undefined;
-};
-const normalizeZipCode = value =>
-  String(value || '')
-    .replace(/\D/g, '')
-    .slice(0, 8);
-
-const buildAddressMapQuery = address => {
-  const streetLine = [normalizeString(address?.street), normalizeString(address?.number)]
-    .filter(Boolean)
-    .join(', ');
-  const cityStateLine = [normalizeString(address?.city), normalizeString(address?.state)]
-    .filter(Boolean)
-    .join(' - ');
-
-  return buildNavigationMapQuery([
-    streetLine,
-    normalizeString(address?.district),
-    cityStateLine,
-    normalizeString(address?.country),
-    normalizeZipCode(address?.zipCode),
-    normalizeString(address?.complement),
-  ]);
-};
-
-const buildAddressPrimaryLine = address =>
-  [normalizeString(address?.street), normalizeString(address?.number)]
-    .filter(Boolean)
-    .join(', ');
-
-const buildAddressSecondaryLine = address =>
-  [
-    normalizeString(address?.district),
-    [normalizeString(address?.city), normalizeString(address?.state)]
-      .filter(Boolean)
-      .join(' - '),
-    normalizeString(address?.country),
-  ]
-    .filter(Boolean)
-    .join(' • ');
-
-const normalizeAddress = address => ({
-  id: normalizeId(address?.id || address?.['@id']),
-  street: address?.street?.street || address?.street || '',
-  number: String(address?.number || '').trim(),
-  city:
-    address?.street?.district?.city?.city ||
-    address?.street?.city?.city ||
-    address?.city ||
-    '',
-  state:
-    address?.street?.district?.city?.state?.uf ||
-    address?.street?.district?.city?.state?.state ||
-    address?.street?.city?.state?.uf ||
-    address?.street?.city?.state?.state ||
-    address?.state ||
-    '',
-  zipCode:
-    (typeof address?.zipCode === 'object'
-      ? address?.zipCode?.cep
-      : address?.zipCode) ||
-    address?.street?.cep?.cep ||
-    address?.postal_code ||
-    address?.cep ||
-    '',
-  complement: address?.complement || '',
-  district:
-    address?.street?.district?.district ||
-    address?.district ||
-    '',
-  country:
-    address?.street?.district?.city?.state?.country?.countrycode ||
-    address?.street?.district?.city?.state?.country?.countryname ||
-    address?.street?.city?.state?.country?.countrycode ||
-    address?.street?.city?.state?.country?.countryname ||
-    address?.country ||
-    '',
-  nickname: address?.nickname || '',
-});
-
-const mapAddressesForClient = list =>
-  list.map(item => ({
-    id: item.id,
-    '@id': String(item?.id || '').startsWith('/addresses/')
-      ? String(item.id)
-      : `/addresses/${extractId(item.id || '')}`,
-    street: item.street,
-    number: item.number,
-    complement: item.complement,
-    district: item.district,
-    city: item.city,
-    state: item.state,
-    zipCode: item.zipCode,
-    country: item.country,
-    nickname: item.nickname,
-  }));
+import {
+  buildAddressMapQueryParts,
+  buildAddressPrimaryLine,
+  buildAddressSecondaryLine,
+  mapAddressesForClient,
+  normalizeAddress,
+  resolveAddressSaveId,
+  toPeopleIri,
+} from './addressesTabHelpers';
 
 const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   const {showError, showSuccess, showDialog} = useMessage();
@@ -151,13 +43,11 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     const rawAddresses = Array.isArray(client?.address)
       ? client.address.map(item => normalizeAddress(item))
       : [];
-
     setAddresses(rawAddresses);
   }, [client]);
 
   const openModal = item => {
-    const normalizedItem = item ? normalizeAddress(item) : {};
-    setEditingItem(item ? normalizedItem : null);
+    setEditingItem(item ? normalizeAddress(item) : null);
     setShowModal(true);
   };
 
@@ -173,7 +63,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
 
   const openNavigationModal = address => {
     const normalizedAddress = normalizeAddress(address);
-    const mapQuery = buildAddressMapQuery(normalizedAddress);
+    const mapQuery = buildNavigationMapQuery(buildAddressMapQueryParts(normalizedAddress));
 
     if (!mapQuery) {
       showError('Nao foi possivel montar a navegacao para este endereco.');
@@ -185,7 +75,9 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   };
 
   const handleOpenNavigation = async appName => {
-    const mapQuery = buildAddressMapQuery(navigationAddress);
+    const mapQuery = buildNavigationMapQuery(
+      buildAddressMapQueryParts(navigationAddress),
+    );
     const url =
       appName === 'waze'
         ? buildWazeNavigationUrl({mapQuery})
@@ -205,6 +97,10 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     }
   };
 
+  /**
+   * Always attach a numeric id when editing so the default store issues PUT
+   * (update) instead of POST (create). Root cause of app-community#282.
+   */
   const saveAddress = async payload => {
     if (!actions?.save) {
       throw new Error('Servico de enderecos indisponivel no momento.');
@@ -214,17 +110,25 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       throw new Error('Nao foi possivel identificar o cliente para salvar o endereco.');
     }
 
-    return actions.save({
+    const body = {
       ...payload,
       people: peopleIri,
-    });
+    };
+
+    const editId = resolveAddressSaveId(editingItem, payload);
+    if (editId) {
+      body.id = editId;
+    }
+
+    return actions.save(body);
   };
 
   const handleAddressSaved = saved => {
     const normalizedSaved = normalizeAddress(saved || {});
-    const updatedAddresses = editingItem
+    const editId = resolveAddressSaveId(editingItem);
+    const updatedAddresses = editId
       ? addresses.map(item =>
-          item.id === editingItem.id ? normalizedSaved : item,
+          resolveAddressSaveId(item) === editId ? normalizedSaved : item,
         )
       : [...addresses, normalizedSaved];
 
@@ -232,7 +136,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
     onUpdateClient?.('address', mapAddressesForClient(updatedAddresses));
 
     showSuccess(
-      editingItem
+      editId
         ? 'Endereco atualizado com sucesso!'
         : 'Endereco criado com sucesso!',
     );
@@ -240,6 +144,7 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
   };
 
   const handleDelete = id => {
+    const deleteId = resolveAddressSaveId({id});
     showDialog({
       title: 'Confirmar exclusao',
       message: 'Deseja realmente remover este item?',
@@ -247,12 +152,14 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       cancelLabel: 'Cancelar',
       onConfirm: async () => {
         try {
-          if (!actions?.remove) {
+          if (!actions?.remove || !deleteId) {
             showError('Servico de enderecos indisponivel no momento.');
             return;
           }
-          await actions.remove(id);
-          const updatedAddresses = addresses.filter(item => item.id !== id);
+          await actions.remove(deleteId);
+          const updatedAddresses = addresses.filter(
+            item => resolveAddressSaveId(item) !== deleteId,
+          );
           setAddresses(updatedAddresses);
           onUpdateClient?.('address', mapAddressesForClient(updatedAddresses));
           showSuccess('Endereco removido com sucesso!');
@@ -269,7 +176,9 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
         <View style={addressModalStyles.container}>
           <View style={addressModalStyles.header}>
             <Text style={[customStyles.modalTitle, addressModalStyles.title]}>
-              {editingItem ? global.t?.t('address', 'title', 'editAddress') : global.t?.t('address', 'title', 'address')}
+              {editingItem
+                ? global.t?.t('address', 'title', 'editAddress')
+                : global.t?.t('address', 'title', 'address')}
             </Text>
             <TouchableOpacity
               onPress={closeModal}
@@ -278,15 +187,23 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
             </TouchableOpacity>
           </View>
           <DefaultAddress
-            mode={editingItem ? 'edit' : 'create'}
-            row={editingItem
-              ? {
-                  ...editingItem,
-                  cep: editingItem.zipCode,
-                  uf: editingItem.state,
-                  country: editingItem.country,
-                }
-              : null}
+            mode={
+              editingItem && resolveAddressSaveId(editingItem) ? 'edit' : 'create'
+            }
+            row={
+              editingItem && resolveAddressSaveId(editingItem)
+                ? {
+                    ...editingItem,
+                    id: resolveAddressSaveId(editingItem),
+                    '@id':
+                      editingItem['@id'] ||
+                      `/addresses/${resolveAddressSaveId(editingItem)}`,
+                    cep: editingItem.zipCode,
+                    uf: editingItem.state,
+                    country: editingItem.country,
+                  }
+                : null
+            }
             peopleIri={peopleIri}
             saveAction={saveAddress}
             onCancel={closeModal}
@@ -363,7 +280,9 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
       <View style={customStyles.tabContent}>
         <View style={customStyles.section}>
           <View style={customStyles.sectionHeader}>
-            <Text style={customStyles.sectionTitle}>{global.t?.t('address', 'title', 'addresses')}</Text>
+            <Text style={customStyles.sectionTitle}>
+              {global.t?.t('address', 'title', 'addresses')}
+            </Text>
             {isEditing && (
               <TouchableOpacity
                 onPress={() => openModal(null)}
@@ -377,35 +296,21 @@ const AddressesTab = ({client, customStyles, isEditing, onUpdateClient}) => {
             )}
           </View>
           {addresses.length === 0 ? (
-            <Text style={customStyles.emptyText}>{global.t?.t('address', 'label', 'noAddressesFound')}</Text>
+            <Text style={customStyles.emptyText}>
+              {global.t?.t('address', 'empty', 'noAddresses') ||
+                'Nenhum endereco cadastrado.'}
+            </Text>
           ) : (
             addresses.map(address => (
-              <View
-                key={address.id}
-                style={[
-                  customStyles.listItem,
-                  customStyles.listItemWithActions,
-                ]}>
+              <View key={address.id || address['@id']} style={customStyles.itemCard}>
                 <View style={customStyles.itemContent}>
-                  <TouchableOpacity
-                    onPress={() => openNavigationModal(address)}
-                    style={[
-                      customStyles.iconButtonLocation,
-                      customStyles.locationButton,
-                    ]}>
-                    <Icon
-                      name="location-on"
-                      size={20}
-                      color={customStyles.iconButtonPrimaryIcon.color}
-                    />
-                  </TouchableOpacity>
-                  <View>
-                    <Text style={customStyles.itemText}>
-                      {address.street}
-                      {address.number ? `, ${address.number}` : ''}
+                  <View style={{flex: 1}}>
+                    <Text style={customStyles.itemTitle}>
+                      {[address.street, address.number].filter(Boolean).join(', ') ||
+                        'Endereco'}
                     </Text>
-                    <Text style={customStyles.itemSubtext}>
-                      {address.district ? `${address.district}, ` : ''}
+                    <Text style={customStyles.itemSubtitle}>
+                      {address.district ? `${address.district}\n` : ''}
                       {address.city}
                       {address.state ? ` - ${address.state}` : ''}
                       {address.country ? ` (${address.country})` : ''}

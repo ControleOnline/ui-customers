@@ -8,6 +8,10 @@ import {
   buildEmployeeCreatePayload,
   extractId,
   LINK_TYPE_OPTIONS,
+  PEOPLE_TYPE_OPTIONS,
+  normalizePeopleType,
+  formatPeopleTypeLabel,
+  formatEmployeeContactMeta,
   buildEmployeeDetailNavParams,
 } from '../../../../react/components/tabs/employeesTabHelpers';
 
@@ -37,9 +41,64 @@ describe('employeesTabHelpers', () => {
     expect(payload.peopleType).toBe('F');
   });
 
+  it('buildEmployeeCreatePayload accepts salesman and after-sales (#649)', () => {
+    expect(
+      buildEmployeeCreatePayload({
+        name: 'VEN',
+        alias: 'V',
+        linkType: 'salesman',
+        parentPeopleId: '15',
+      }).linkType,
+    ).toBe('salesman');
+    expect(
+      buildEmployeeCreatePayload({
+        name: 'POS',
+        alias: 'P',
+        linkType: 'after-sales',
+        parentPeopleId: '15',
+      }).linkType,
+    ).toBe('after-sales');
+  });
+
+  it('buildEmployeeCreatePayload accepts peopleType J (PJ)', () => {
+    const payload = buildEmployeeCreatePayload({
+      name: 'EMPRESA X',
+      alias: 'X',
+      linkType: 'employee',
+      parentPeopleId: '15',
+      peopleType: 'J',
+    });
+    expect(payload.peopleType).toBe('J');
+  });
+
+  it('normalizePeopleType only allows F|J', () => {
+    expect(normalizePeopleType('F')).toBe('F');
+    expect(normalizePeopleType('j')).toBe('J');
+    expect(normalizePeopleType('pj')).toBe('J');
+    expect(normalizePeopleType('contrato')).toBe('F');
+    expect(normalizePeopleType('')).toBe('F');
+    expect(PEOPLE_TYPE_OPTIONS.map(o => o.value)).toEqual(['F', 'J']);
+    expect(formatPeopleTypeLabel('J')).toBe('Pessoa Jurídica');
+  });
+
+  it('formatEmployeeContactMeta includes peopleType', () => {
+    expect(
+      formatEmployeeContactMeta({ id: 9, peopleType: 'J', linkType: 'employee' }),
+    ).toContain('Pessoa Jurídica');
+  });
+
   it('extractId and LINK_TYPE_OPTIONS', () => {
     expect(extractId('/people/3')).toBe('3');
     expect(LINK_TYPE_OPTIONS.some(o => o.value === 'employee')).toBe(true);
+    expect(LINK_TYPE_OPTIONS.map(o => o.value)).toEqual([
+      'employee',
+      'owner',
+      'director',
+      'manager',
+      'salesman',
+      'after-sales',
+      'courier',
+    ]);
   });
 
   it('buildEmployeeDetailNavParams opens employee detail on general tab', () => {

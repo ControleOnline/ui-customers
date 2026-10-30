@@ -488,10 +488,11 @@ const ClientDetails = ({ route, navigation }) => {
             imageUrl={clientAvatarImageUrl}
             name={String(client?.name || '').replace(/\s+/g, ' ').trim()}
             size={64}
-            backgroundColor={themeColors.buttonBackground}
-            borderColor={themeColors.buttonText}
-            borderWidth={3}
-            textColor={themeColors.buttonText}
+            backgroundColor={detailsStyles.listAvatarBrand.backgroundColor}
+            borderColor={detailsStyles.listAvatarBrand.borderColor}
+            borderWidth={1}
+            textColor={detailsStyles.listAvatarText.color}
+            iconColor={detailsStyles.listAvatarText.color}
             useGravatar={false}
             usePeopleImage={false}
           />
