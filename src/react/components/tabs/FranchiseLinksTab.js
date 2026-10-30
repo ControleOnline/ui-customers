@@ -13,7 +13,7 @@ import { useStore } from '@store';
 import PeopleAvatar from '@controleonline/ui-people/src/react/components/PeopleAvatar';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { colors } from '@controleonline/../../src/styles/colors';
+import { colors } from '@controleonline/ui-layout/src/styles/colors';
 
 import {
   buildFranchiseLinkReadParams,

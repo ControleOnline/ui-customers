@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { colors } from '@controleonline/../../src/styles/colors';
+import { colors } from '@controleonline/ui-layout/src/styles/colors';
 import styles from './ProductsTab.styles';
 import {
   buildCreateProductParams,

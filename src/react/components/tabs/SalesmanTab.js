@@ -31,7 +31,7 @@ import { normalizeSalesmanLink } from './salesmanTab.helpers';
 import SalesmanManageModal from './SalesmanManageModal';
 import { useSalesmanManage } from './useSalesmanManage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { colors } from '@controleonline/../../src/styles/colors';
+import { colors } from '@controleonline/ui-layout/src/styles/colors';
 import SalesmanCommissionBlock from './SalesmanCommissionBlock';
 
 import {
