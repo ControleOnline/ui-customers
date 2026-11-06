@@ -63,11 +63,24 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
   const getters = documentsTypesStore.getters || {};
   const { items = [] } = getters;
 
-  const resolveTypeLabel = typeIri =>
-    items.find(item => item['@id'] === typeIri)?.documentType || String(typeIri || '');
+  const resolveTypeLabel = (typeIri, rawDocument) => {
+    const rawType = rawDocument?.documentType;
+    const embeddedLabel =
+      rawType && typeof rawType === 'object' ? rawType.documentType : '';
+    if (embeddedLabel) {
+      return String(embeddedLabel);
+    }
+    const storeLabel = items.find(item => item['@id'] === typeIri)?.documentType;
+    if (storeLabel) {
+      return String(storeLabel);
+    }
+    return /^\/?document_types\/\d+$/.test(String(typeIri || ''))
+      ? ''
+      : String(typeIri || '');
+  };
 
-  const applyMask = (value, type) =>
-    applyDocumentMask(value, resolveTypeLabel(type));
+  const applyMask = (value, type, rawDocument) =>
+    applyDocumentMask(value, resolveTypeLabel(type, rawDocument));
 
   const syncClientDocuments = nextDocuments => {
     if (typeof onUpdateClient !== 'function') {
@@ -77,7 +90,10 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
       '@id': `/documents/${documentItem.id}`,
       id: documentItem.id,
       document: documentItem.value,
-      documentType: documentItem.type,
+      documentType:
+        documentItem.raw?.documentType?.['@id'] === documentItem.type
+          ? documentItem.raw.documentType
+          : documentItem.type,
       documentFiles: documentItem.files || [],
       file: documentItem.files?.[0]?.file || null,
     }));
@@ -122,7 +138,7 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
     setEditingItem(item);
     setFormData(
       item
-        ? { type: item.type, value: applyMask(String(item.value || ''), item.type) }
+        ? { type: item.type, value: applyMask(String(item.value || ''), item.type, item.raw) }
         : { type: '', value: '' },
     );
     setShowModal(true);
@@ -320,9 +336,13 @@ const DocumentsTab = ({ client, customStyles, isEditing, onUpdateClient }) => {
                     <Icon name="description" size={20} color={customStyles.cardItemIcon.color} />
                     <View>
                       <Text style={customStyles.itemText}>
-                        {applyMask(String(doc.value || ''), doc.type)}
+                        {[
+                          resolveTypeLabel(doc.type, doc.raw),
+                          applyMask(String(doc.value || ''), doc.type, doc.raw),
+                        ]
+                          .filter(Boolean)
+                          .join(': ')}
                       </Text>
-                      <Text style={customStyles.itemSubtext}>{resolveTypeLabel(doc.type)}</Text>
                     </View>
                   </View>
                   {isEditing && (
