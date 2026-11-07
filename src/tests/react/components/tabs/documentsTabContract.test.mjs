@@ -27,6 +27,9 @@ test('DocumentAttachments exposes view/share/print/remove via DefaultUpload', ()
   assert.match(attachments, /handleShare|Share\.share/);
   assert.match(attachments, /handlePrint|print\(/);
   assert.match(attachments, /ACCEPTED_DOCUMENT_FILE_TYPES/);
+  // app-community#1392: a full IRI here produced `//documents/N/N` and the relation was never saved.
+  assert.match(attachments, /relationResource="documents"/);
+  assert.doesNotMatch(attachments, /relationResource=\{/);
   assert.ok(attachments.split('\n').length <= 500, 'DocumentAttachments must stay under 500 lines');
 });
 
