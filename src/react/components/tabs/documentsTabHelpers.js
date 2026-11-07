@@ -18,6 +18,15 @@ export const normalizeText = value => String(value || '').trim();
 export const isImageFile = url => IMAGE_FILE_PATTERN.test(String(url || ''));
 export const isPdfFile = url => PDF_FILE_PATTERN.test(String(url || ''));
 
+// Download URLs (/files/{id}/download) carry no extension, so the kind is
+// resolved from the file name and, when available, the fetched MIME type.
+export const resolveAttachmentKind = (name, mimeType = '') => {
+  const mime = String(mimeType || '').toLowerCase();
+  if (mime.startsWith('image/') || isImageFile(name)) return 'image';
+  if (mime === 'application/pdf' || isPdfFile(name)) return 'pdf';
+  return 'other';
+};
+
 export const applyDocumentMask = (value, documentType) => {
   if (!value) {
     return '';

@@ -1,12 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  Linking,
   Modal,
-  Platform,
   ScrollView,
-  Share,
   Text,
   TouchableOpacity,
   View,
@@ -15,11 +12,17 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { resolveFileDownloadUrl } from '@controleonline/ui-common/src/react/utils/fileUrl';
 import { colors } from '@controleonline/../../src/styles/colors';
+import {
+  materializeAttachment,
+  openAttachment,
+  printAttachment,
+  releaseAttachment,
+  shareAttachment,
+} from './documentFileAccess';
 import DefaultUpload from '@controleonline/ui-default/src/react/components/upload/DefaultUpload';
 import {
   extractId,
-  isImageFile,
-  isPdfFile,
+  resolveAttachmentKind,
   normalizeDocumentFiles,
   ACCEPTED_DOCUMENT_FILE_TYPES,
 } from './documentsTabHelpers';
@@ -71,76 +74,67 @@ const DocumentAttachments = ({
     [documentItem],
   );
 
-  const activePreviewUrl = previewAttachment?.url || '';
-  const canPreviewImage = isImageFile(activePreviewUrl);
+  const [previewFile, setPreviewFile] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const previewKind = resolveAttachmentKind(previewAttachment?.name, previewFile?.mimeType);
+  const canPreviewImage = previewKind === 'image';
 
-  const handleOpen = useCallback(async attachment => {
-    const url = attachment?.url;
-    if (!url) {
-      showError(global.t?.t('customers', 'error', 'URL do arquivo indisponível.'));
-      return;
+  // Preview needs the authenticated blob; the raw download URL is "Access denied".
+  useEffect(() => {
+    if (!previewAttachment) {
+      setPreviewFile(null);
+      return undefined;
     }
-    try {
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.open(url, '_blank', 'noopener,noreferrer');
-        return;
-      }
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      } else {
-        showError(global.t?.t('customers', 'error', 'Não foi possível abrir o arquivo.'));
-      }
-    } catch {
-      showError(global.t?.t('customers', 'error', 'Falha ao abrir o arquivo.'));
-    }
-  }, [showError]);
-
-  const handleShare = useCallback(async attachment => {
-    const url = attachment?.url;
-    if (!url) {
-      showError(global.t?.t('customers', 'error', 'URL do arquivo indisponível.'));
-      return;
-    }
-    try {
-      await Share.share({
-        message: `${attachment.name || 'Documento'}: ${url}`,
-        url,
-        title: attachment.name || 'Documento',
-      });
-    } catch {
-      showError(global.t?.t('customers', 'error', 'Falha ao compartilhar o arquivo.'));
-    }
-  }, [showError]);
-
-  const handlePrint = useCallback(attachment => {
-    const url = attachment?.url;
-    if (!url) {
-      showError(global.t?.t('customers', 'error', 'URL do arquivo indisponível.'));
-      return;
-    }
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const printWindow = window.open(url, '_blank', 'noopener,noreferrer');
-      if (printWindow) {
-        const triggerPrint = () => {
-          try {
-            printWindow.focus();
-            printWindow.print();
-          } catch {
-            /* browser may block auto-print; user can print manually */
-          }
-        };
-        if (printWindow.document?.readyState === 'complete') {
-          triggerPrint();
-        } else {
-          printWindow.onload = triggerPrint;
+    let cancelled = false;
+    let loaded = null;
+    setPreviewLoading(true);
+    setPreviewFile(null);
+    materializeAttachment(previewAttachment)
+      .then(result => {
+        loaded = result;
+        if (cancelled) {
+          releaseAttachment(result);
+          return;
         }
-      }
-      return;
-    }
-    handleOpen(attachment);
-  }, [handleOpen, showError]);
+        setPreviewFile(result);
+      })
+      .catch(error => {
+        if (!cancelled) {
+          showError(error?.message || global.t?.t('customers', 'error', 'Falha ao carregar o arquivo.'));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      releaseAttachment(loaded);
+    };
+  }, [previewAttachment, showError]);
 
+  const runAction = useCallback(
+    async (action, attachment, failureMessage) => {
+      try {
+        await action(attachment);
+      } catch (error) {
+        showError(error?.message || global.t?.t('customers', 'error', failureMessage));
+      }
+    },
+    [showError],
+  );
+
+  const handleOpen = useCallback(
+    attachment => runAction(openAttachment, attachment, 'Falha ao abrir o arquivo.'),
+    [runAction],
+  );
+  const handleShare = useCallback(
+    attachment => runAction(shareAttachment, attachment, 'Falha ao compartilhar o arquivo.'),
+    [runAction],
+  );
+  const handlePrint = useCallback(
+    attachment => runAction(printAttachment, attachment, 'Falha ao imprimir o arquivo.'),
+    [runAction],
+  );
   const handlePreview = useCallback(attachment => {
     setPreviewAttachment(attachment);
   }, []);
@@ -180,7 +174,7 @@ const DocumentAttachments = ({
           <View key={String(attachment.id || attachment.fileId || attachment.url)} style={attachmentCardStyle}>
             <View style={attachmentMetaStyle}>
               <Icon
-                name={isPdfFile(attachment.url) ? 'picture-as-pdf' : 'image'}
+                name={resolveAttachmentKind(attachment.name) === 'pdf' ? 'picture-as-pdf' : 'image'}
                 size={20}
                 color={colors.primary}
               />
@@ -247,8 +241,10 @@ const DocumentAttachments = ({
                 </TouchableOpacity>
               </View>
               <ScrollView contentContainerStyle={previewContentStyle}>
-                {canPreviewImage ? (
-                  <Image source={{ uri: activePreviewUrl }} style={previewImageStyle} resizeMode="contain" />
+                {previewLoading ? (
+                  <ActivityIndicator />
+                ) : canPreviewImage && previewFile?.uri ? (
+                  <Image source={{ uri: previewFile.uri }} style={previewImageStyle} resizeMode="contain" />
                 ) : (
                   <View style={previewFallbackStyle}>
                     <Icon name="insert-drive-file" size={48} color="#94A3B8" />

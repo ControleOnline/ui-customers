@@ -41,3 +41,14 @@ test('helpers cover multi-file normalization contract', () => {
   assert.match(helpers, /documentFiles/);
   assert.match(helpers, /ACCEPTED_DOCUMENT_FILE_TYPES/);
 });
+
+test('DocumentAttachments reads private files through the authenticated blob helper (#1411)', () => {
+  const access = fs.readFileSync(
+    new URL('../../../../react/components/tabs/documentFileAccess.js', import.meta.url),
+    'utf8',
+  );
+  assert.match(access, /'API-TOKEN'/);
+  assert.match(attachments, /openAttachment|shareAttachment|printAttachment/);
+  assert.doesNotMatch(attachments, /Linking\.openURL|window\.open\(url/);
+  assert.doesNotMatch(attachments, /source=\{\{ uri: activePreviewUrl/);
+});

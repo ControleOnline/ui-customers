@@ -7,6 +7,7 @@ import {
   isPdfFile,
   normalizeDocumentFiles,
   removeMask,
+  resolveAttachmentKind,
   toDocumentIri,
   toFileIri,
   toDocumentItem,
@@ -90,4 +91,12 @@ test('unwrapUploadFile accepts hydra and nested shapes', () => {
   assert.deepEqual(unwrapUploadFile({ file: { id: 1 } }), { id: 1 });
   assert.deepEqual(unwrapUploadFile({ 'hydra:member': [{ id: 2 }] }), { id: 2 });
   assert.deepEqual(unwrapUploadFile({ member: [{ id: 3 }] }), { id: 3 });
+});
+
+test('resolveAttachmentKind uses name or MIME because download URLs have no extension (#1411)', () => {
+  assert.equal(resolveAttachmentKind('RG Ale FRENTE.jpg'), 'image');
+  assert.equal(resolveAttachmentKind('arquivo', 'image/png'), 'image');
+  assert.equal(resolveAttachmentKind('contrato.pdf'), 'pdf');
+  assert.equal(resolveAttachmentKind('x', 'application/pdf'), 'pdf');
+  assert.equal(resolveAttachmentKind('planilha.xlsx'), 'other');
 });
