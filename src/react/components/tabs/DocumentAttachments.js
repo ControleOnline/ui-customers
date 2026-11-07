@@ -77,7 +77,8 @@ const DocumentAttachments = ({
   const [previewFile, setPreviewFile] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const previewKind = resolveAttachmentKind(previewAttachment?.name, previewFile?.mimeType);
-  const canPreviewImage = previewKind === 'image';
+  const canPreviewImage =
+    previewKind === 'image' && !/svg/i.test(previewFile?.mimeType || previewAttachment?.name || '');
 
   // Preview needs the authenticated blob; the raw download URL is "Access denied".
   useEffect(() => {

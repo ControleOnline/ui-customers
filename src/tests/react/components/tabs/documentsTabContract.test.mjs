@@ -52,3 +52,13 @@ test('DocumentAttachments reads private files through the authenticated blob hel
   assert.doesNotMatch(attachments, /Linking\.openURL|window\.open\(url/);
   assert.doesNotMatch(attachments, /source=\{\{ uri: activePreviewUrl/);
 });
+
+test('documentFileAccess guards token origin and blob rendering (#1411 security)', () => {
+  const access = fs.readFileSync(
+    new URL('../../../../react/components/tabs/documentFileAccess.js', import.meta.url),
+    'utf8',
+  );
+  assert.match(access, /isTrustedApiUrl\(source\.uri/);
+  assert.match(access, /tab\.opener = null/);
+  assert.match(access, /isSafeToRender/);
+});

@@ -1,8 +1,11 @@
 import {Platform} from 'react-native';
 import {File as ExpoFile, Paths} from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import {env as APP_ENV} from '@env';
 import {api} from '@controleonline/ui-common/src/api';
 import {resolveDefaultFileSource} from '@controleonline/ui-common/src/react/utils/fileUrl';
+import {isTrustedApiUrl} from '@controleonline/ui-common/src/utils/trustedApiUrl';
+import {resolveAttachmentKind} from './documentsTabHelpers';
 import {readStoredSessionToken} from '@controleonline/ui-common/src/utils/storedSessionToken';
 
 // app-community#1411: uploaded documents are private (public=false), so
@@ -40,7 +43,10 @@ export const fetchAttachmentBlob = async attachment => {
   if (!source?.uri) {
     throw new Error('URL do arquivo indisponível.');
   }
-  const token = (await api.getToken?.()) || readStoredSessionToken();
+  // Credentials only go to the configured API, never to another origin.
+  const token = isTrustedApiUrl(source.uri, APP_ENV?.API_ENTRYPOINT)
+    ? (await api.getToken?.()) || readStoredSessionToken()
+    : '';
   const response = await fetch(source.uri, {
     method: 'GET',
     headers: {
@@ -97,11 +103,26 @@ const shareNative = materialized =>
 
 // The blank tab must be opened synchronously inside the click handler, otherwise
 // popup blockers reject it once the async fetch finishes.
-const openBlankTab = () => (isWeb ? window.open('', '_blank') : null);
+const openBlankTab = () => {
+  const tab = isWeb ? window.open('', '_blank') : null;
+  if (tab) tab.opener = null;
+  return tab;
+};
+
+// A blob: URL shares the app origin, so only inert types may render in a tab;
+// anything else (html, svg, ...) is downloaded instead of executed.
+const isSafeToRender = ({mimeType, name}) => {
+  const mime = String(mimeType || '').toLowerCase();
+  if (mime === 'image/svg+xml' || /\.svg$/i.test(name || '')) return false;
+  return resolveAttachmentKind(name, mime) !== 'other' &&
+    (mime === 'application/pdf' || mime.startsWith('image/'));
+};
 
 const showInTab = (tab, materialized, {print = false} = {}) => {
-  if (!tab) {
+  if (!tab || !isSafeToRender(materialized)) {
+    tab?.close?.();
     downloadOnWeb(materialized);
+    setTimeout(() => releaseAttachment(materialized), 10000);
     return;
   }
   tab.location.href = materialized.uri;
