@@ -53,6 +53,9 @@ const DocumentAttachments = ({
   const { showError, showSuccess, showDialog } = useMessage();
   const [previewAttachment, setPreviewAttachment] = useState(null);
   const documentId = extractId(documentItem?.id);
+  // /files/upload answers 500 when no owner people is sent; fall back to the document owner.
+  const uploadPeopleId =
+    extractId(companyId) || extractId(documentItem?.raw?.people || documentItem?.people);
 
   const attachments = useMemo(
     () =>
@@ -216,7 +219,7 @@ const DocumentAttachments = ({
           // DefaultUpload builds `/${relationResource}/${entityId}`, so pass the bare collection name.
           relationResource="documents"
           entityId={documentId}
-          companyId={companyId}
+          companyId={uploadPeopleId}
           context="document"
           fileType="all"
           acceptedTypes={ACCEPTED_DOCUMENT_FILE_TYPES}

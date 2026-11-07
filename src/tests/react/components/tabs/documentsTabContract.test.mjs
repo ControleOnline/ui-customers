@@ -30,6 +30,9 @@ test('DocumentAttachments exposes view/share/print/remove via DefaultUpload', ()
   // app-community#1392: a full IRI here produced `//documents/N/N` and the relation was never saved.
   assert.match(attachments, /relationResource="documents"/);
   assert.doesNotMatch(attachments, /relationResource=\{/);
+  // app-community#1392: upload needs an owner people id or the API answers 500.
+  assert.match(attachments, /companyId=\{uploadPeopleId\}/);
+  assert.match(attachments, /documentItem\?\.raw\?\.people/);
   assert.ok(attachments.split('\n').length <= 500, 'DocumentAttachments must stay under 500 lines');
 });
 
