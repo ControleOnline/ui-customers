@@ -21,7 +21,6 @@ import {
   isImageFile,
   isPdfFile,
   normalizeDocumentFiles,
-  toDocumentIri,
   ACCEPTED_DOCUMENT_FILE_TYPES,
 } from './documentsTabHelpers';
 import {
@@ -214,7 +213,8 @@ const DocumentAttachments = ({
         <DefaultUpload
           relationStoreName="document_file"
           relationField="document"
-          relationResource={toDocumentIri(documentId)}
+          // DefaultUpload builds `/${relationResource}/${entityId}`, so pass the bare collection name.
+          relationResource="documents"
           entityId={documentId}
           companyId={companyId}
           context="document"
