@@ -51,7 +51,8 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 16,
+    justifyContent: 'center',
+    minHeight: 40,
     position: 'relative',
   },
   tabButtonText: {
