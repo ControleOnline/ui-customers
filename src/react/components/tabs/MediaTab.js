@@ -319,34 +319,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  mediaPreviewFrame: {
-    minHeight: 180,
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mediaPreviewTransparencyGrid: {
-    // RN StyleSheet (web) rejects multi-value backgroundPosition / CSS backgroundImage gradients.
-    // Keep solid preview background; checkerboard was cosmetic only.
-    backgroundColor: '#F8FAFC',
-  },
-  mediaPreviewImage: {
-    width: '100%',
-    height: '100%',
-    minHeight: 180,
-  },
-  mediaEmptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 180,
-  },
-  mediaEmptyText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
   mediaHelpText: {
     fontSize: 12,
     lineHeight: 18,

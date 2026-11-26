@@ -73,7 +73,7 @@ const SalesmanTab = ({
   const currentCompanyId = extractId(
     peopleGetters?.currentCompany?.id ||
       peopleGetters?.currentCompany?.['@id'] ||
-      peopleGetters?.defaultCompany?.id,
+      peopleGetters?.mainCompany?.id,
   );
 
   const appType = useMemo(() => resolveAppType(), []);
