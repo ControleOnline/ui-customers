@@ -9,8 +9,8 @@ import { useStore } from '@store';
 import DefaultUpload from '@controleonline/ui-default/src/react/components/upload/DefaultUpload';
 import { extractFileId } from '@controleonline/ui-default/src/react/components/upload/fileUpload';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
-import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
-import { colors } from '@controleonline/../../src/styles/colors';
+import { resolveThemePalette, withOpacity } from '@controleonline/ui-layout/src/styles/branding';
+import { colors } from '@controleonline/ui-layout/src/styles/colors';
 
 const COMPANY_MEDIA_ACCEPT_ATTRIBUTE = 'image/png,image/jpeg,.png,.jpg,.jpeg';
 
@@ -318,34 +318,6 @@ const styles = StyleSheet.create({
   mediaBadgeText: {
     fontSize: 12,
     fontWeight: '700',
-  },
-  mediaPreviewFrame: {
-    minHeight: 180,
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mediaPreviewTransparencyGrid: {
-    // RN StyleSheet (web) rejects multi-value backgroundPosition / CSS backgroundImage gradients.
-    // Keep solid preview background; checkerboard was cosmetic only.
-    backgroundColor: '#F8FAFC',
-  },
-  mediaPreviewImage: {
-    width: '100%',
-    height: '100%',
-    minHeight: 180,
-  },
-  mediaEmptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 180,
-  },
-  mediaEmptyText: {
-    fontSize: 13,
-    fontWeight: '500',
   },
   mediaHelpText: {
     fontSize: 12,

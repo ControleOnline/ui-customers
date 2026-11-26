@@ -10,6 +10,8 @@ const resolvePalette = themeColors => ({
   cardBorder: themeColors.cardBorder,
   cardText: themeColors.cardText,
   cardIcon: themeColors.cardIcon,
+  cardIconBackground: themeColors.cardIconBackground || themeColors.cardBackground,
+  cardIconColor: themeColors.cardIconColor || themeColors.cardIcon || themeColors.listItemText,
   cardShadow: themeColors.cardShadow,
   listItemBackground: themeColors.listItemBackground,
   listItemText: themeColors.listItemText,
@@ -324,12 +326,12 @@ export const createDetailsStyles = themeColors => {
     },
 
     listAvatarBrand: {
-      backgroundColor: palette.buttonBackground,
-      borderColor: palette.buttonText,
+      backgroundColor: palette.cardIconBackground,
+      borderColor: palette.cardBorder || palette.cardIconBackground,
     },
 
     listAvatarText: {
-      color: palette.buttonText,
+      color: palette.cardIconColor,
     },
 
     locationButton: {

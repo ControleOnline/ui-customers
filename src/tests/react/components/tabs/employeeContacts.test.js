@@ -7,6 +7,7 @@ const {
   extractPeopleLinkItems,
   filterPeopleLinksByScope,
   normalizeEmployeeLinkType,
+  EMPLOYEE_CONTACT_LINK_TYPES,
 } = require('../../../../react/components/tabs/employeeContacts')
 
 describe('employeeContacts', () => {
@@ -21,7 +22,21 @@ describe('employeeContacts', () => {
   it('normalizes supported link types and falls back to employee', () => {
     expect(normalizeEmployeeLinkType('OWNER')).toBe('owner')
     expect(normalizeEmployeeLinkType('courier')).toBe('courier')
+    expect(normalizeEmployeeLinkType('salesman')).toBe('salesman')
+    expect(normalizeEmployeeLinkType('after-sales')).toBe('after-sales')
     expect(normalizeEmployeeLinkType('unknown')).toBe('employee')
+  })
+
+  it('exports the same catalog used by create and edit pickers', () => {
+    expect(EMPLOYEE_CONTACT_LINK_TYPES).toEqual([
+      'employee',
+      'owner',
+      'director',
+      'manager',
+      'salesman',
+      'after-sales',
+      'courier',
+    ])
   })
 
   it('builds numeric relationship filters for collection reads', () => {
@@ -38,16 +53,16 @@ describe('employeeContacts', () => {
     })
   })
 
-  it('accepts linkTypes allowlist and itemsPerPage for contact reads (#636)', () => {
+  it('accepts linkTypes allowlist and itemsPerPage for contact reads (#636/#649)', () => {
     expect(
       buildPeopleLinkReadParams({
         companyId: 3,
-        linkTypes: ['employee', 'owner', 'director', 'manager', 'courier'],
+        linkTypes: EMPLOYEE_CONTACT_LINK_TYPES,
         itemsPerPage: 100,
       }),
     ).toEqual({
       company: '3',
-      linkType: ['employee', 'owner', 'director', 'manager', 'courier'],
+      linkType: EMPLOYEE_CONTACT_LINK_TYPES,
       itemsPerPage: 100,
     })
   })
@@ -84,10 +99,37 @@ describe('employeeContacts', () => {
         peopleLink: expect.objectContaining({id: 3229}),
       }),
       expect.objectContaining({
-        id: '7',
+        id: 7,
         linkType: 'owner',
         name: 'Owner',
       }),
+    ])
+  })
+
+  it('keeps salesman and after-sales contacts in the company list (#649)', () => {
+    expect(
+      buildEmployeeContactsFromPeopleLinks(
+        {
+          member: [
+            {
+              id: 80,
+              linkType: 'salesman',
+              company: {id: 3},
+              people: {id: 81, name: 'Vendedor', peopleType: 'F'},
+            },
+            {
+              id: 82,
+              linkType: 'after-sales',
+              company: {id: 3},
+              people: {id: 83, name: 'Pos Venda', peopleType: 'F'},
+            },
+          ],
+        },
+        {parentPeopleId: '3'},
+      ),
+    ).toEqual([
+      expect.objectContaining({id: 81, linkType: 'salesman'}),
+      expect.objectContaining({id: 83, linkType: 'after-sales'}),
     ])
   })
 

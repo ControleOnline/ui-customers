@@ -6,6 +6,8 @@ const {
   toTimezoneItem,
   extractCollectionItems,
   extractErrorMessage,
+  buildUsersListQuery,
+  embeddedUsersFromClient,
 } = require('../../../../react/components/tabs/usersTabHelpers');
 
 describe('usersTabHelpers', () => {
@@ -49,6 +51,24 @@ describe('usersTabHelpers', () => {
     });
     expect(item.timezoneId).toBe('5');
     expect(item.username).toBe('alice');
+  });
+
+  test('buildUsersListQuery uses people IRI and does not send company', () => {
+    const query = buildUsersListQuery({id: 31468, company: 3});
+    expect(query.people).toBe('/people/31468');
+    expect(query.itemsPerPage).toBe(100);
+    expect(query.__storeMeta.dedupeKey).toBe('client-details-users-/people/31468');
+    expect(query.company).toBeUndefined();
+    expect(buildUsersListQuery({})).toBe(null);
+  });
+
+  test('embeddedUsersFromClient is fallback only and normalizes items', () => {
+    const items = embeddedUsersFromClient({
+      user: {id: 9, username: 'alice'},
+    });
+    expect(items).toHaveLength(1);
+    expect(items[0].username).toBe('alice');
+    expect(embeddedUsersFromClient({user: []})).toEqual([]);
   });
 
   test('extractCollectionItems supports hydra and member', () => {

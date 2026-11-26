@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import test from 'node:test';
+
+const tab = fs.readFileSync(
+  new URL('../../../../react/components/tabs/DocumentsTab.js', import.meta.url),
+  'utf8',
+);
+const attachments = fs.readFileSync(
+  new URL('../../../../react/components/tabs/DocumentAttachments.js', import.meta.url),
+  'utf8',
+);
+const helpers = fs.readFileSync(
+  new URL('../../../../react/components/tabs/documentsTabHelpers.js', import.meta.url),
+  'utf8',
+);
+
+test('DocumentsTab wires DocumentAttachments for per-document files', () => {
+  assert.match(tab, /DocumentAttachments/);
+  assert.match(tab, /onFilesChanged=\{updateDocumentFiles\}/);
+  assert.ok(tab.split('\n').length <= 500, 'DocumentsTab must stay under 500 lines');
+});
+
+test('DocumentAttachments exposes view/share/print/remove via DefaultUpload', () => {
+  assert.match(attachments, /DefaultUpload/);
+  assert.match(attachments, /relationStoreName=\"document_file\"/);
+  assert.match(attachments, /handleShare|Share\.share/);
+  assert.match(attachments, /handlePrint|print\(/);
+  assert.match(attachments, /ACCEPTED_DOCUMENT_FILE_TYPES/);
+  // app-community#1392: a full IRI here produced `//documents/N/N` and the relation was never saved.
+  assert.match(attachments, /relationResource="documents"/);
+  assert.doesNotMatch(attachments, /relationResource=\{/);
+  // app-community#1392: upload needs an owner people id or the API answers 500.
+  assert.match(attachments, /companyId=\{uploadPeopleId\}/);
+  assert.match(attachments, /documentItem\?\.raw\?\.people/);
+  assert.ok(attachments.split('\n').length <= 500, 'DocumentAttachments must stay under 500 lines');
+});
+
+test('helpers cover multi-file normalization contract', () => {
+  assert.match(helpers, /normalizeDocumentFiles/);
+  assert.match(helpers, /documentFiles/);
+  assert.match(helpers, /ACCEPTED_DOCUMENT_FILE_TYPES/);
+});
+
+test('DocumentAttachments reads private files through the authenticated blob helper (#1411)', () => {
+  const access = fs.readFileSync(
+    new URL('../../../../react/components/tabs/documentFileAccess.js', import.meta.url),
+    'utf8',
+  );
+  assert.match(access, /'API-TOKEN'/);
+  assert.match(attachments, /openAttachment|shareAttachment|printAttachment/);
+  assert.doesNotMatch(attachments, /Linking\.openURL|window\.open\(url/);
+  assert.doesNotMatch(attachments, /source=\{\{ uri: activePreviewUrl/);
+});
+
+test('documentFileAccess guards token origin and blob rendering (#1411 security)', () => {
+  const access = fs.readFileSync(
+    new URL('../../../../react/components/tabs/documentFileAccess.js', import.meta.url),
+    'utf8',
+  );
+  assert.match(access, /isTrustedApiUrl\(source\.uri/);
+  assert.match(access, /tab\.opener = null/);
+  assert.match(access, /isSafeToRender/);
+});
