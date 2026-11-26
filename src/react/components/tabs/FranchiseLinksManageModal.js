@@ -10,7 +10,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
-import { colors } from '@controleonline/../../src/styles/colors';
+import { colors } from '@controleonline/ui-layout/src/styles/colors';
 
 const styles = {
   modalCard: {
